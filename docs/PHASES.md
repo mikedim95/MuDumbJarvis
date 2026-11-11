@@ -54,3 +54,46 @@ windows. Initial cold load was slow on CPU; subsequent cached tool turns ran.
 Direct JARVIS chat verified via /api/chat: HTTP 200, text READY, run ID
 run_77d0da14b6e24296b894393f0f4352c8. The direct conversation session is stored
 in server/logs/hermes_sessions.json and is separate from future Paperclip tasks.
+
+## Phase 3 — verified (2026-11-11)
+
+Paperclip stable release 2026.1106.0 (source d69631b), installed from its
+published npm package in a non-root Linux container. Embedded PostgreSQL is
+persistent under .runtime/paperclip; no separate database service was added.
+Paperclip internals remain unchanged. Created authenticated operator, JARVIS
+company, General Operations project, and JARVIS-01 using documented REST routes.
+Hermes credentials use an encrypted Paperclip secret_ref, not adapter plaintext.
+The agent receives only its own API key; the HUD backend holds the board key.
+
+Changes: deploy/Dockerfile.paperclip, compose.yaml, init.py, .env.example,
+bootstrap_paperclip.py, hermes-tls.conf, supported Hermes reporting plugin,
+reporting tests, live_phase3.py, COMMAND_CENTER.md and evidence snapshots.
+Generated credentials, certificates, databases and private keys are Git-ignored.
+
+Evidence:
+- Paperclip health 200, authenticated/private deployment, upstream build commit
+  d69631b01b9c658f80bf8bed389863dce82643e1.
+- JARVIS-01 lifecycle ready after authenticated TLS gateway health check.
+- Issue JAR-1 / 86e0f800-6f54-44fb-a799-99982ef783dc moved from todo to
+  in_progress to done; final comment authored by JARVIS-01 records actual
+  jarvis-hermes:3b (2.75 GiB) and pentagi-basilisk:7b (4.36 GiB).
+- Paperclip execution 79ff6a76-c812-47e0-925d-de504188f65f dispatched Hermes
+  run_011b6c278c0b417d99e2f2b34e9a76ce into an issue-scoped session.
+- Hermes log verifies model jarvis-hermes:3b / custom provider / local Ollama
+  endpoint and actual local_ollama_models execution for this exact issue.
+- Evidence: docs/evidence/phase3-task.json and phase3-runtime.json.
+- 8 automated tests pass (startup/auth/WebSocket plus reporting boundaries,
+  assignment checks, failure disposition and callbacks across worker threads).
+
+Blockers/fixes: standard Docker image includes several large toolchains; used
+supported pinned npm distribution instead. npm requires explicit embedded
+PostgreSQL symlink hydration. Paperclip's lifecycle verifier rejects a warning
+from non-loopback plaintext Hermes; added a private TLS proxy with a generated
+trusted certificate, with no verification bypass. Hermes hooks can execute on
+different workers; correlation uses session + turn identity in ephemeral memory.
+The first CPU prompt took 248 seconds; subsequent tool-selection calls used
+cached context and took about 20 seconds each. Existing PentAGI was untouched.
+
+Restart verification: recreated Hermes, JARVIS and Paperclip services; the live
+test replayed the identical idempotency key, recovered the same JAR-1 UUID and
+its final comment, and retrieved a persisted succeeded Paperclip run.

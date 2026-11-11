@@ -23,6 +23,8 @@ def local_ollama_models(args: dict, **kwargs) -> str:
 
 
 def register(ctx):
+    from . import paperclip_reporting
+    paperclip_reporting.register(ctx)
     ctx.register_tool(name='local_ollama_models', toolset='jarvis_readonly',
         schema={'name': 'local_ollama_models',
                 'description': 'Retrieve the ACTUAL installed local Ollama models, their exact names, sizes in bytes and GiB, and architecture details. Always call this tool before answering questions about installed models. Never guess the inventory.',

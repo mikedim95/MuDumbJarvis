@@ -1,5 +1,57 @@
 name: jarvis-command-center
 services:
+  hermes-tls:
+    image: nginx:1.28-alpine
+    container_name: jarvis-hermes-tls
+    restart: unless-stopped
+    depends_on:
+      hermes: {condition: service_healthy}
+    networks: [agent-private]
+    volumes:
+      - ./hermes-tls.conf:/etc/nginx/nginx.conf:ro
+      - ../.runtime/tls:/certs:ro
+    security_opt: [no-new-privileges:true]
+    logging:
+      options: {max-size: 10m, max-file: '3'}
+  paperclip:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.paperclip
+    image: jarvis-command-center:paperclip-2026.1106.0
+    container_name: jarvis-paperclip
+    init: true
+    restart: unless-stopped
+    depends_on:
+      hermes-tls: {condition: service_started}
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      PAPERCLIP_TOOL_ACTION_SIGNING_SECRET: ${PAPERCLIP_TOOL_ACTION_SIGNING_SECRET}
+      PAPERCLIP_SECRETS_MASTER_KEY: ${PAPERCLIP_SECRETS_MASTER_KEY}
+      PAPERCLIP_AGENT_JWT_SECRET: ${PAPERCLIP_AGENT_JWT_SECRET}
+      HOST: 0.0.0.0
+      PAPERCLIP_HOME: /paperclip
+      PAPERCLIP_DEPLOYMENT_MODE: authenticated
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: private
+      PAPERCLIP_PUBLIC_URL: http://localhost:3100
+      PAPERCLIP_ALLOWED_HOSTNAMES: paperclip,127.0.0.1
+      PAPERCLIP_SECRETS_STRICT_MODE: 'true'
+      PAPERCLIP_ANNOUNCEMENTS_ENABLED: 'false'
+      NODE_EXTRA_CA_CERTS: /run/jarvis-ca/hermes.crt
+    ports: ['127.0.0.1:3100:3100']
+    volumes:
+      - ../.runtime/paperclip:/paperclip
+      - ../.runtime/tls/hermes.crt:/run/jarvis-ca/hermes.crt:ro
+    networks: [default, agent-private]
+    pids_limit: 2048
+    stop_grace_period: 90s
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      start_period: 60s
+    logging:
+      options: {max-size: 10m, max-file: '3'}
   jarvis:
     build:
       context: ..
@@ -8,7 +60,14 @@ services:
     container_name: jarvis-hud
     init: true
     restart: unless-stopped
-    env_file: .env
+    environment:
+      JARVIS_HUD_TOKEN: ${JARVIS_HUD_TOKEN}
+      API_SERVER_KEY: ${API_SERVER_KEY}
+      PAPERCLIP_URL: ${PAPERCLIP_URL:-http://paperclip:3100}
+      PAPERCLIP_API_KEY: ${PAPERCLIP_API_KEY:-}
+      PAPERCLIP_COMPANY_ID: ${PAPERCLIP_COMPANY_ID:-}
+      PAPERCLIP_PROJECT_ID: ${PAPERCLIP_PROJECT_ID:-}
+      PAPERCLIP_AGENT_ID: ${PAPERCLIP_AGENT_ID:-}
     networks: [default, agent-private]
     ports:
       - "127.0.0.1:8765:8765"
@@ -31,8 +90,9 @@ services:
     container_name: jarvis-hermes
     restart: unless-stopped
     command: [gateway, run]
-    env_file: .env
     environment:
+      API_SERVER_KEY: ${API_SERVER_KEY}
+      HERMES_PAPERCLIP_AGENT_KEY: ${HERMES_PAPERCLIP_AGENT_KEY:-}
       HERMES_UID: '1000'
       HERMES_GID: '1000'
       API_SERVER_ENABLED: 'true'

@@ -3,7 +3,8 @@
 Workspace: /home/kali/jarvis-command-center/jarvis_ai
 
 Phase 1 topology: browser → existing JARVIS FastAPI backend (127.0.0.1:8765).
-Hermes v0.23.1 now runs as an isolated gateway using the existing local Ollama server. Paperclip is the next phase.
+Hermes v0.23.1 runs as an isolated gateway using the existing local Ollama server.
+Paperclip 2026.1106.0 is the persistent task orchestrator at http://localhost:3100.
 See PHASES.md for verified acceptance evidence and changes.
 
 ## Install and start
@@ -37,3 +38,43 @@ num_ctx=65536 and four CPU threads. Existing model definitions are retained.
 The alias definition is deploy/Modelfile.hermes. Initial CPU loads can be slow.
 Hermes state is isolated under .runtime/hermes; plugin source is read-only.
 No host workspace or Docker socket is mounted into the agent container.
+
+## Paperclip
+
+The container installs the official pinned npm release; upstream internals are
+unchanged. Its embedded PostgreSQL database, backups and logs persist under
+`.runtime/paperclip`. Operator login credentials are generated once in
+`.runtime/operator.json` (mode 0600). The backend's permanent board API key stays
+in `deploy/.env`; the agent receives only its own reporting key.
+
+After first startup, bootstrap via the supported REST API:
+
+```sh
+docker run --rm --user 1000:1000 --network jarvis-command-center_default \
+  -e PAPERCLIP_BOOTSTRAP_URL=http://paperclip:3100 \
+  -v "$PWD:/workspace" --entrypoint /opt/venv/bin/python \
+  jarvis-command-center:hud /workspace/deploy/bootstrap_paperclip.py
+docker compose -f deploy/compose.yaml up -d
+```
+
+Run these commands from the repository root. Bootstrap creates JARVIS, General
+Operations and JARVIS-01, and stores the Hermes API key through Paperclip's
+encrypted secret management. `sessionKeyStrategy=issue` isolates tasks.
+The built-in `hermes_gateway` adapter uses TLS through a private nginx proxy;
+Paperclip trusts only the generated local certificate. No TLS verification
+bypass is configured. The private certificate key is excluded from Git.
+
+A supported Hermes lifecycle plugin checks out only its assigned issue and
+atomically records its real reply and final disposition using Paperclip REST.
+Failed/interrupted turns are blocked, never marked done. Ordinary chat cannot
+enter that reporting path. Paperclip alone owns task state; the plugin stores
+only ephemeral per-turn correlation and ordinary execution logs.
+
+Live Phase 3 test (creates/replays one read-only, idempotent issue):
+
+```sh
+docker run --rm --user 1000:1000 --env-file deploy/.env \
+  --network jarvis-command-center_default -v "$PWD:/workspace" \
+  --entrypoint /opt/venv/bin/python jarvis-command-center:hud \
+  /workspace/tests/live_phase3.py
+```

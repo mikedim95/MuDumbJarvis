@@ -1,0 +1,8 @@
+FROM node:24-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git libicu72 && rm -rf /var/lib/apt/lists/*
+RUN npm install --global --omit=dev paperclipai@2026.1106.0 && npm cache clean --force
+RUN cd /usr/local/lib/node_modules/paperclipai/node_modules/@embedded-postgres/linux-x64 && node scripts/hydrate-symlinks.js
+ENV HOME=/paperclip PAPERCLIP_HOME=/paperclip NODE_ENV=production HOST=0.0.0.0 PORT=3100 SERVE_UI=true
+USER node
+WORKDIR /paperclip
+CMD ["node", "/usr/local/lib/node_modules/paperclipai/node_modules/@paperclipai/server/dist/index.js"]
