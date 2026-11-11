@@ -6,11 +6,11 @@ llm:
   temperature: 0.3
   history_turns: 12
 hermes:
-  base_url: http://127.0.0.1:8642
+  base_url: http://hermes:8642
   api_key_env: API_SERVER_KEY
   conversation: jarvis-direct-chat
   session_key: jarvis:direct:chat
-  timeout: 240
+  timeout: 900
   ack_after_seconds: 0
   ack_texts:
   - On it.

@@ -15,6 +15,7 @@ worker/stt_server.log
 __pycache__/
 *.pyc
 .venv/
+.runtime/
 venv/
 
 # os

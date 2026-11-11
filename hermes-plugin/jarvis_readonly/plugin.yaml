@@ -1,0 +1,5 @@
+name: jarvis_readonly
+version: 1.0.0
+description: Read-only local model inventory for the JARVIS command center
+provides_tools:
+  - local_ollama_models
