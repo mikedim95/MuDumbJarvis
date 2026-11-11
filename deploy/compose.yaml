@@ -1,0 +1,27 @@
+name: jarvis-command-center
+services:
+  jarvis:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.jarvis
+    image: jarvis-command-center:hud
+    container_name: jarvis-hud
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ../server/config/server.yaml:/app/server/config/server.yaml:ro
+      - ../server/logs:/app/server/logs
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp:size=64m]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request,os; r=urllib.request.Request('http://127.0.0.1:8765/api/health',headers={'X-Jarvis-Token':os.environ['JARVIS_HUD_TOKEN']}); urllib.request.urlopen(r,timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+    logging:
+      options: {max-size: 10m, max-file: '3'}

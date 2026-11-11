@@ -1,0 +1,8 @@
+.git
+.venv
+**/__pycache__
+**/.env
+**/*.env
+server/logs
+server/certs
+server/config/server.yaml

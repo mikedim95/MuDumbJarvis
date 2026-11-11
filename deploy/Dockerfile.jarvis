@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 VIRTUAL_ENV=/opt/venv PATH=/opt/venv/bin:$PATH
+WORKDIR /app
+RUN python -m venv /opt/venv
+COPY server/requirements-text.txt tests/requirements.txt /tmp/requirements/
+RUN pip install --no-cache-dir -r /tmp/requirements/requirements-text.txt -r /tmp/requirements/requirements.txt
+COPY --chown=1000:1000 server /app/server
+COPY --chown=1000:1000 tests /app/tests
+USER 1000:1000
+EXPOSE 8765
+CMD ["python", "/app/server/server.py"]

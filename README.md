@@ -158,3 +158,7 @@ STT by [faster-whisper](https://github.com/SYSTRAN/faster-whisper) /
 [ElevenLabs](https://elevenlabs.io).
 
 MIT — see [LICENSE](LICENSE). Use it, fork it, build your own Jarvis.
+
+## Local command-center deployment
+
+See [COMMAND_CENTER.md](docs/COMMAND_CENTER.md) for the Linux deployment, phase evidence, and integration work.

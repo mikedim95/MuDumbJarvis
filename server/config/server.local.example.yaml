@@ -1,0 +1,59 @@
+llm:
+  provider: hermes
+  model: claude-haiku-4-5
+  api_key_env: ANTHROPIC_API_KEY
+  max_tokens: 220
+  temperature: 0.3
+  history_turns: 12
+hermes:
+  base_url: http://127.0.0.1:8642
+  api_key_env: API_SERVER_KEY
+  conversation: jarvis-direct-chat
+  session_key: jarvis:direct:chat
+  timeout: 240
+  ack_after_seconds: 0
+  ack_texts:
+  - On it.
+  - Still working.
+  - Almost there.
+  fallback_provider: null
+  instructions: 'You are speaking aloud through a voice pipeline. Replies are converted
+    to speech, so use plain conversational prose only: no markdown, no lists, no code
+    blocks. Default to one to three short sentences unless asked for more detail.
+    Speak numbers, dates, times and phone numbers as natural spoken words. Never speak
+    secrets, API keys, or passwords aloud.
+
+    '
+stt:
+  model: small.en
+  device: cpu
+  compute_type: int8
+  sample_rate: 16000
+  partials: true
+  partial_interval: 1.2
+machines: []
+usage:
+  llm_cost_per_mtok_input: 0
+  llm_cost_per_mtok_output: 0
+server:
+  host: 0.0.0.0
+  port: 8765
+  tls_ports: []
+  tls_cert: certs/cert.pem
+  tls_key: certs/key.pem
+  dashboard_proxy: {}
+security:
+  hud_token_env: JARVIS_HUD_TOKEN
+  extra_origin_hosts: []
+voice:
+  provider: elevenlabs
+  model: eleven_flash_v2_5
+  voice_name: Your chosen voice
+  voice_id: YOUR_ELEVENLABS_VOICE_ID
+  output_format: pcm_16000
+  enabled: false
+persona:
+  system_prompt: 'You are the spoken interface for the user''s personal agent. Be
+    direct, calm, and concise. Default to one to three short sentences.
+
+    '

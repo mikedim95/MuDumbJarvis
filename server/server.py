@@ -34,12 +34,9 @@ from typing import AsyncIterator, Iterator
 import requests
 import uvicorn
 import yaml
-import numpy as np
-from anthropic import Anthropic
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from RealtimeSTT import AudioToTextRecorder
 
 try:
     import psutil
@@ -47,7 +44,7 @@ except ImportError:  # machines panel degrades gracefully
     psutil = None
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_PATH = ROOT / "config" / "server.yaml"
+CONFIG_PATH = Path(os.environ.get("JARVIS_CONFIG", str(ROOT / "config" / "server.yaml")))
 LOG_PATH = ROOT / "logs" / "latency.jsonl"
 STATE_PATH = ROOT / "logs" / "hermes_sessions.json"
 USAGE_PATH = ROOT / "logs" / "usage_stats.json"
@@ -295,6 +292,7 @@ class HermesAPI:
 
 class VoicePipelineServer:
     def __init__(self, cfg: dict):
+        from RealtimeSTT import AudioToTextRecorder
         self.cfg = cfg
         self.turn_counter = 0
         self.hermes = HermesAPI(cfg)
@@ -317,6 +315,7 @@ class VoicePipelineServer:
         return self.turn_counter
 
     async def transcribe(self, audio: bytes, timing: TurnTiming | None = None) -> str:
+        import numpy as np
         if timing:
             timing.stt_start_monotonic = time.perf_counter()
         # 1) GPU worker (if configured and reachable) — big model, ~0.3s
@@ -391,6 +390,7 @@ class VoicePipelineServer:
         timing.llm_provider = provider
         timing.llm_model = llm["model"]
         if provider == "anthropic":
+            from anthropic import Anthropic
             key = os.environ.get(llm.get("api_key_env", "ANTHROPIC_API_KEY"))
             if not key:
                 raise RuntimeError("ANTHROPIC_API_KEY not found")
@@ -654,6 +654,8 @@ async def warm_pipeline() -> None:
     hook fires once per uvicorn listener — there are four), and never let a
     warm failure take a listener down."""
     global _WARM_STARTED
+    if not (CFG.get("voice") or {}).get("enabled", True):
+        return
     if _WARM_STARTED:
         return
     _WARM_STARTED = True
@@ -695,6 +697,11 @@ async def api_auth_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/") and not _request_authed(request):
         return Response(status_code=401, content="jarvis auth required")
     return await call_next(request)
+
+
+@app.get("/api/health")
+async def health() -> dict:
+    return {"status": "ok", "voice_enabled": (CFG.get("voice") or {}).get("enabled", True)}
 
 
 def _ws_allowed(ws: WebSocket) -> bool:
@@ -1146,16 +1153,21 @@ async def websocket_endpoint(ws: WebSocket) -> None:
         return
     await ws.accept()
     WS_CLIENTS.add(ws)
-    pipeline = get_pipeline()
+    pipeline = get_pipeline() if (CFG.get("voice") or {}).get("enabled", True) else None
     conn = ConnState(conversation=(CFG.get("hermes") or {}).get("conversation", "jarvis-main"))
     await ws.send_json({"type": "status", "message": "Hermes voice server connected."})
     try:
         while True:
             message = await ws.receive()
+            if message.get("type") == "websocket.disconnect":
+                break
             if "text" in message and message["text"] is not None:
                 event = json.loads(message["text"])
                 etype = event.get("type")
                 if etype == "start":
+                    if pipeline is None:
+                        await ws.send_json({"type": "error", "message": "Voice is disabled. Use typed chat."})
+                        continue
                     await _cancel_active_turn(ws, pipeline, conn)  # barge-in
                     if event.get("conversation"):
                         conn.conversation = str(event["conversation"])
@@ -1174,7 +1186,8 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                     conn.timing.end_of_speech_monotonic = time.perf_counter()
                     conn.turn_task = asyncio.create_task(_run_turn(ws, pipeline, conn))
                 elif etype == "stop_run":
-                    await _cancel_active_turn(ws, pipeline, conn)
+                    if pipeline is not None:
+                        await _cancel_active_turn(ws, pipeline, conn)
                     await ws.send_json({"type": "agent_status", "state": "stopped"})
                 elif etype == "approval_decision":
                     run_id = event.get("run_id") or conn.current_run_id
@@ -1187,7 +1200,7 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                         "approved": decision == "allow",
                         "approval_id": event.get("approval_id"),
                     }
-                    res = await asyncio.to_thread(pipeline.hermes.post_approval, run_id, body)
+                    res = await asyncio.to_thread(HERMES.post_approval, run_id, body)
                     await ws.send_json({"type": "status", "message": f"Approval sent ({res['status_code']})."})
                 else:
                     await ws.send_json({"type": "error", "message": f"Unknown event type: {etype}"})
