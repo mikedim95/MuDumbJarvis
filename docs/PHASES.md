@@ -157,4 +157,76 @@ The screenshot also exposed misleading upstream static cloud/voice labels;
 they now reflect the actual configuration, and the server machine label is
 platform-neutral. The intentional timeout left the agent in error; cleared it
 through Paperclip's supported clear-error route before the real user task.
-Phase 5 still requires the remaining two HUD submissions and restart checks.
+Phase 4 ended before the remaining two HUD submissions and restart checks;
+Phase 5 below completes those checks.
+
+## Phase 5 — complete (2026-11-12)
+
+Resumed the prior agent's uncommitted browser/restart work. Retained its
+running Chromium test rather than creating duplicate verification tasks.
+The exact requested inventory/recommendation prompt completed through the
+actual JARVIS HUD at least three times:
+- JAR-7 / b5c84f82-095c-4235-ac40-0b963b301c7f, user-submitted and re-observed.
+- JAR-8 / 76a3de7f-f624-4a95-8e7d-6ca46e41af77, Chromium input + SEND TASK.
+- JAR-9 / aa194673-bc9b-4ee2-827c-20ceddc13794, Chromium input + SEND TASK.
+
+Each issue reached done with a succeeded Paperclip execution, persisted
+JARVIS-01 result comments, an issue/run-correlated local_ollama_models audit
+containing eight actual installed models, and a runtime log identifying
+jarvis-hermes:3b / custom provider. The HUD displayed the same UUID and status
+as canonical Paperclip. Results include exact tool-retrieved names and byte
+sizes separately from model-generated recommendations. JAR-8's screenshot also
+captures JAR-9 in_progress, demonstrating real sequential execution.
+
+Restarted all four JARVIS services (HUD, Hermes, internal TLS proxy and
+Paperclip), leaving the existing Ollama and PentAGI services running.
+All returned healthy. Browser refresh and post-restart observations recovered
+all three accepted task IDs, statuses and unchanged comments. The separate
+API persistence test also verified the identical prior JAR-3/JAR-5/JAR-6 result
+hashes and run records across the restart.
+
+Chromium verified the actual one-second timeout fixture JAR-4 displays blocked
+and ERROR: timeout, then sent Reply with READY only through Direct chat.
+The runtime returned READY with a real run ID; the Paperclip task count stayed
+unchanged. Task and direct-chat sessions remain separate. No browser page
+errors were recorded.
+
+Modified/configuration files:
+- deploy/bootstrap_paperclip.py: concise instructions; exact retrieved facts and
+  tentative recommendations. Deployed adapter instructions match this source.
+- tests/hud_e2e.cjs: restart/failure/direct-chat checks, exact byte-size checks,
+  and configurable trial count (three by default for future full reruns).
+- tests/live_failure.py: clear only the intentional agent error using the
+  supported Paperclip endpoint, preserving the failure history.
+- tests/live_persistence.py: resolve prior completed issue IDs from evidence.
+- README.md, COMMAND_CENTER.md, PHASES.md: access, restart, test and limitation
+  documentation. All generated credentials stay in ignored local files.
+- docs/evidence/: phase5-browser.json, phase5-runtime.json,
+  restart-history.json, updated phase4-hud.json, and HUD screenshots of
+  JAR-7/JAR-8/JAR-9, the blocked timeout and direct-chat READY.
+
+Validation:
+- 20 pytest integration tests passed; only upstream deprecation warnings.
+- Updated browser helper syntax check passed; --observe passed again after
+  the restart, including exact byte-size checks for JAR-7.
+- Three HUD trials were checked against live authenticated history, persisted
+  comments, succeeded runs and local-model/tool audits after the restart.
+- JARVIS authenticated health 200; unauthenticated task history 401.
+- Hermes authenticated health/models 200; unauthenticated models 401.
+- Paperclip's official npm latest tag revalidated as 2026.1106.0.
+- Credential scan of tracked and proposed files found no actual secret values.
+- git diff --check passed.
+
+Observed limits/fixes: CPU-only inventory jobs take several minutes; services
+have bounded 900-second execution timeouts and serialize runtime access.
+The small model can still generate unsupported capability/context/CLI claims.
+These recommendations are not verified facts; the appended inventory is the
+verified tool data. The operating guide documents this limitation and the
+embedding-model distinction. The optional upstream Hermes Skills endpoint
+continues to return 500; it does not affect inventory execution or task state.
+No Hermes or Paperclip core changes were made. No MVP acceptance blocker remains.
+
+The phase 5 browser batch contains two new tasks because JAR-7 was already
+submitted through the HUD before this handoff. Together they establish the
+required three complete HUD workflows. Future fresh full browser runs default
+to three new tasks.

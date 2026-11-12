@@ -13,8 +13,10 @@ import requests
 
 root = Path(__file__).resolve().parents[1]
 snapshot = root / 'docs/evidence/restart-history.json'
-ids = ['886fde66-3bb3-4f9e-8ec8-cd65cd757d58', '8ea14a70-8f37-4c8b-81f4-7636aecd9706',
-       'ccd51df4-2119-45cf-a889-41e6ff2f9db2']
+fixtures = [root / ('docs/evidence/phase4-api-' + trial + '.json') for trial in ('v2', 'v3', 'v4')]
+if not fixtures[0].exists():
+    fixtures[0] = root / 'docs/evidence/phase4-api.json'
+ids = [json.loads(path.read_text())['id'] for path in fixtures]
 base = os.environ.get('JARVIS_TEST_URL', 'http://jarvis:8765') + '/api'
 headers = {'X-Jarvis-Token': os.environ['JARVIS_HUD_TOKEN']}
 for attempt in range(60):

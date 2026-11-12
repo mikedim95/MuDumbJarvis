@@ -26,6 +26,8 @@ results come from Paperclip and survive browser refresh and service restart.
 Paperclip's operator UI is http://localhost:3100; its generated login is in
 `.runtime/operator.json`.
 
+For remote access, use the SSH tunnel in [COMMAND_CENTER.md](docs/COMMAND_CENTER.md#access-from-another-computer).
+
 Configuration: `server/config/server.yaml`, `.runtime/hermes/config.yaml`,
 and server-side `deploy/.env`. Secret-free templates are in `deploy/` and
 `server/config/`. Generated secrets and runtime data are excluded from Git.

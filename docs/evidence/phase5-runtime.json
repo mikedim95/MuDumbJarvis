@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-11-12T06:17:22.729971+00:00",
+  "hud_health": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "voice_enabled": false
+    }
+  },
+  "unauthenticated_task_history_status": 401,
+  "three_hud_trials_after_restart": [
+    {
+      "id": "b5c84f82-095c-4235-ac40-0b963b301c7f",
+      "identifier": "JAR-7",
+      "status": "done",
+      "runs": [
+        {
+          "runId": "657b4717-f69b-4204-8b60-c7c1f480a927",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T05:47:19.073Z",
+          "finishedAt": "2026-11-12T05:55:06.601Z",
+          "errorCode": null,
+          "error": null
+        }
+      ],
+      "models_retrieved": 8,
+      "comments_unchanged_after_restart": true,
+      "browser_result_verified": true
+    },
+    {
+      "id": "76a3de7f-f624-4a95-8e7d-6ca46e41af77",
+      "identifier": "JAR-8",
+      "status": "done",
+      "runs": [
+        {
+          "runId": "6103f4cc-750f-4fec-bf62-d0970290a8fb",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T06:00:42.323Z",
+          "finishedAt": "2026-11-12T06:08:15.589Z",
+          "errorCode": null,
+          "error": null
+        }
+      ],
+      "models_retrieved": 8,
+      "comments_unchanged_after_restart": true,
+      "browser_result_verified": true
+    },
+    {
+      "id": "aa194673-bc9b-4ee2-827c-20ceddc13794",
+      "identifier": "JAR-9",
+      "status": "done",
+      "runs": [
+        {
+          "runId": "542c530f-c047-49a3-8fa6-0514b2be5679",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T06:08:16.428Z",
+          "finishedAt": "2026-11-12T06:14:53.637Z",
+          "errorCode": null,
+          "error": null
+        }
+      ],
+      "models_retrieved": 8,
+      "comments_unchanged_after_restart": true,
+      "browser_result_verified": true
+    }
+  ],
+  "agent_state": {
+    "agents": [
+      {
+        "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "name": "JARVIS-01",
+        "title": "Local read-only assistant",
+        "adapterType": "hermes_gateway",
+        "status": "idle",
+        "lifecycleState": "ready",
+        "lifecycleError": null,
+        "capabilities": null
+      }
+    ]
+  }
+}

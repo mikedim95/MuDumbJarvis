@@ -9,6 +9,9 @@ const out = root + '/docs/evidence';
 const url = 'http://localhost:8765';
 const prompt = 'Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which are suitable for research and coding.';
 const observe = process.argv.includes('--observe');
+const trialsArg = process.argv.find(arg => arg.startsWith('--trials='));
+const trials = trialsArg ? Number(trialsArg.split('=')[1]) : 3;
+assert(Number.isInteger(trials) && trials >= 1 && trials <= 10, '--trials must be an integer from 1 to 10');
 const stage = root + '/.runtime/browser-stage.json';
 const restarted = root + '/.runtime/browser-restart-done';
 const hash = value => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -36,7 +39,10 @@ async function result(page, task) {
   const rows = fs.readFileSync(root + '/.runtime/hermes/logs/paperclip-tools.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
   const audit = rows.find(row => row.issue_id === task.id);
   assert(audit && audit.tool === 'local_ollama_models' && audit.result.models.length);
-  for (const model of audit.result.models) assert(text.includes(model.name), 'HUD missing exact retrieved model: ' + model.name);
+  for (const model of audit.result.models) {
+    assert(text.includes(model.name), 'HUD missing exact retrieved model: ' + model.name);
+    assert(text.includes(String(model.size_bytes)), 'HUD missing exact retrieved byte size: ' + model.name);
+  }
   assert(text.includes('Verified local_ollama_models data'));
   const canonical = await fetch('http://localhost:3100/api/issues/' + task.id, {
     headers: {Authorization: 'Bearer ' + process.env.PAPERCLIP_API_KEY}, signal: AbortSignal.timeout(20000)});
@@ -79,7 +85,7 @@ async function result(page, task) {
     } else {
       fs.rmSync(restarted, {force: true});
       const tasks = [];
-      for (let index = 0; index < 2; index++) {
+      for (let index = 0; index < trials; index++) {
         await page.locator('#chatInput').fill(prompt);
         const [response] = await Promise.all([
           page.waitForResponse(response => response.url() === url + '/api/tasks' && response.request().method() === 'POST'),
@@ -93,7 +99,7 @@ async function result(page, task) {
         await page.waitForFunction(() => document.getElementById('taskConnection').textContent.includes('Paperclip connected'));
         await selectTask(page, task.identifier);
       }
-      assert.notEqual(tasks[0].id, tasks[1].id);
+      assert.equal(new Set(tasks.map(task => task.id)).size, trials);
       const proofs = [];
       for (const task of tasks) {
         proofs.push(await result(page, task));
@@ -112,8 +118,27 @@ async function result(page, task) {
       const after = [];
       for (const task of tasks) after.push(await result(page, task));
       for (let index = 0; index < proofs.length; index++) assert.equal(proofs[index].comments_hash, after[index].comments_hash);
+      const expectedFailure = JSON.parse(fs.readFileSync(out + '/phase4-failure.json', 'utf8'));
+      await selectTask(page, expectedFailure.identifier);
+      await page.waitForFunction(() => document.getElementById('taskDetail').textContent.includes('ERROR: timeout'));
+      assert((await page.locator('#taskDetail').innerText()).startsWith(expectedFailure.identifier + ' · blocked'));
+      await page.screenshot({path: out + '/hud-expected-timeout.png', fullPage: true});
+      const countBefore = (await (await page.request.get(url + '/api/tasks')).json()).tasks.length;
+      await page.locator('#commandMode').selectOption('chat');
+      await page.locator('#chatInput').fill('Reply with READY only.');
+      const [chatResponse] = await Promise.all([
+        page.waitForResponse(response => response.url() === url + '/api/chat' && response.request().method() === 'POST', {timeout: 900000}),
+        page.locator('#sendBtn').click()]);
+      assert.equal(chatResponse.status(), 200);
+      const chat = await chatResponse.json();
+      assert(chat.text.includes('READY') && chat.run_id);
+      await page.waitForFunction(() => document.getElementById('feed').textContent.includes('READY'));
+      const countAfter = (await (await page.request.get(url + '/api/tasks')).json()).tasks.length;
+      assert.equal(countBefore, countAfter, 'Direct chat created an unintended Paperclip task');
+      await page.screenshot({path: out + '/hud-direct-chat.png', fullPage: true});
       fs.writeFileSync(out + '/phase5-browser.json', JSON.stringify({tasks: proofs, after_restart: after,
-        history_after_submission_refresh: true, history_after_service_restart: true, browser_errors: errors}, null, 2));
+        history_after_submission_refresh: true, history_after_service_restart: true, failed_job_visible: true,
+        direct_chat: {...chat, task_count_unchanged: true}, browser_errors: errors}, null, 2));
       writeStage({status: 'passed', task_ids: tasks.map(task => task.id)});
       console.log('PASS: actual HUD task history and results survive service restart.');
     }

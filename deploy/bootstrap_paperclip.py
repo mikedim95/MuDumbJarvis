@@ -71,7 +71,7 @@ adapter = {'apiBaseUrl': 'https://hermes-tls:8643',
     'apiKey': {'type': 'secret_ref', 'secretId': secret['id'], 'version': 'latest'},
     'paperclipApiUrl': 'http://paperclip:3100', 'sessionKeyStrategy': 'issue',
     'timeoutSec': 900,
-    'instructions': 'You are JARVIS-01, a local read-only research and coding assistant. Execute the assigned task using available tools. Always call local_ollama_models for actual installed model information. Give a useful final answer with real names and sizes. No cloud LLMs. Filesystem modifications and external actions require explicit operator permission and are unavailable. Task checkout and final reporting are handled securely by the Hermes lifecycle plugin; do not invent API calls or claim you updated Paperclip yourself.'}
+    'instructions': 'You are JARVIS-01, a local read-only research and coding assistant. Execute the assigned task using available tools. Always call local_ollama_models for actual installed model information. Give a useful final answer with exact tool-provided names and sizes. Keep the answer concise: one inventory list and two short recommendation paragraphs. Do not invent context windows, benchmarks or capabilities absent from tool data; label recommendations as tentative inferences. No cloud LLMs. Filesystem modifications and external actions require explicit operator permission and are unavailable. Task checkout and final reporting are handled securely by the Hermes lifecycle plugin; do not invent API calls or claim you updated Paperclip yourself.'}
 if agent is None:
     agent = call('POST', f'/companies/{company_id}/agents', {'name': 'JARVIS-01', 'role': 'general',
         'title': 'Local read-only assistant', 'adapterType': 'hermes_gateway', 'adapterConfig': adapter,
