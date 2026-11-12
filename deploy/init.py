@@ -22,9 +22,15 @@ if not env.exists():
         stream.write(f'API_SERVER_KEY={secrets.token_urlsafe(40)}\n')
 current = env.read_text()
 with env.open('a') as stream:
-    for name in ('BETTER_AUTH_SECRET', 'PAPERCLIP_TOOL_ACTION_SIGNING_SECRET', 'PAPERCLIP_SECRETS_MASTER_KEY', 'PAPERCLIP_AGENT_JWT_SECRET'):
+    for name in ('BETTER_AUTH_SECRET', 'PAPERCLIP_TOOL_ACTION_SIGNING_SECRET', 'PAPERCLIP_SECRETS_MASTER_KEY', 'PAPERCLIP_AGENT_JWT_SECRET', 'API_SERVER_CEO_KEY', 'JARVIS_EXECUTION_PROOF_KEY'):
         if not any(line.startswith(name + '=') for line in current.splitlines()):
             stream.write(f'{name}={secrets.token_hex(32)}\n')
+ceo = root / '.runtime/hermes-ceo'
+ceo.mkdir(parents=True, exist_ok=True)
+if not (ceo / 'config.yaml').exists():
+    shutil.copyfile(root / 'deploy/hermes.ceo.config.example.yaml', ceo / 'config.yaml')
+if not (ceo / 'SOUL.md').exists():
+    shutil.copyfile(root / 'deploy/CEO_POLICY.md', ceo / 'SOUL.md')
 (root / '.runtime/paperclip').mkdir(parents=True, exist_ok=True)
 tls = root / '.runtime/tls'
 tls.mkdir(exist_ok=True)

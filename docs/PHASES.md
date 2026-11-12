@@ -230,3 +230,104 @@ The phase 5 browser batch contains two new tasks because JAR-7 was already
 submitted through the HUD before this handoff. Together they establish the
 required three complete HUD workflows. Future fresh full browser runs default
 to three new tasks.
+
+## CEO orchestration — complete (2026-11-12)
+
+Extended the verified Phase 5 deployment with JARVIS-CEO and the existing
+JARVIS-01 worker. Paperclip remains the sole task orchestrator and state store.
+The HUD now offers CEO objective, Persistent task and Direct chat modes through
+the existing authenticated FastAPI backend. Agents and delegated children are
+discovered from Paperclip; no fixed specialist team or second database was added.
+
+Fresh acceptance under the final deployed configuration:
+
+- JAR-14 / 4ced33fc-58d1-4053-8303-02963c645763: the exact requested inventory
+  objective. CEO chose self, recorded its plan, executed local_ollama_models
+  against the existing local Ollama service and produced a technical report.
+  Run b0dc4e22-b6e3-4258-aef7-e1bd0e669bb3 succeeded; no child or hire.
+- JAR-15 / 00b34673-2995-460d-af5e-7622e5ee1b6d: the additional two-role
+  objective. CEO run 3498ac8f-43b6-4506-9b43-f1c55d3afd26 recorded the plan and
+  assigned JAR-16 / b76a924a-d1ed-4f06-9b84-68709bf8ad4f to JARVIS-01.
+  Worker run 6c959144-3a31-43a8-a785-fd110477ba78 executed the real inventory
+  tool, retrieved eight models, stored signed issue/session/run-bound evidence
+  and succeeded.
+- Paperclip automatically resumed CEO run 0d3512f0-266b-437f-ab95-61ae2fb869f1
+  with source issue.children_completed and wakeReason issue_children_completed.
+  Its supported Hermes preflight delivered the verified worker data for review.
+  The CEO produced a substantive report containing all eight exact names and
+  byte sizes. Both CEO runs succeeded and the parent reached done. No manual
+  child-completion wake, result injection or extra employee was used.
+- Actual Chromium validation matched HUD and canonical Paperclip IDs, plans,
+  assignments, statuses, tool audits, signed evidence and results. Browser
+  refresh restored history; the roster remained exactly the CEO and worker.
+
+Restarted all five JARVIS services after execution finished. The post-restart
+browser validation passed again without creating another objective. Both
+accepted roots and their child retained identical statuses, result hashes and
+run records. The existing Phase 5 persistence helper also passed unchanged
+legacy task history. Health/authentication checks passed, including 401 for
+unauthenticated history. Ollama and PentAGI retained their exact container IDs,
+start times and configuration values; the comparison normalizes Docker's
+non-semantic mount-list ordering. Neither service was restarted or modified.
+
+Modified/configuration files:
+
+- server/task_api.py and server/hud/{index.html,tasks.js}: server-selected CEO
+  routing, dynamic role/reporting information, real child results/errors and
+  three-second monitoring while preserving legacy worker tasks/direct chat.
+- hermes-plugin/jarvis_readonly/{ceo_tools.py,paperclip_reporting.py,__init__.py,
+  plugin.yaml}: identity-bound plan/delegate/review/hire requests, supported
+  current-turn context, signed execution proof and guarded completion.
+- deploy/{compose.yaml,hermes-tls.conf,init.py,start.sh,bootstrap_ceo.py,
+  CEO_POLICY.md,hermes.ceo.config.example.yaml,.env.example}: one isolated CEO
+  runtime, separate API/callback identities, Paperclip secret references,
+  human hiring approval, native issue sessions and bounded timeouts.
+- tests/{test_ceo_tools.py,test_paperclip_reporting.py,test_tasks.py,
+  ceo_permissions.py,ceo_e2e.cjs,direct_chat_regression.cjs}: automated and opt-in
+  live verification. README.md, COMMAND_CENTER.md and CEO_ORCHESTRATION.md
+  document architecture, configuration, startup/restart and test commands.
+- docs/evidence/ceo-browser.json, ceo-native-wake-final.json, ceo-restart.json,
+  ceo-delivery.json and ceo-permissions.json contain final sanitized evidence.
+  Rejected attempts remain separately recorded instead of counted as success.
+
+Validation: 111 packaged Python tests passed, with three upstream deprecation
+warnings. Live CEO/worker identity, goal/assignment reads and hiring boundaries
+passed. The CEO reached the authenticated hire route's semantic guard (422),
+while worker/anonymous attempts returned 403/401 without creating an employee.
+The CEO could read a neutral approval but approving it returned 403. The final
+permission rerun reused its already rejected fixture: two employees and one
+rejected neutral approval before and after. No hiring approval was requested.
+Source JavaScript syntax checks, repository credential scan and diff checks
+passed. Paperclip and Hermes core source checkouts remain unmodified.
+
+Direct chat executed in its separate api_ session and created no Paperclip task
+or CEO turn. The first fresh trial returned exact READY and passed core browser
+UI, task-count and session checks, then its final background-response scan was
+interrupted by login navigation. A second returned HTTP 200 and READY with
+model-generated boilerplate, failing an overly strict text-equality assertion.
+These are recorded as observed_with_harness_limitations, not a full helper
+pass. The future helper bounds response reads, starts its background scan after
+login, captures real responses before assertions and uses the Phase 5 READY
+containment check; that final helper revision was not rerun for this milestone.
+
+Blockers/fixes: isolated per-agent callback keys work around the installed
+Hermes gateway's missing callback JWT forwarding (upstream issue #9956).
+An actual blocked-write 403 was caused by naming board as unblock owner;
+self-owned blockers fix it. Native child completion requires a waiting parent
+that Paperclip can wake, rather than an independently implemented scheduler.
+Removed static payload input that hid native objective/wake data; supported
+pre_llm_call context now supplies bounded authoritative state and verified
+results. Explicit bounded history avoids replaying rejected assistant replies
+while preserving issue sessions and durable audit transcripts. Test assumptions
+were corrected to the installed child-array and version-2 proof contracts,
+retaining exact actor/company/issue/run, HMAC and latest-worker-run checks.
+
+No acceptance blocker remains for this authorized inventory workflow. The
+current tool scope is deliberately read-only local inventory. New capabilities
+need explicit operator provisioning and an execution-evidence contract; future
+hires need human approval. Generated prose can still contain typos or unsupported
+source/capability claims; the signed/appended tool data establishes the retrieved
+facts. CPU-only inference is slow (the final CEO review took about 18.5 minutes).
+Historical cancelled debugging jobs remain inspectable, including Paperclip's
+legacy-execution quarantine; they are not accepted results or reused objectives.
+The user's requested AIgoat performance comparison follows this separate commit.

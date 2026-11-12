@@ -21,3 +21,13 @@ if ! grep -q '^PAPERCLIP_AGENT_ID=.' .env; then
     jarvis-command-center:hud /workspace/deploy/bootstrap_paperclip.py
   docker compose up -d hermes jarvis
 fi
+
+# The initial CEO is explicitly operator-provisioned; future hires require approval.
+docker compose up -d --wait --wait-timeout 120 hermes-ceo hermes-tls paperclip
+if ! grep -q '^PAPERCLIP_CEO_AGENT_ID=.' .env; then
+  docker run --rm --user 1000:1000 --network jarvis-command-center_default \
+    -e PAPERCLIP_BOOTSTRAP_URL=http://paperclip:3100 \
+    -v "$(cd .. && pwd):/workspace" --entrypoint /opt/venv/bin/python \
+    jarvis-command-center:hud /workspace/deploy/bootstrap_ceo.py
+  docker compose up -d --wait --wait-timeout 120 hermes-ceo jarvis
+fi

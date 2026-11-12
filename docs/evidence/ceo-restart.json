@@ -1,0 +1,104 @@
+{
+  "checked_at": "2026-11-12T09:33:32.632228+00:00",
+  "verified": true,
+  "restarted_services": [
+    "jarvis",
+    "hermes",
+    "hermes-ceo",
+    "hermes-tls",
+    "paperclip"
+  ],
+  "new_objectives_created_during_verification": 0,
+  "before": {
+    "4ced33fc-58d1-4053-8303-02963c645763": {
+      "identifier": "JAR-14",
+      "status": "done",
+      "parent_id": null,
+      "comments_sha256": "be13d573a9b884adcfda73e97be21f0cc804ae86d143a8149f4f474c48070355",
+      "runs": [
+        [
+          "b0dc4e22-b6e3-4258-aef7-e1bd0e669bb3",
+          "succeeded"
+        ]
+      ]
+    },
+    "00b34673-2995-460d-af5e-7622e5ee1b6d": {
+      "identifier": "JAR-15",
+      "status": "done",
+      "parent_id": null,
+      "comments_sha256": "8f1c5f78f8376994cac5f9cc4d84f4d959fd218a06ecd22892314df86f9531f6",
+      "runs": [
+        [
+          "0d3512f0-266b-437f-ab95-61ae2fb869f1",
+          "succeeded"
+        ],
+        [
+          "3498ac8f-43b6-4506-9b43-f1c55d3afd26",
+          "succeeded"
+        ]
+      ]
+    },
+    "b76a924a-d1ed-4f06-9b84-68709bf8ad4f": {
+      "identifier": "JAR-16",
+      "status": "done",
+      "parent_id": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+      "comments_sha256": "df10e0b950337be93805454ba56c3466797b816d93bc96a52066cda3c9d7af47",
+      "runs": [
+        [
+          "3498ac8f-43b6-4506-9b43-f1c55d3afd26",
+          "succeeded"
+        ],
+        [
+          "6c959144-3a31-43a8-a785-fd110477ba78",
+          "succeeded"
+        ]
+      ]
+    }
+  },
+  "after": {
+    "4ced33fc-58d1-4053-8303-02963c645763": {
+      "identifier": "JAR-14",
+      "status": "done",
+      "parent_id": null,
+      "comments_sha256": "be13d573a9b884adcfda73e97be21f0cc804ae86d143a8149f4f474c48070355",
+      "runs": [
+        [
+          "b0dc4e22-b6e3-4258-aef7-e1bd0e669bb3",
+          "succeeded"
+        ]
+      ]
+    },
+    "00b34673-2995-460d-af5e-7622e5ee1b6d": {
+      "identifier": "JAR-15",
+      "status": "done",
+      "parent_id": null,
+      "comments_sha256": "8f1c5f78f8376994cac5f9cc4d84f4d959fd218a06ecd22892314df86f9531f6",
+      "runs": [
+        [
+          "0d3512f0-266b-437f-ab95-61ae2fb869f1",
+          "succeeded"
+        ],
+        [
+          "3498ac8f-43b6-4506-9b43-f1c55d3afd26",
+          "succeeded"
+        ]
+      ]
+    },
+    "b76a924a-d1ed-4f06-9b84-68709bf8ad4f": {
+      "identifier": "JAR-16",
+      "status": "done",
+      "parent_id": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+      "comments_sha256": "df10e0b950337be93805454ba56c3466797b816d93bc96a52066cda3c9d7af47",
+      "runs": [
+        [
+          "3498ac8f-43b6-4506-9b43-f1c55d3afd26",
+          "succeeded"
+        ],
+        [
+          "6c959144-3a31-43a8-a785-fd110477ba78",
+          "succeeded"
+        ]
+      ]
+    }
+  }
+}

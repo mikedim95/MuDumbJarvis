@@ -73,7 +73,7 @@ def test_inventory_reply_without_actual_tool_is_blocked(monkeypatch):
     payload = api.call_args.args[2]
     assert payload['status'] == 'blocked'
     assert 'no successful local_ollama_models call' in payload['comment']
-    assert payload['unblockDescriptor']['owner'] == 'board'
+    assert payload['unblockDescriptor']['owner'] == {'agentId': agent}
 
 
 def test_actual_inventory_tool_unlocks_completion_and_writes_correlated_audit(monkeypatch, tmp_path):
@@ -89,3 +89,23 @@ def test_actual_inventory_tool_unlocks_completion_and_writes_correlated_audit(mo
     reporting.finish(session_id=session, completed=True)
     assert api.call_args.args[2]['status'] == 'done'
     assert issue in (tmp_path / 'logs/paperclip-tools.jsonl').read_text()
+
+
+def test_failed_worker_callback_uses_its_own_agent_as_blocker_owner(monkeypatch):
+    api, _ = start(monkeypatch)
+    api.side_effect = None
+    reporting.response(session_id=session, assistant_response='Partial runtime output')
+    reporting.finish(session_id=session, completed=True, failed=True, turn_exit_reason='tool failure')
+    payload = api.call_args.args[2]
+    assert payload['status'] == 'blocked'
+    assert payload['unblockDescriptor']['owner'] == {'agentId': agent}
+    assert payload['unblockDescriptor']['action'].strip()
+
+
+def test_interrupted_worker_callback_never_assigns_blocker_to_board(monkeypatch):
+    api, _ = start(monkeypatch)
+    api.side_effect = None
+    reporting.finish(session_id=session, completed=False, interrupted=True, turn_exit_reason='operator cancellation')
+    payload = api.call_args.args[2]
+    assert payload['status'] == 'blocked'
+    assert payload['unblockDescriptor']['owner'] == {'agentId': agent}

@@ -12,6 +12,7 @@ class TaskSubmission(BaseModel):
     input: str = Field(min_length=1, max_length=8000)
     request_id: UUID
     agent_id: UUID | None = None
+    objective: bool = False
 
 
 class Paperclip:
@@ -19,6 +20,7 @@ class Paperclip:
         self.company = os.environ.get('PAPERCLIP_COMPANY_ID', '')
         self.project = os.environ.get('PAPERCLIP_PROJECT_ID', '')
         self.agent = os.environ.get('PAPERCLIP_AGENT_ID', '')
+        self.ceo = os.environ.get('PAPERCLIP_CEO_AGENT_ID', '')
         key = os.environ.get('PAPERCLIP_API_KEY', '')
         if not all((self.company, self.project, self.agent, key)):
             raise HTTPException(503, 'Paperclip integration is not configured')
@@ -59,7 +61,7 @@ class Paperclip:
 
 def project_issue(issue):
     return {key: issue.get(key) for key in ('id', 'identifier', 'title', 'description', 'status',
-        'assigneeAgentId', 'createdAt', 'updatedAt', 'completedAt', 'executionRunId', 'unblockDescriptor')}
+        'assigneeAgentId', 'parentId', 'createdAt', 'updatedAt', 'completedAt', 'executionRunId', 'unblockDescriptor')}
 
 
 def build_router(require_auth):
@@ -74,15 +76,23 @@ def build_router(require_auth):
 
     @router.get('/agents')
     async def agents(p: Paperclip = Depends(client)):
-        return {'agents': [{k: a.get(k) for k in ('id', 'name', 'title', 'adapterType', 'status',
-            'lifecycleState', 'lifecycleError', 'capabilities')} for a in await p.agents()]}
+        return {'ceo_id': p.ceo or None,
+            'agents': [{k: a.get(k) for k in ('id', 'name', 'title', 'role', 'reportsTo', 'adapterType', 'status',
+                'lifecycleState', 'lifecycleError', 'capabilities')} for a in await p.agents()]}
 
     @router.post('/tasks', status_code=201)
     async def create_task(body: TaskSubmission, p: Paperclip = Depends(client)):
         text = body.input.strip()
         if not text:
             raise HTTPException(422, 'Task input cannot be blank')
-        agent_id = str(body.agent_id) if body.agent_id else p.agent
+        if body.objective:
+            if not p.ceo:
+                raise HTTPException(503, 'CEO objective integration is not configured')
+            if body.agent_id and str(body.agent_id) != p.ceo:
+                raise HTTPException(409, 'Objectives must be assigned to the configured CEO')
+            agent_id = p.ceo
+        else:
+            agent_id = str(body.agent_id) if body.agent_id else p.agent
         agent = next((a for a in await p.agents() if a['id'] == agent_id), None)
         if not agent or agent.get('lifecycleState') != 'ready':
             raise HTTPException(409, 'Selected agent is not ready')
@@ -97,18 +107,35 @@ def build_router(require_auth):
     @router.get('/tasks')
     async def history(p: Paperclip = Depends(client)):
         issues = await p.request('GET', f'companies/{p.company}/issues?projectId={p.project}')
-        return {'tasks': sorted([project_issue(i) for i in issues],
+        return {'tasks': sorted([project_issue(i) for i in issues
+            if i.get('companyId') == p.company and i.get('projectId') == p.project],
             key=lambda i: i.get('createdAt') or '', reverse=True)}
 
     @router.get('/tasks/{task_id}')
     async def task(task_id: UUID, p: Paperclip = Depends(client)):
         issue = await p.issue(task_id)
-        comments, runs = await asyncio.gather(
-            p.request('GET', f'issues/{task_id}/comments'),
-            p.request('GET', f'issues/{task_id}/runs'))
-        result = project_issue(issue)
-        result['comments'] = [{k: c.get(k) for k in ('id', 'body', 'createdAt', 'authorAgentId', 'authorUserId')} for c in comments]
-        result['runs'] = [{k: r.get(k) for k in ('runId', 'status', 'startedAt', 'finishedAt', 'errorCode', 'error')} for r in runs]
+        async def details(item):
+            comments, runs = await asyncio.gather(
+                p.request('GET', f"issues/{item['id']}/comments"),
+                p.request('GET', f"issues/{item['id']}/runs"))
+            result = project_issue(item)
+            result['comments'] = [{k: c.get(k) for k in ('id', 'body', 'createdAt', 'authorAgentId', 'authorUserId')} for c in comments]
+            result['runs'] = [{k: r.get(k) for k in ('runId', 'status', 'startedAt', 'finishedAt', 'errorCode', 'error')} for r in runs]
+            return result
+
+        # Paperclip owns the hierarchy. Filter every child before reading its
+        # comments/runs; never infer ownership from a supplied parentId alone.
+        issues = await p.request('GET', f'companies/{p.company}/issues?projectId={p.project}')
+        children = [item for item in issues if item.get('parentId') == str(task_id)
+            and item.get('companyId') == p.company and item.get('projectId') == p.project]
+        limit = asyncio.Semaphore(4)
+
+        async def child_details(item):
+            async with limit:
+                return await details(item)
+
+        result = await details(issue)
+        result['children'] = await asyncio.gather(*(child_details(item) for item in children))
         return result
 
     return router

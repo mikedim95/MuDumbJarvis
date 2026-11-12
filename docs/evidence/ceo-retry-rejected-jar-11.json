@@ -1,0 +1,249 @@
+{
+  "accepted": false,
+  "task": {
+    "id": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+    "identifier": "JAR-11",
+    "status": "todo"
+  },
+  "comments": [
+    {
+      "id": "5e1017e1-cc60-481e-b8f5-c7fe65380c35",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "issueId": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+      "authorAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "authorUserId": null,
+      "onBehalfOfUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "authorType": "agent",
+      "createdByRunId": "c47b8c5b-74c5-4384-9c33-d91fc5e61a33",
+      "derivedAuthorAgentId": null,
+      "derivedCreatedByRunId": null,
+      "derivedAuthorSource": null,
+      "clientRequestId": null,
+      "conversationSessionGeneration": null,
+      "origin": "comment",
+      "fastResponseRequestId": null,
+      "body": "**Waiting update.** JARVIS-01 will complete its assigned task soon\u2014waiting for Paperclip\u2019s wake-up to review the output. If the child task resumes, I will check verified tool evidence. No further actions pending pending.",
+      "presentation": null,
+      "metadata": {
+        "version": 1,
+        "authorizationReason": "internal_agent_write",
+        "sections": [
+          {
+            "title": "Authorization",
+            "rows": [
+              {
+                "type": "key_value",
+                "label": "Reason",
+                "value": "internal_agent_write"
+              }
+            ]
+          }
+        ]
+      },
+      "deletedAt": null,
+      "deletedByType": null,
+      "deletedByAgentId": null,
+      "deletedByUserId": null,
+      "deletedByRunId": null,
+      "sourceTrust": null,
+      "createdAt": "2026-11-12T07:04:37.558Z",
+      "updatedAt": "2026-11-12T07:04:37.558Z"
+    },
+    {
+      "id": "358fe97f-c053-4303-a41c-b913227ff1f6",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "issueId": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+      "authorAgentId": null,
+      "authorUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "onBehalfOfUserId": null,
+      "authorType": "user",
+      "createdByRunId": null,
+      "derivedAuthorAgentId": null,
+      "derivedCreatedByRunId": null,
+      "derivedAuthorSource": null,
+      "clientRequestId": null,
+      "conversationSessionGeneration": null,
+      "origin": "comment",
+      "fastResponseRequestId": null,
+      "body": "The prior attempt did not create a worker child. Do not treat its assignment claim as evidence. Retry this SAME objective using paperclip_ceo action=delegate with plan=minimum-team reasoning, the existing worker agent_id, title and scoped text. This records the plan before the persistent child. After the worker completes, review signed execution evidence and produce the substantive final report. No hiring.",
+      "presentation": null,
+      "metadata": null,
+      "deletedAt": null,
+      "deletedByType": null,
+      "deletedByAgentId": null,
+      "deletedByUserId": null,
+      "deletedByRunId": null,
+      "sourceTrust": null,
+      "createdAt": "2026-11-12T07:11:10.604Z",
+      "updatedAt": "2026-11-12T07:11:10.604Z"
+    }
+  ],
+  "runs": [
+    {
+      "runId": "dcf21291-26bb-4096-859d-69f820072c18",
+      "runtimeMode": "legacy",
+      "wakeupRequestId": "fe8b8d12-0b4c-4316-a249-f58967d8fad9",
+      "status": "cancelled",
+      "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "adapterType": "hermes_gateway",
+      "startedAt": "2026-11-12T07:04:38.371Z",
+      "finishedAt": "2026-11-12T07:05:54.679Z",
+      "createdAt": "2026-11-12T07:04:38.022Z",
+      "invocationSource": "automation",
+      "responsibleUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "errorCode": "cancelled",
+      "error": null,
+      "usageJson": {
+        "billingType": "unknown",
+        "inputTokens": 0,
+        "billing_type": "unknown",
+        "input_tokens": 0,
+        "outputTokens": 0,
+        "output_tokens": 0,
+        "cachedInputTokens": 0,
+        "cached_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "resultJson": {
+        "stopReason": "cancelled",
+        "timeoutFired": false,
+        "timeoutSource": "config",
+        "timeoutConfigured": true,
+        "effectiveTimeoutSec": 1800
+      },
+      "logBytes": null,
+      "retryOfRunId": null,
+      "scheduledRetryAt": null,
+      "scheduledRetryAttempt": 0,
+      "scheduledRetryReason": null,
+      "livenessState": "failed",
+      "livenessReason": "Run ended with cancelled (cancelled)",
+      "continuationAttempt": 0,
+      "lastUsefulActionAt": null,
+      "nextAction": null,
+      "wakeCommentIds": null,
+      "queuedCommentSourceWakeIds": null,
+      "wakeCommentId": null,
+      "contextCommentId": null,
+      "contextIssueId": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+      "execution": {
+        "phase": "recovery_needed",
+        "label": "Stopped",
+        "cause": "legacy_execution_requires_reconciliation",
+        "lastConfirmedActivityAt": "2026-11-12T07:10:04.600Z",
+        "retryAt": null,
+        "attempt": 1,
+        "maxAttempts": 3,
+        "recoveryOwner": null,
+        "nextAction": "Automatic recovery stopped. Recorded work is preserved; actions with unverified outcomes will not be repeated.",
+        "permittedActions": [
+          "inspect_run"
+        ],
+        "predecessorRunId": null,
+        "successorRunId": null
+      },
+      "environment": {
+        "id": "bc0bd990-decc-4f02-a352-db32fb737cfb",
+        "name": "Local",
+        "driver": "local"
+      },
+      "environmentLease": {
+        "id": "fbdbf211-1b13-499a-a116-04eb076082ea",
+        "status": "expired",
+        "leasePolicy": "ephemeral",
+        "provider": "local",
+        "providerLeaseId": null,
+        "executionWorkspaceId": "d440a2e5-16e5-461a-808b-ec2905ee6e6b",
+        "workspacePath": null,
+        "failureReason": "pending_cleanup_retry",
+        "cleanupStatus": "success",
+        "acquiredAt": "2026-11-12T07:04:40.087Z",
+        "releasedAt": "2026-11-12T07:09:55.843Z"
+      },
+      "retryExhaustedReason": null
+    },
+    {
+      "runId": "c47b8c5b-74c5-4384-9c33-d91fc5e61a33",
+      "runtimeMode": "legacy",
+      "wakeupRequestId": "160f1c45-7d33-4a4b-b504-5a3b319c7386",
+      "status": "succeeded",
+      "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "adapterType": "hermes_gateway",
+      "startedAt": "2026-11-12T06:58:11.744Z",
+      "finishedAt": "2026-11-12T07:04:37.210Z",
+      "createdAt": "2026-11-12T06:53:28.428Z",
+      "invocationSource": "assignment",
+      "responsibleUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "errorCode": null,
+      "error": null,
+      "usageJson": {
+        "billingType": "unknown",
+        "inputTokens": 11720,
+        "billing_type": "unknown",
+        "input_tokens": 11720,
+        "outputTokens": 673,
+        "output_tokens": 673,
+        "cachedInputTokens": 0,
+        "cached_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "resultJson": {
+        "stopReason": "completed",
+        "timeoutFired": false,
+        "timeoutSource": "config",
+        "timeoutConfigured": true,
+        "effectiveTimeoutSec": 1800
+      },
+      "logBytes": 4982,
+      "retryOfRunId": null,
+      "scheduledRetryAt": null,
+      "scheduledRetryAttempt": 0,
+      "scheduledRetryReason": null,
+      "livenessState": "advanced",
+      "livenessReason": "Run produced concrete action evidence: 1 workspace operation(s), 1 activity event(s)",
+      "continuationAttempt": 0,
+      "lastUsefulActionAt": "2026-11-12T07:04:37.162Z",
+      "nextAction": null,
+      "wakeCommentIds": null,
+      "queuedCommentSourceWakeIds": null,
+      "wakeCommentId": null,
+      "contextCommentId": null,
+      "contextIssueId": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+      "execution": {
+        "phase": "completed",
+        "label": "Completed",
+        "cause": null,
+        "lastConfirmedActivityAt": "2026-11-12T07:04:37.162Z",
+        "retryAt": null,
+        "attempt": 1,
+        "maxAttempts": 3,
+        "recoveryOwner": null,
+        "nextAction": null,
+        "permittedActions": [
+          "inspect_run"
+        ],
+        "predecessorRunId": null,
+        "successorRunId": null
+      },
+      "environment": {
+        "id": "bc0bd990-decc-4f02-a352-db32fb737cfb",
+        "name": "Local",
+        "driver": "local"
+      },
+      "environmentLease": {
+        "id": "cd9faef0-53c8-40a2-add4-fc8b888adf6c",
+        "status": "released",
+        "leasePolicy": "ephemeral",
+        "provider": "local",
+        "providerLeaseId": null,
+        "executionWorkspaceId": "d440a2e5-16e5-461a-808b-ec2905ee6e6b",
+        "workspacePath": null,
+        "failureReason": null,
+        "cleanupStatus": null,
+        "acquiredAt": "2026-11-12T06:58:13.026Z",
+        "releasedAt": "2026-11-12T07:04:38.605Z"
+      },
+      "retryExhaustedReason": null
+    }
+  ]
+}

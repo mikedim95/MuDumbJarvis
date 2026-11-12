@@ -1,0 +1,287 @@
+{
+  "checked_at": "2026-11-12T09:06:14.017738+00:00",
+  "paperclip_guard_contract": "2026.1106.0 inspected handler ordering",
+  "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+  "passed": true,
+  "identities": {
+    "ceo": {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "name": "JARVIS-CEO",
+      "role": "ceo",
+      "can_create_agents": true,
+      "goals_read": true,
+      "goal_count": 0,
+      "assigned_tasks_read": true,
+      "assigned_task_count": 1
+    },
+    "worker": {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "name": "JARVIS-01",
+      "role": "general",
+      "can_create_agents": false,
+      "goals_read": true,
+      "goal_count": 0,
+      "assigned_tasks_read": true,
+      "assigned_task_count": 2
+    }
+  },
+  "http_checks": [
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agents",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/goals",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/issues",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/goals",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/issues",
+      "status": 200
+    },
+    {
+      "actor": "anonymous",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 401
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 422
+    },
+    {
+      "actor": "worker",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 403
+    },
+    {
+      "actor": "anonymous",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 401
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/approvals/2d4bf16f-042e-4115-b142-176a003868f8/approve",
+      "status": 404
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293/issues",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293/approve",
+      "status": 403
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/00b34673-2995-460d-af5e-7622e5ee1b6d",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/00b34673-2995-460d-af5e-7622e5ee1b6d/comments",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/00b34673-2995-460d-af5e-7622e5ee1b6d/runs",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/issues",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/b76a924a-d1ed-4f06-9b84-68709bf8ad4f",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/b76a924a-d1ed-4f06-9b84-68709bf8ad4f/comments",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/issues/b76a924a-d1ed-4f06-9b84-68709bf8ad4f/runs",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agents",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    }
+  ],
+  "before": {
+    "employee_count": 2,
+    "employee_ids": [
+      "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    ],
+    "approval_count": 1,
+    "approval_ids": [
+      "48f21851-b6cd-4358-8629-4c96d45f3293"
+    ]
+  },
+  "require_board_approval_for_new_agents": true,
+  "hire_permission_probes": {
+    "ceo_authorized_before_semantic_guard": true,
+    "ceo_status": 422,
+    "worker_status": 403,
+    "anonymous_status": 401
+  },
+  "missing_approval_probe": {
+    "status": 404,
+    "proves_board_only_denial": false
+  },
+  "ceo_cannot_approve_hiring": true,
+  "approval_fixture": {
+    "id": "48f21851-b6cd-4358-8629-4c96d45f3293",
+    "type": "request_board_approval",
+    "created_by_helper": false,
+    "reused_existing_fixture": true,
+    "requested_by_agent_id": null,
+    "linked_issue_ids": [],
+    "initial_status": "rejected",
+    "final_status": "rejected",
+    "cleanup_verified": true
+  },
+  "board_only_approval_probe": {
+    "id": "48f21851-b6cd-4358-8629-4c96d45f3293",
+    "type": "request_board_approval",
+    "ceo_read_status": 200,
+    "ceo_approve_status": 403,
+    "status_after_agent_attempt": "rejected"
+  },
+  "objective_read_proof": {
+    "id": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+    "identifier": "JAR-15",
+    "assignee_agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "status": "in_progress",
+    "comment_count": 5,
+    "run_statuses": [
+      "running",
+      "succeeded"
+    ],
+    "children": [
+      {
+        "id": "b76a924a-d1ed-4f06-9b84-68709bf8ad4f",
+        "identifier": "JAR-16",
+        "parent_id": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+        "assignee_agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "done",
+        "comment_count": 1,
+        "run_statuses": [
+          "succeeded",
+          "succeeded"
+        ],
+        "ceo_can_read_result": true
+      }
+    ]
+  },
+  "after": {
+    "employee_count": 2,
+    "employee_ids": [
+      "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    ],
+    "approval_count": 1,
+    "approval_ids": [
+      "48f21851-b6cd-4358-8629-4c96d45f3293"
+    ]
+  },
+  "no_employee_created": true,
+  "approval_records_created": [],
+  "only_explicit_neutral_fixture_added": true
+}

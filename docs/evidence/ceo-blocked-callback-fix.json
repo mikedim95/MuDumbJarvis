@@ -1,0 +1,12 @@
+{
+  "issue_id": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+  "previous_runtime_callback_status": 403,
+  "corrected_authorization_probe_status": 200,
+  "scope": "Agent-key permission probe attributed to the original CEO run; no new model execution claimed",
+  "unblockDescriptor": {
+    "owner": {
+      "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    },
+    "action": "Record the scoped CEO delegation plan and retry this objective after the integration contract fix."
+  }
+}

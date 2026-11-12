@@ -1,0 +1,47 @@
+model:
+  provider: custom
+  default: jarvis-hermes:3b
+  base_url: http://ollama-models:11434/v1
+  context_length: 65536
+  ollama_num_ctx: 65536
+  streaming: false
+agent:
+  max_turns: 8
+  gateway_timeout: 1800
+  disabled_toolsets:
+  - terminal
+  - file
+  - browser
+  - computer_use
+  - code_execution
+  - delegation
+  - skills
+  - cronjob
+  - messaging
+  - kanban
+platform_toolsets:
+  cli:
+  - jarvis_readonly
+  - jarvis_ceo
+  api_server:
+  - jarvis_readonly
+  - jarvis_ceo
+tools:
+  tool_search:
+    enabled: 'off'
+plugins:
+  enabled:
+  - jarvis_readonly
+compression:
+  enabled: false
+memory:
+  memory_enabled: false
+  user_profile_enabled: false
+skills:
+  creation_nudge_interval: 0
+gateway:
+  api_server:
+    enabled: true
+    host: 0.0.0.0
+    port: 8642
+    max_concurrent_runs: 1

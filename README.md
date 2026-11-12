@@ -7,6 +7,12 @@ backend. Persistent tasks follow this path:
 
 `HUD → JARVIS FastAPI → Paperclip → Hermes → local Ollama`
 
+The **CEO objective** mode assigns one objective to JARVIS-CEO. The CEO records
+its plan in Paperclip, performs simple work itself, or delegates a persistent
+child to the existing JARVIS-01 worker. Paperclip wakes the CEO to review signed
+execution evidence and consolidate the result. Future hires require human
+approval. See [CEO architecture, configuration and verification](docs/CEO_ORCHESTRATION.md).
+
 Paperclip is the only task orchestrator and task database. Direct Hermes chat
 uses separate sessions. Agent tools are limited to read-only local model
 inventory; host files, shell execution and external actions are unavailable.

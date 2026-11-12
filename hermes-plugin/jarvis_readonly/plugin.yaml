@@ -1,5 +1,7 @@
 name: jarvis_readonly
-version: 1.0.0
-description: Read-only local model inventory for the JARVIS command center
+version: 1.1.0
+description: Read-only inventory and identity-bound Paperclip CEO operations
 provides_tools:
-  - local_ollama_models
+- local_ollama_models
+- paperclip_context
+- paperclip_ceo

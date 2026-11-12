@@ -4,10 +4,15 @@
   const el = id => document.getElementById(id);
   const mode = el('commandMode');
   let tasks = [], selected = localStorage.getItem('jarvis-task-selected'), fetching = false, submitting = false;
-  let refreshQueued = false, reloadAgents = false;
+  let refreshQueued = false, reloadAgents = false, ceoId = null, agents = [];
   let pending;
   try { pending = JSON.parse(localStorage.getItem('jarvis-task-pending') || 'null'); } catch {}
   const error = message => { el('taskError').textContent = message; };
+  const persistent = () => mode.value === 'task' || mode.value === 'objective';
+  const agentName = id => {
+    const agent = agents.find(item => item.id === id);
+    return agent ? agent.name + (agent.role ? ' (' + agent.role + ')' : '') : (id || 'unassigned');
+  };
 
   async function api(path, options = {}) {
     const response = await fetch('/api/' + path, {...options, signal: AbortSignal.timeout(25000)});
@@ -22,7 +27,9 @@
     el('taskHistory').replaceChildren();
     for (const task of tasks) {
       const button = document.createElement('button');
-      button.textContent = `${task.identifier} · ${task.status} · ${task.title}`;
+      const parent = tasks.find(item => item.id === task.parentId);
+      button.textContent = task.identifier + ' · ' + task.status + ' · ' +
+        (task.parentId ? 'Subtask of ' + (parent?.identifier || task.parentId) + ' · ' : '') + task.title;
       button.setAttribute('aria-current', String(task.id === selected));
       button.onclick = () => { selected = task.id; localStorage.setItem('jarvis-task-selected', selected); history(); detail().catch(e => error(e.message)); };
       el('taskHistory').append(button);
@@ -30,72 +37,106 @@
     if (!tasks.length) el('taskHistory').textContent = 'No tasks yet.';
   }
 
+  function updates(task) {
+    const lines = [];
+    if (task.unblockDescriptor?.action) lines.push('', 'Next action: ' + task.unblockDescriptor.action);
+    for (const run of task.runs || []) {
+      lines.push('', 'Execution ' + run.runId + ': ' + run.status);
+      if (run.error || run.errorCode) lines.push('ERROR: ' + (run.error || run.errorCode));
+    }
+    for (const comment of [...(task.comments || [])].sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))) {
+      lines.push('', 'Update ' + (comment.createdAt || '') + ' · ' + agentName(comment.authorAgentId || comment.authorUserId), comment.body || '');
+    }
+    if (task.status === 'done' && !(task.comments || []).length) lines.push('', 'Task is done in Paperclip, but no result comment was recorded.');
+    return lines;
+  }
+
   async function detail() {
     if (!selected) return;
     const target = selected;
     const task = await api('tasks/' + encodeURIComponent(target));
     if (selected !== target) return;
-    const runs = task.runs || [];
-    const lines = [`${task.identifier} · ${task.status}`, `Paperclip ID: ${task.id}`, '', task.description || task.title];
-    if (task.unblockDescriptor?.action) lines.push('', 'Needs operator: ' + task.unblockDescriptor.action);
-    for (const run of runs) {
-      lines.push('', `Execution ${run.runId}: ${run.status}`);
-      if (run.error || run.errorCode) lines.push('ERROR: ' + (run.error || run.errorCode));
+    const lines = [task.identifier + ' · ' + task.status, 'Paperclip ID: ' + task.id,
+      'Assigned to: ' + agentName(task.assigneeAgentId)];
+    if (task.parentId) {
+      const parent = tasks.find(item => item.id === task.parentId);
+      lines.push('Parent: ' + (parent?.identifier || task.parentId));
     }
-    for (const comment of [...(task.comments || [])].sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))) {
-      lines.push('', `Update ${comment.createdAt || ''}`, comment.body || '');
+    lines.push('', task.description || task.title, ...updates(task));
+    if (task.children?.length) {
+      lines.push('', 'DELEGATED WORK (' + task.children.length + ')');
+      for (const child of task.children) {
+        lines.push('', child.identifier + ' · ' + child.status, 'Paperclip ID: ' + child.id,
+          'Assigned to: ' + agentName(child.assigneeAgentId), child.description || child.title, ...updates(child));
+      }
     }
-    if (task.status === 'done' && !(task.comments || []).length) lines.push('', 'Task is done in Paperclip, but no result comment was recorded.');
     el('taskDetail').textContent = lines.join('\n');
+  }
+
+  function populateAgents() {
+    const isObjective = mode.value === 'objective';
+    const previous = localStorage.getItem('jarvis-task-agent') || (!pending?.objective && pending?.agent_id);
+    el('taskAgent').replaceChildren();
+    for (const agent of agents.filter(item => !isObjective || item.id === ceoId)) {
+      const option = document.createElement('option');
+      option.value = agent.id;
+      option.textContent = agent.name + ' · ' + agent.status + (agent.role ? ' (' + agent.role + ')' : '');
+      option.title = agent.lifecycleError || agent.capabilities || agent.lifecycleState;
+      option.disabled = agent.lifecycleState !== 'ready';
+      if (isObjective || agent.id === previous || (!previous && agent.name === 'JARVIS-01')) option.selected = true;
+      el('taskAgent').append(option);
+    }
+    if (isObjective && !el('taskAgent').options.length) {
+      const option = document.createElement('option');
+      option.value = ''; option.textContent = 'CEO unavailable'; option.disabled = true;
+      el('taskAgent').append(option);
+    }
+    el('taskAgent').disabled = isObjective;
   }
 
   async function refresh(loadAgents = false) {
     if (fetching) { refreshQueued = true; reloadAgents ||= loadAgents; return; }
     fetching = true;
     try {
-      if (loadAgents || mode.value === 'task' || !el('taskAgent').options.length) {
+      if (loadAgents || persistent() || !el('taskAgent').options.length) {
         const data = await api('agents');
-        const previous = el('taskAgent').value || pending?.agent_id;
-        el('taskAgent').replaceChildren();
-        for (const agent of data.agents) {
-          const option = document.createElement('option');
-          option.value = agent.id;
-          option.textContent = `${agent.name} · ${agent.status} (${agent.adapterType})`;
-          option.title = agent.lifecycleError || agent.capabilities || agent.lifecycleState;
-          option.disabled = agent.lifecycleState !== 'ready';
-          if (agent.id === previous || (!previous && agent.name === 'JARVIS-01')) option.selected = true;
-          el('taskAgent').append(option);
-        }
+        agents = data.agents; ceoId = data.ceo_id || null;
+        populateAgents();
       }
       tasks = (await api('tasks')).tasks;
       if (!tasks.some(task => task.id === selected)) selected = tasks[0]?.id || null;
       if (selected) localStorage.setItem('jarvis-task-selected', selected);
       history();
       await detail();
-      el('taskConnection').textContent = `Paperclip connected · ${tasks.length} persistent tasks · updated ${new Date().toLocaleTimeString()}`;
+      el('taskConnection').textContent = 'Paperclip connected · ' + tasks.length + ' persistent tasks · updated ' + new Date().toLocaleTimeString();
       if (!pending) error('');
+      if (mode.value === 'objective' && !ceoId) error('The Paperclip CEO is not configured. Persistent task and Direct chat remain available.');
     } catch (err) {
       el('taskConnection').textContent = 'Paperclip connection failed — displayed data may be stale.';
       error(err.message);
     } finally {
       fetching = false;
       if (refreshQueued) {
-        const agents = reloadAgents;
+        const agentsRequested = reloadAgents;
         refreshQueued = false; reloadAgents = false;
-        queueMicrotask(() => refresh(agents));
+        queueMicrotask(() => refresh(agentsRequested));
       }
     }
   }
 
   async function submit(text) {
     if (submitting) return;
-    if (pending && pending.input !== text) {
-      error('A previous submission is awaiting confirmation. Retry its original text first: ' + pending.input);
+    const isObjective = mode.value === 'objective';
+    if (pending && (pending.input !== text || Boolean(pending.objective) !== isObjective)) {
+      error('A previous submission is awaiting confirmation. Retry its original ' +
+        (pending.objective ? 'CEO objective' : 'persistent task') + ' first: ' + pending.input);
       return;
     }
     if (!pending) {
+      if (isObjective && !ceoId) { error('No CEO is configured. Refresh and retry.'); return; }
       if (!el('taskAgent').value) { error('No ready agent is connected. Refresh and retry.'); return; }
-      pending = {input: text, request_id: crypto.randomUUID(), agent_id: el('taskAgent').value};
+      pending = {input: text, request_id: crypto.randomUUID(), objective: isObjective};
+      if (!isObjective) pending.agent_id = el('taskAgent').value;
       localStorage.setItem('jarvis-task-pending', JSON.stringify(pending));
     }
     submitting = true; el('sendBtn').disabled = true; error('');
@@ -106,28 +147,29 @@
       el('chatInput').value = '';
       await refresh();
     } catch (err) {
-      error(err.message + ' The submission ID has been saved; retrying this text is safe.');
+      error(err.message + ' The submission ID has been saved; retrying this text in the same mode is safe.');
     } finally { submitting = false; el('sendBtn').disabled = false; }
   }
 
   function changeMode() {
-    const isTask = mode.value === 'task';
+    const isPersistent = persistent();
     localStorage.setItem('jarvis-command-mode', mode.value);
-    for (const id of ['taskPanel', 'taskAgentLabel', 'taskRefresh']) el(id).hidden = !isTask;
-    el('feed').hidden = isTask; el('clearBtn').hidden = isTask;
-    el('chatInput').placeholder = isTask ? 'Submit a persistent task to the selected agent…' : 'Type to Hermes… (/new resets your conversation)';
-    el('sendBtn').textContent = isTask ? 'SEND TASK' : 'SEND';
-    if (isTask) refresh(true);
+    for (const id of ['taskPanel', 'taskAgentLabel', 'taskRefresh']) el(id).hidden = !isPersistent;
+    el('feed').hidden = isPersistent; el('clearBtn').hidden = isPersistent;
+    el('chatInput').placeholder = mode.value === 'objective' ? 'Give the CEO one objective to plan, execute and review…' :
+      (isPersistent ? 'Submit a persistent task to the selected agent…' : 'Type to Hermes… (/new resets your conversation)');
+    el('sendBtn').textContent = mode.value === 'objective' ? 'SEND OBJECTIVE' : (isPersistent ? 'SEND TASK' : 'SEND');
+    if (isPersistent) refresh(true);
   }
   window.JarvisTasks = {submit};
-  mode.value = pending ? 'task' : (localStorage.getItem('jarvis-command-mode') || 'chat');
+  mode.value = pending ? (pending.objective ? 'objective' : 'task') : (localStorage.getItem('jarvis-command-mode') || 'objective');
+  if (!['chat', 'task', 'objective'].includes(mode.value)) mode.value = 'objective';
   if (pending) el('chatInput').value = pending.input;
   mode.onchange = changeMode;
+  el('taskAgent').onchange = () => { if (mode.value === 'task') localStorage.setItem('jarvis-task-agent', el('taskAgent').value); };
   el('taskRefresh').onclick = () => { error(''); refresh(true); };
-  window.addEventListener('jarvis-reconnected', () => { if (mode.value === 'task') refresh(true); });
-  window.addEventListener('online', () => { if (mode.value === 'task') refresh(true); });
-  setInterval(() => {
-    if (mode.value === 'task') refresh();
-  }, 3000);
+  window.addEventListener('jarvis-reconnected', () => { if (persistent()) refresh(true); });
+  window.addEventListener('online', () => { if (persistent()) refresh(true); });
+  setInterval(() => { if (persistent()) refresh(); }, 3000);
   changeMode();
 })();

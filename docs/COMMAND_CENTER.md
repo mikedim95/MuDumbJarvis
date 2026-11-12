@@ -14,7 +14,7 @@ See PHASES.md for verified acceptance evidence and changes.
 2. Keep the existing `ollama` container running, with `ministral-3:3b` installed.
 3. Run `./deploy/start.sh`. It creates missing configuration/secrets, builds,
    attaches Ollama to the private network, creates the separate model alias if
-   absent, starts services and bootstraps Paperclip once.
+   absent, starts services and bootstraps Paperclip plus the initial CEO once.
 4. Open http://localhost:8765/hud/ and enter JARVIS_HUD_TOKEN from deploy/.env.
    This is a local secret; do not commit or share it.
 
@@ -47,7 +47,10 @@ separate operator login is in .runtime/operator.json.
 the private agent network without changing its existing networks or settings.
 The Hermes API uses http://hermes:8642 internally; the browser never receives
 its API_SERVER_KEY. Inspect it through the JARVIS allowlist proxy or inside the
-service network. Active API tools are restricted to local_ollama_models.
+service network. The existing worker API tools are restricted to local_ollama_models. The
+separate CEO runtime also exposes identity-bound Paperclip context, planning,
+delegation, result review and human-gated hire-request operations. See
+[CEO_ORCHESTRATION.md](CEO_ORCHESTRATION.md) for that configuration.
 
 A separate jarvis-hermes:3b alias of the installed ministral-3:3b weights sets
 num_ctx=65536 and four CPU threads. Existing model definitions are retained.
@@ -99,7 +102,9 @@ docker run --rm --user 1000:1000 --env-file deploy/.env \
 
 Choose **Persistent task** next to the existing typed input. The agent list is
 retrieved dynamically from Paperclip. Submitted tasks are assigned to the
-selected agent (JARVIS-01 by default). Select a history entry to see its exact
+selected agent (JARVIS-01 by default). Choose **CEO objective** to submit one objective for executive planning and
+managed delegation; the CEO assignee is fixed server-side.
+Select a history entry to see its exact
 Paperclip UUID, status, run errors and result comments. Active tasks refresh
 every three seconds. Browser refresh/reconnect reloads authoritative history.
 An uncertain submission retains its nonce and text so a retry uses the same

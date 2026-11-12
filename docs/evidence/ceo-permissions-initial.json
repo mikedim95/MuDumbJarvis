@@ -1,0 +1,231 @@
+{
+  "checked_at": "2026-11-12T06:54:28.372451+00:00",
+  "paperclip_guard_contract": "2026.1106.0 inspected handler ordering",
+  "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+  "passed": true,
+  "identities": {
+    "ceo": {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "name": "JARVIS-CEO",
+      "role": "ceo",
+      "can_create_agents": true,
+      "goals_read": true,
+      "goal_count": 0,
+      "assigned_tasks_read": true,
+      "assigned_task_count": 2
+    },
+    "worker": {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "name": "JARVIS-01",
+      "role": "general",
+      "can_create_agents": false,
+      "goals_read": true,
+      "goal_count": 0,
+      "assigned_tasks_read": true,
+      "assigned_task_count": 2
+    }
+  },
+  "http_checks": [
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agents",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/goals",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/issues",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/goals",
+      "status": 200
+    },
+    {
+      "actor": "worker",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/issues",
+      "status": 200
+    },
+    {
+      "actor": "anonymous",
+      "method": "GET",
+      "path": "/agents/me",
+      "status": 401
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 422
+    },
+    {
+      "actor": "worker",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 403
+    },
+    {
+      "actor": "anonymous",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agent-hires",
+      "status": 401
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/approvals/231fc687-0825-48c0-af65-b9331652f941/approve",
+      "status": 404
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "POST",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 201
+    },
+    {
+      "actor": "ceo",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293/issues",
+      "status": 200
+    },
+    {
+      "actor": "ceo",
+      "method": "POST",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293/approve",
+      "status": 403
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "POST",
+      "path": "/approvals/48f21851-b6cd-4358-8629-4c96d45f3293/reject",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/agents",
+      "status": 200
+    },
+    {
+      "actor": "board",
+      "method": "GET",
+      "path": "/companies/1da0bc85-d81f-4e61-b73e-1569f5eced85/approvals",
+      "status": 200
+    }
+  ],
+  "before": {
+    "employee_count": 2,
+    "employee_ids": [
+      "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    ],
+    "approval_count": 0,
+    "approval_ids": []
+  },
+  "require_board_approval_for_new_agents": true,
+  "hire_permission_probes": {
+    "ceo_authorized_before_semantic_guard": true,
+    "ceo_status": 422,
+    "worker_status": 403,
+    "anonymous_status": 401
+  },
+  "missing_approval_probe": {
+    "status": 404,
+    "proves_board_only_denial": false
+  },
+  "ceo_cannot_approve_hiring": true,
+  "approval_fixture": {
+    "id": "48f21851-b6cd-4358-8629-4c96d45f3293",
+    "type": "request_board_approval",
+    "created_by_helper": true,
+    "reused_existing_fixture": false,
+    "requested_by_agent_id": null,
+    "linked_issue_ids": [],
+    "initial_status": "pending",
+    "final_status": "rejected",
+    "cleanup_verified": true
+  },
+  "board_only_approval_probe": {
+    "id": "48f21851-b6cd-4358-8629-4c96d45f3293",
+    "type": "request_board_approval",
+    "ceo_read_status": 200,
+    "ceo_approve_status": 403,
+    "status_after_agent_attempt": "pending"
+  },
+  "after": {
+    "employee_count": 2,
+    "employee_ids": [
+      "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    ],
+    "approval_count": 1,
+    "approval_ids": [
+      "48f21851-b6cd-4358-8629-4c96d45f3293"
+    ]
+  },
+  "no_employee_created": true,
+  "approval_records_created": [
+    "48f21851-b6cd-4358-8629-4c96d45f3293"
+  ],
+  "only_explicit_neutral_fixture_added": true
+}

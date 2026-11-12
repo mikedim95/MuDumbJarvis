@@ -1,0 +1,33 @@
+{
+  "runtime_isolation": {
+    "jarvis-hermes": {
+      "callback_identity": "worker",
+      "board_key_present": false,
+      "docker_socket_present": false,
+      "published_ports": {},
+      "mount_destinations": [
+        "/opt/data/plugins/jarvis_readonly",
+        "/opt/data"
+      ],
+      "networks": [
+        "jarvis-command-center_agent-private"
+      ],
+      "proof_signing_configured": true
+    },
+    "jarvis-hermes-ceo": {
+      "callback_identity": "CEO",
+      "board_key_present": false,
+      "docker_socket_present": false,
+      "published_ports": {},
+      "mount_destinations": [
+        "/opt/data/plugins/jarvis_readonly",
+        "/opt/data"
+      ],
+      "networks": [
+        "jarvis-command-center_agent-private"
+      ],
+      "proof_signing_configured": true
+    }
+  },
+  "phase5_inventory_names_and_bytes_unchanged": true
+}

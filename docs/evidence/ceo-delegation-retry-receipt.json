@@ -1,0 +1,8 @@
+{
+  "http_status": 202,
+  "scope": "Operator retry of the same cancelled initial CEO objective after fixes; worker and CEO continuation are not manually invoked.",
+  "objective_id": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+  "idempotency_key": "jarvis-ceo-integration-JAR11-verified-contract-v3",
+  "run_id": null,
+  "status": "skipped"
+}

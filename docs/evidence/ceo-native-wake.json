@@ -1,0 +1,18 @@
+{
+  "id": "e9941f2a-c56a-4ccf-a850-26e54f478e79",
+  "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "status": "running",
+  "startedAt": "2026-11-12T08:11:40.237Z",
+  "invocationSource": "automation",
+  "triggerDetail": "system",
+  "context": {
+    "issueId": "f8f4222d-6a0b-4b08-ad5c-5beec6abf0e0",
+    "taskId": "f8f4222d-6a0b-4b08-ad5c-5beec6abf0e0",
+    "wakeReason": "issue_children_completed",
+    "source": "issue.children_completed",
+    "completedChildIssueId": "b58af7b0-e4d1-4343-bc05-15e12defcdbc",
+    "childIssueIds": [
+      "b58af7b0-e4d1-4343-bc05-15e12defcdbc"
+    ]
+  }
+}

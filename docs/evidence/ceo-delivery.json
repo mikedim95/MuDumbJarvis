@@ -1,0 +1,84 @@
+{
+  "checked_at": "2026-11-12T09:33:07.704322+00:00",
+  "passed": true,
+  "http_checks": {
+    "hud_health": 200,
+    "hud_history_anonymous": 401,
+    "hud_history_authenticated": 200,
+    "paperclip_health": 200,
+    "paperclip_company_anonymous": 401,
+    "ceo_identity": 200,
+    "worker_identity": 200
+  },
+  "services": {
+    "jarvis-hud": {
+      "status": "running",
+      "health": "healthy"
+    },
+    "jarvis-hermes": {
+      "status": "running",
+      "health": "healthy"
+    },
+    "jarvis-hermes-ceo": {
+      "status": "running",
+      "health": "healthy"
+    },
+    "jarvis-paperclip": {
+      "status": "running",
+      "health": "healthy"
+    },
+    "jarvis-hermes-tls": {
+      "status": "running",
+      "health": null
+    }
+  },
+  "runtime_isolation": {
+    "jarvis-hermes": {
+      "correct_separate_callback_identity": true,
+      "board_key_present": false,
+      "published_ports": {},
+      "docker_socket_present": false,
+      "networks": [
+        "jarvis-command-center_agent-private"
+      ],
+      "proof_signing_configured": true,
+      "health": "healthy"
+    },
+    "jarvis-hermes-ceo": {
+      "correct_separate_callback_identity": true,
+      "board_key_present": false,
+      "published_ports": {},
+      "docker_socket_present": false,
+      "networks": [
+        "jarvis-command-center_agent-private"
+      ],
+      "proof_signing_configured": true,
+      "health": "healthy"
+    }
+  },
+  "hiring_requires_human_approval": true,
+  "employee_count": 2,
+  "ceo": {
+    "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "adapter": "hermes_gateway",
+    "session_strategy": "issue",
+    "native_input": true,
+    "bounded_history_messages": 2,
+    "hermes_key_is_secret_ref": true,
+    "can_request_hiring": true,
+    "timeout_seconds": 1800
+  },
+  "ollama_pentagi_unchanged_across_jarvis_restart": true,
+  "unmodified_service_digests": {
+    "ollama": {
+      "id": "954d55068a3ee821b34070c2e2ac875273497c8674de35ef655b3b74695d5da9",
+      "started_at": "2026-11-04T12:30:24.115578626Z",
+      "configuration_sha256": "2705640c3edded53811644191ebff2e3666b8f6c9e8935546679ef75659ef2cc"
+    },
+    "pentagi": {
+      "id": "bb867cd5d2664e5023c0a28bac366181eac9ca71774c103bef412892afee0f5b",
+      "started_at": "2026-11-11T11:52:57.790873869Z",
+      "configuration_sha256": "c13f91a6c7af4beb9a3da948134b4079254e17fe982c81776e4b43c766e20d51"
+    }
+  }
+}

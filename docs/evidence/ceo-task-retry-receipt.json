@@ -1,0 +1,10 @@
+{
+  "http_status": 202,
+  "scope": "Explicit operator retry of the same previously cancelled CEO objective; no worker or completion wake is invoked by this helper.",
+  "issue_id": "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+  "idempotency_key": "bd84aff7-394e-454f-8c5b-5591d999101a",
+  "requestId": "9810bb15-831d-4ecb-bcd2-44645f2b0302",
+  "accepted": true,
+  "stale": false,
+  "observedRunId": "dcf21291-26bb-4096-859d-69f820072c18"
+}

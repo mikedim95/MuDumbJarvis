@@ -308,7 +308,7 @@ footer{
     </div>
     <div id="feed"></div>
     <div id="commandModes">
-      <label>MODE <select id="commandMode"><option value="chat">Direct chat</option><option value="task">Persistent task</option></select></label>
+      <label>MODE <select id="commandMode"><option value="objective">CEO objective</option><option value="chat">Direct chat</option><option value="task">Persistent task</option></select></label>
       <label id="taskAgentLabel" hidden>AGENT <select id="taskAgent" aria-label="Task agent"></select></label>
       <button class="btn" id="taskRefresh" hidden>REFRESH</button>
     </div>
@@ -661,7 +661,7 @@ addEventListener("keydown",e=>{
 /* ============================== typed chat ========================= */
 async function sendChat(){
   const inp=$("chatInput"); const text=inp.value.trim(); if(!text)return;
-  if($("commandMode").value==="task")return window.JarvisTasks.submit(text);
+  if(["task","objective"].includes($("commandMode").value))return window.JarvisTasks.submit(text);
   inp.value=""; addMsg("you",text); setState("thinking","PROCESSING");
   try{
     const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},

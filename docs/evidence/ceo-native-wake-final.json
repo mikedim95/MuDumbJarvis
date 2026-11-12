@@ -1,0 +1,57 @@
+{
+  "checked_at": "2026-11-12T09:23:55.646291+00:00",
+  "verified": true,
+  "ceo_run": {
+    "id": "0d3512f0-266b-437f-ab95-61ae2fb869f1",
+    "status": "succeeded",
+    "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "startedAt": "2026-11-12T09:01:23.413Z",
+    "finishedAt": "2026-11-12T09:19:56.340Z",
+    "invocationSource": "automation",
+    "triggerDetail": "system"
+  },
+  "native_context": {
+    "source": "issue.children_completed",
+    "wakeReason": "issue_children_completed",
+    "wakeSource": "automation",
+    "issueId": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+    "taskId": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+    "childIssueIds": [
+      "b76a924a-d1ed-4f06-9b84-68709bf8ad4f"
+    ]
+  },
+  "completed_child_summaries": [
+    {
+      "id": "b76a924a-d1ed-4f06-9b84-68709bf8ad4f",
+      "identifier": "JAR-16",
+      "status": "done",
+      "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef"
+    }
+  ],
+  "worker_run": {
+    "runId": "6c959144-3a31-43a8-a785-fd110477ba78",
+    "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+    "status": "succeeded",
+    "startedAt": "2026-11-12T08:52:17.181Z",
+    "finishedAt": "2026-11-12T09:01:23.422Z"
+  },
+  "delivery": {
+    "source": "hermes_pre_llm_call",
+    "action": "verified_child_results_delivered",
+    "paperclip_run_id": "0d3512f0-266b-437f-ab95-61ae2fb869f1",
+    "issue_id": "00b34673-2995-460d-af5e-7622e5ee1b6d",
+    "delivered_child_ids": [
+      "b76a924a-d1ed-4f06-9b84-68709bf8ad4f"
+    ],
+    "context_sha256": "7568ad6f8b7a46ef18e88eeb223cf1bd34227470bd09425e3c418efc53fee5f1",
+    "context_delivered_for_review": true
+  },
+  "signed_worker_proof_valid": true,
+  "latest_worker_run_verified": true,
+  "model_count": 8,
+  "all_eight_names_and_exact_sizes_in_ceo_prose": true,
+  "parent_status": "done",
+  "child_status": "done",
+  "manually_woken": false,
+  "note": "Proof establishes Ollama API inventory and execution, not binary-manifest inspection or every narrative claim."
+}
