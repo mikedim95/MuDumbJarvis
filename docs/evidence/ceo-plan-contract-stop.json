@@ -1,0 +1,144 @@
+{
+  "started_at": "2026-11-12T11:00:25.660273+00:00",
+  "authorized_scope": {
+    "root_issue_ids": [
+      "494849fa-2990-430a-8952-df155492f73a",
+      "3a92a8e5-0fea-4cbf-b108-76c04d6d22e9"
+    ],
+    "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+    "project_id": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+    "ceo_agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "worker_agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef"
+  },
+  "reason": "Explicit self-plan requests were rejected because optional rationale and plan alias did not match the handler contract; these compatibility attempts are superseded, not accepted.",
+  "events": [
+    {
+      "observed_at": "2026-11-12T11:00:28.216424+00:00",
+      "event": "exact_owned_runtime_stop",
+      "issue_id": "494849fa-2990-430a-8952-df155492f73a",
+      "identifier": "JAR-25",
+      "paperclip_run_id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+      "scope_verified": true,
+      "before": {
+        "run_id": "run_3e98bef7c2fd4eda8d8f2bda186b7e15",
+        "status": "completed",
+        "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:494849fa-2990-430a-8952-df155492f73a"
+      },
+      "stop_posted": false
+    },
+    {
+      "observed_at": "2026-11-12T11:00:28.808373+00:00",
+      "event": "exact_owned_runtime_stop",
+      "issue_id": "79477388-fa36-492b-ac38-d93d5f09c64f",
+      "identifier": "JAR-28",
+      "paperclip_run_id": "41a25542-1a56-4ab0-9620-686a60f02ed4",
+      "scope_verified": true,
+      "before": {
+        "run_id": "run_dadf5f8f867c4e3c835eb13a5186bb1f",
+        "status": "running",
+        "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:79477388-fa36-492b-ac38-d93d5f09c64f"
+      },
+      "stop_posted": true,
+      "response": {
+        "run_id": "run_dadf5f8f867c4e3c835eb13a5186bb1f",
+        "status": "stopping"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T11:00:36.292589+00:00",
+      "event": "retained_terminal_issue",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "identifier": "JAR-25",
+      "status": "done"
+    },
+    {
+      "observed_at": "2026-11-12T11:00:36.664864+00:00",
+      "event": "retired_unfinished_owned_issue",
+      "id": "3a92a8e5-0fea-4cbf-b108-76c04d6d22e9",
+      "identifier": "JAR-26",
+      "status": "cancelled",
+      "comment": "Operator supersession: this compatibility attempt is retired because explicit self decisions with omitted rationale or the advertised plan alias were rejected by the tool handler. It is not an accepted minimum-team verification. Any active owned Hermes execution was stopped through its exact authenticated run endpoint and acknowledged terminal by Hermes and Paperclip; no direct heartbeat cancellation was used. Fresh verification will use the corrected handler contract. Completed child results remain preserved."
+    },
+    {
+      "observed_at": "2026-11-12T11:00:36.812157+00:00",
+      "event": "retained_terminal_issue",
+      "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+      "identifier": "JAR-27",
+      "status": "done"
+    },
+    {
+      "observed_at": "2026-11-12T11:00:37.329773+00:00",
+      "event": "retired_unfinished_owned_issue",
+      "id": "79477388-fa36-492b-ac38-d93d5f09c64f",
+      "identifier": "JAR-28",
+      "status": "cancelled",
+      "comment": "Operator supersession: this compatibility attempt is retired because explicit self decisions with omitted rationale or the advertised plan alias were rejected by the tool handler. It is not an accepted minimum-team verification. Any active owned Hermes execution was stopped through its exact authenticated run endpoint and acknowledged terminal by Hermes and Paperclip; no direct heartbeat cancellation was used. Fresh verification will use the corrected handler contract. Completed child results remain preserved."
+    },
+    {
+      "observed_at": "2026-11-12T11:00:51.222310+00:00",
+      "event": "owned_graphs_terminal",
+      "issues": [
+        {
+          "id": "494849fa-2990-430a-8952-df155492f73a",
+          "identifier": "JAR-25",
+          "status": "done",
+          "runs": [
+            {
+              "runId": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+              "status": "succeeded",
+              "errorCode": null,
+              "finishedAt": "2026-11-12T11:00:26.809Z"
+            },
+            {
+              "runId": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded",
+              "errorCode": null,
+              "finishedAt": "2026-11-12T10:53:21.845Z"
+            }
+          ]
+        },
+        {
+          "id": "3a92a8e5-0fea-4cbf-b108-76c04d6d22e9",
+          "identifier": "JAR-26",
+          "status": "cancelled",
+          "runs": [
+            {
+              "runId": "ac03e3f8-60e1-40af-a441-c5a1f656cbd9",
+              "status": "succeeded",
+              "errorCode": null,
+              "finishedAt": "2026-11-12T10:57:03.348Z"
+            }
+          ]
+        },
+        {
+          "id": "79477388-fa36-492b-ac38-d93d5f09c64f",
+          "identifier": "JAR-28",
+          "status": "cancelled",
+          "runs": [
+            {
+              "runId": "41a25542-1a56-4ab0-9620-686a60f02ed4",
+              "status": "cancelled",
+              "errorCode": "cancelled",
+              "finishedAt": "2026-11-12T11:00:29.837Z"
+            }
+          ]
+        },
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "runs": [
+            {
+              "runId": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded",
+              "errorCode": null,
+              "finishedAt": "2026-11-12T10:56:34.495Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "status": "completed",
+  "finished_at": "2026-11-12T11:00:51.223171+00:00"
+}

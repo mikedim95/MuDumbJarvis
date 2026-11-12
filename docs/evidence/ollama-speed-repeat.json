@@ -1,0 +1,583 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-11-12T09:46:19.884934+00:00",
+  "status": "completed",
+  "plan": {
+    "model": "jarvis-hermes:3b",
+    "endpoint": "http://127.0.0.1:11434",
+    "threads": [
+      4,
+      24
+    ],
+    "num_ctx": 65536,
+    "num_predict": 32,
+    "seed": 42,
+    "temperature": 0.1,
+    "warm_reps": 2,
+    "num_batch": 1024,
+    "docker_runner_container": "ollama",
+    "prompt_sha256": "11fa9f34b82fa81901f10c9ec70ec594344dc48722b00cbc2961d320864d896a",
+    "system_sha256": "a8bdab3c31350eb53a6a13030be9a5d8ddc5bb98e8624746f0b5e8249c46b715",
+    "prompt_words": 300,
+    "prompt_lines": 12,
+    "prompt_token_target": [
+      300,
+      500
+    ],
+    "prompt_token_note": "Approximate before execution; actual rendered count is recorded from Ollama, never invented.",
+    "request_timeout_seconds": 600,
+    "cold_order": [],
+    "warm_order": [
+      4,
+      24,
+      4,
+      24
+    ],
+    "generate_requests": 8,
+    "warm_setup": "A one-token generation of the same prompt immediately precedes every warm sample; setup is recorded separately and excluded from aggregates.",
+    "cold_definition": "Selected model unloaded before each cold sample; OS file cache remains intact.",
+    "concurrency": "Synchronous requests and a nonblocking repository lock; unrelated clients must be idle. This script cannot police other Ollama clients.",
+    "scope": "Native inference timings only. No tools, agents, orchestration, or fake task-execution evidence."
+  },
+  "prompt": "Read the fixed engineering records below. They are synthetic benchmark data, not facts about this host.\nExplain reliable local service operation using the records. Write at least 250 words of continuous technical prose.\nDiscuss bounded requests, cache reuse, explicit state, measurement, and recovery. Do not use tools, make API calls, or invent local observations.\nRecord 01: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 02: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 03: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 04: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 05: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 06: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 07: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 08: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 09: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 10: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 11: A local service reads a fixed cache and returns a compact status value for each queued request.\nRecord 12: A local service reads a fixed cache and returns a compact status value for each queued request.\nNow write the technical explanation. Continue with concrete engineering details rather than a greeting or a readiness acknowledgement.",
+  "system": "You are a technical writer completing a controlled local inference benchmark. Follow the supplied writing task.",
+  "samples": [
+    {
+      "id": 1,
+      "phase": "warm_setup",
+      "num_thread": 4,
+      "repetition": 1,
+      "started_at": "2026-11-12T09:46:19.941824+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 4,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 1,
+        "num_batch": 1024
+      },
+      "total_duration": 33136011605,
+      "load_duration": 15489299189,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 0,
+      "prompt_eval_duration": 17628402000,
+      "eval_count": 1,
+      "eval_duration": 1000,
+      "finished_at": "2026-11-12T09:46:53.085696+00:00",
+      "wall_seconds": 33.143642,
+      "load_seconds": 15.489299,
+      "generation_tokens_per_second": 1000000.0,
+      "generation_tokens_per_wall_second": 0.0302,
+      "prompt_reported_count_per_eval_second": 22.9176,
+      "uncached_prompt_eval_count": 404,
+      "uncached_prompt_tokens_per_second": 22.9176,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In",
+      "response_sha256": "8bc1d53cc57c24b79bf7c260b1f3b29973caab7b8f501c33016b321ebfc274f1",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1808793,
+            "num_thread": 4,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "num_thread": 4,
+      "repetition": 1,
+      "started_at": "2026-11-12T09:46:53.206454+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 4,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 32,
+        "num_batch": 1024
+      },
+      "total_duration": 6482254440,
+      "load_duration": 4673951,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 403,
+      "prompt_eval_duration": 216130000,
+      "eval_count": 32,
+      "eval_duration": 6238593000,
+      "finished_at": "2026-11-12T09:46:59.704608+00:00",
+      "wall_seconds": 6.497754,
+      "load_seconds": 0.004674,
+      "generation_tokens_per_second": 5.1294,
+      "generation_tokens_per_wall_second": 4.9248,
+      "prompt_reported_count_per_eval_second": 1869.2454,
+      "uncached_prompt_eval_count": 1,
+      "uncached_prompt_tokens_per_second": 4.6268,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In the observed local service operation, a robust architecture for controlled local inference is demonstrated through systematic handling of bounded requests, efficient cache reuse, and explicit state management,",
+      "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1808793,
+            "num_thread": 4,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 3,
+      "phase": "warm_setup",
+      "num_thread": 24,
+      "repetition": 1,
+      "started_at": "2026-11-12T09:46:59.834471+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 24,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 1,
+        "num_batch": 1024
+      },
+      "total_duration": 28904944129,
+      "load_duration": 20536782612,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 0,
+      "prompt_eval_duration": 8342467000,
+      "eval_count": 1,
+      "eval_duration": 1000,
+      "finished_at": "2026-11-12T09:47:28.766978+00:00",
+      "wall_seconds": 28.93223,
+      "load_seconds": 20.536783,
+      "generation_tokens_per_second": 1000000.0,
+      "generation_tokens_per_wall_second": 0.0346,
+      "prompt_reported_count_per_eval_second": 48.4269,
+      "uncached_prompt_eval_count": 404,
+      "uncached_prompt_tokens_per_second": 48.4269,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In",
+      "response_sha256": "8bc1d53cc57c24b79bf7c260b1f3b29973caab7b8f501c33016b321ebfc274f1",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1809784,
+            "num_thread": 24,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "num_thread": 24,
+      "repetition": 1,
+      "started_at": "2026-11-12T09:47:28.858437+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 24,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 32,
+        "num_batch": 1024
+      },
+      "total_duration": 117678447414,
+      "load_duration": 1153793,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 403,
+      "prompt_eval_duration": 3920304000,
+      "eval_count": 32,
+      "eval_duration": 113741153000,
+      "finished_at": "2026-11-12T09:49:26.555330+00:00",
+      "wall_seconds": 117.696709,
+      "load_seconds": 0.001154,
+      "generation_tokens_per_second": 0.2813,
+      "generation_tokens_per_wall_second": 0.2719,
+      "prompt_reported_count_per_eval_second": 103.0532,
+      "uncached_prompt_eval_count": 1,
+      "uncached_prompt_tokens_per_second": 0.2551,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In the observed local service operations, a robust architecture for controlled, bounded request processing emerges through systematic reliance on a fixed cache and explicit state management. Each of the",
+      "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1809784,
+            "num_thread": 24,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 5,
+      "phase": "warm_setup",
+      "num_thread": 4,
+      "repetition": 2,
+      "started_at": "2026-11-12T09:49:26.661387+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 4,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 1,
+        "num_batch": 1024
+      },
+      "total_duration": 33066217358,
+      "load_duration": 14357159284,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 0,
+      "prompt_eval_duration": 18688182000,
+      "eval_count": 1,
+      "eval_duration": 2000,
+      "finished_at": "2026-11-12T09:49:59.738090+00:00",
+      "wall_seconds": 33.076549,
+      "load_seconds": 14.357159,
+      "generation_tokens_per_second": 500000.0,
+      "generation_tokens_per_wall_second": 0.0302,
+      "prompt_reported_count_per_eval_second": 21.6179,
+      "uncached_prompt_eval_count": 404,
+      "uncached_prompt_tokens_per_second": 21.6179,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In",
+      "response_sha256": "8bc1d53cc57c24b79bf7c260b1f3b29973caab7b8f501c33016b321ebfc274f1",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1813973,
+            "num_thread": 4,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "num_thread": 4,
+      "repetition": 2,
+      "started_at": "2026-11-12T09:49:59.902858+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 4,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 32,
+        "num_batch": 1024
+      },
+      "total_duration": 5989394881,
+      "load_duration": 1693284,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 403,
+      "prompt_eval_duration": 206798000,
+      "eval_count": 32,
+      "eval_duration": 5765226000,
+      "finished_at": "2026-11-12T09:50:05.904537+00:00",
+      "wall_seconds": 6.001531,
+      "load_seconds": 0.001693,
+      "generation_tokens_per_second": 5.5505,
+      "generation_tokens_per_wall_second": 5.332,
+      "prompt_reported_count_per_eval_second": 1953.5972,
+      "uncached_prompt_eval_count": 1,
+      "uncached_prompt_tokens_per_second": 4.8356,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In the observed local service operation, a robust architecture for controlled local inference is demonstrated through systematic handling of bounded requests, efficient cache reuse, and explicit state management,",
+      "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1813973,
+            "num_thread": 4,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 7,
+      "phase": "warm_setup",
+      "num_thread": 24,
+      "repetition": 2,
+      "started_at": "2026-11-12T09:50:05.998064+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 24,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 1,
+        "num_batch": 1024
+      },
+      "total_duration": 32322389531,
+      "load_duration": 21329924281,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 0,
+      "prompt_eval_duration": 10969345000,
+      "eval_count": 1,
+      "eval_duration": 1000,
+      "finished_at": "2026-11-12T09:50:38.332200+00:00",
+      "wall_seconds": 32.333946,
+      "load_seconds": 21.329924,
+      "generation_tokens_per_second": 1000000.0,
+      "generation_tokens_per_wall_second": 0.0309,
+      "prompt_reported_count_per_eval_second": 36.8299,
+      "uncached_prompt_eval_count": 404,
+      "uncached_prompt_tokens_per_second": 36.8299,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In",
+      "response_sha256": "8bc1d53cc57c24b79bf7c260b1f3b29973caab7b8f501c33016b321ebfc274f1",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1815023,
+            "num_thread": 24,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "num_thread": 24,
+      "repetition": 2,
+      "started_at": "2026-11-12T09:50:38.457864+00:00",
+      "request_options": {
+        "num_ctx": 65536,
+        "num_thread": 24,
+        "seed": 42,
+        "temperature": 0.1,
+        "num_predict": 32,
+        "num_batch": 1024
+      },
+      "total_duration": 132342298821,
+      "load_duration": 2340523,
+      "prompt_eval_count": 404,
+      "prompt_eval_cached_count": 403,
+      "prompt_eval_duration": 4795422000,
+      "eval_count": 32,
+      "eval_duration": 127529355000,
+      "finished_at": "2026-11-12T09:52:50.807857+00:00",
+      "wall_seconds": 132.349844,
+      "load_seconds": 0.002341,
+      "generation_tokens_per_second": 0.2509,
+      "generation_tokens_per_wall_second": 0.2418,
+      "prompt_reported_count_per_eval_second": 84.247,
+      "uncached_prompt_eval_count": 1,
+      "uncached_prompt_tokens_per_second": 0.2085,
+      "cache_counter_available": true,
+      "done_reason": "length",
+      "response": "In the observed local service operations, a robust architecture for controlled, bounded request processing emerges through systematic reliance on a fixed cache and explicit state management. Each of the",
+      "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9",
+      "running_model": {
+        "name": "jarvis-hermes:3b",
+        "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "size": 9495694540,
+        "size_vram": 0,
+        "context_length": 65536
+      },
+      "effective_runner": {
+        "status": "observed",
+        "runners": [
+          {
+            "pid": 1815023,
+            "num_thread": 24,
+            "context_size": 65536,
+            "batch_size": 1024,
+            "micro_batch_size": 1024,
+            "parallel": 1
+          }
+        ],
+        "source": "docker top target runner, numeric flag projection only; no environment or model path retained"
+      }
+    }
+  ],
+  "warnings": [],
+  "documentation": [
+    "https://docs.ollama.com/api/generate",
+    "https://docs.ollama.com/api/ps",
+    "https://github.com/ollama/ollama/blob/main/api/types.go"
+  ],
+  "ollama_version": "0.40.11",
+  "host": {
+    "cpu_count": 32,
+    "python_version": "3.14.8"
+  },
+  "model": {
+    "name": "jarvis-hermes:3b",
+    "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+    "size": 2953840466,
+    "details": {
+      "parent_model": "ministral-3:3b",
+      "format": "gguf",
+      "family": "mistral3",
+      "families": [
+        "mistral3"
+      ],
+      "parameter_size": "3.8B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 262144,
+      "embedding_length": 3072,
+      "runner": "ggml"
+    }
+  },
+  "model_configuration": {
+    "parameters": "num_ctx                        65536\nnum_thread                     4\ntemperature                    0.1",
+    "template_sha256": "24c6226aca35b16350187fb9125e7cb4e746795c78edd3cb1de45654c7e77181",
+    "system_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "modelfile_sha256": "ec91b17240cb6a5df1b66858e4bc11fa81e55b3de5a038bf81c0b4a2d3fd785c"
+  },
+  "finished_at": "2026-11-12T09:52:50.932643+00:00",
+  "summary": [
+    {
+      "num_thread": 4,
+      "warm_samples": 2,
+      "cold_sample_ids": [],
+      "warm_metrics": {
+        "generation_tokens_per_second": {
+          "median": 5.3399,
+          "min": 5.1294,
+          "max": 5.5505
+        },
+        "wall_seconds": {
+          "median": 6.2496,
+          "min": 6.001531,
+          "max": 6.497754
+        },
+        "load_seconds": {
+          "median": 0.0032,
+          "min": 0.001693,
+          "max": 0.004674
+        }
+      }
+    },
+    {
+      "num_thread": 24,
+      "warm_samples": 2,
+      "cold_sample_ids": [],
+      "warm_metrics": {
+        "generation_tokens_per_second": {
+          "median": 0.2661,
+          "min": 0.2509,
+          "max": 0.2813
+        },
+        "wall_seconds": {
+          "median": 125.0233,
+          "min": 117.696709,
+          "max": 132.349844
+        },
+        "load_seconds": {
+          "median": 0.0017,
+          "min": 0.001154,
+          "max": 0.002341
+        }
+      }
+    }
+  ],
+  "comparison_scope": "Controlled native generation only; a separate real Paperclip/Hermes tool task must verify any selected profile.",
+  "cache_interpretation": "Null cached count means unsupported/unreported, never zero. Reported prompt-count rate can include cached tokens; uncached rate is supplied only when its counter is available.",
+  "thread_observation": "num_thread is requested in each request. Optional Docker observations record actual target-runner numeric flags after completion while keep_alive retains it; /api/ps records actual context. Missing flags are unknown, not confirmed. A known thread mismatch stops comparison.",
+  "post_measurement_review": {
+    "status": "superseded_for_performance_decisions",
+    "reason": "The user reported competing work, and an active AIgoat inference runner was subsequently observed. These measurements did not establish an uncontended host.",
+    "raw_measurements_preserved": true,
+    "accepted_replacements": [
+      "ollama-speed-clean.json",
+      "ollama-speed-clean-summary.json",
+      "agent-speed-clean-control4.json",
+      "agent-speed-clean-candidate24.json"
+    ],
+    "resource_gate": "ollama-clean-gate.json"
+  }
+}

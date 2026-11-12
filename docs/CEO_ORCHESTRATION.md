@@ -1,6 +1,6 @@
 # JARVIS CEO orchestration
 
-Status on 2026-11-12: **functional browser acceptance passed** for fresh
+Baseline on 2026-11-12 (`a0f7fc7`): **functional browser acceptance passed** for fresh
 objectives JAR-14 and JAR-15, including real JAR-16 worker execution, signed
 evidence, Paperclip's native CEO wake and the final consolidated report.
 The 111-test final-image suite passed, browser refresh and a full five-service
@@ -8,10 +8,45 @@ restart preserved the same completed objectives/results, and the roster stayed
 at two employees. **CEO functional and restart acceptance are complete.**
 Direct chat was observed working through the real HUD with separate sessions
 and no new Paperclip work; its full browser helper did not pass because of
-recorded harness/model-response limitations. This delivery commit is identified
-in Git history.
+recorded harness/model-response limitations. This baseline is archived in
+`docs/evidence/ceo-before-tuning.json`.
 Historical rejected attempts stay separate. Known model-prose limitations are
 recorded below; canonical appended tool data is the verified inventory.
+
+Current follow-up: both existing runtime files select the separately named
+`jarvis-hermes-aigoat24:3b` local profile. The current source suite passes 131
+tests and the atomic direct-tool/self-scope contract below is deployed.
+**Fresh JAR-35/JAR-36 functional browser acceptance passed**, with no child for
+the simple objective, real JAR-37 worker execution for the two-role objective,
+native CEO continuation, final report, persistent refresh and two employees.
+The five-service restart, separate direct-chat regression and explicit AIgoat
+restoration also passed. The
+historical JAR-14/15/16 results establish the original four-thread baseline;
+they are not substituted for the new profile's verification. Measurements,
+rejected compatibility cycles and rollback are in
+[OLLAMA_TUNING.md](OLLAMA_TUNING.md).
+
+The current evidence is `docs/evidence/ceo-browser.json`, checked at
+11:39:15 UTC. Its exact tool-data appendices preserve all nine model names and
+byte sizes. Model-generated prose is not independently authoritative: JAR-35
+mis-copied one long-tag byte value and JAR-36 shortened that model name; some
+metadata/recommendations remain unsupported. These limitations are separate
+from the verified tool execution, task graph and exact appended inventory.
+
+| Fresh copied-profile record | Canonical identity | Verified result |
+| --- | --- | --- |
+| Simple objective | JAR-35 / `44a371b4-603a-4f13-9952-4940ec4e54d1` | Done; actual model-selected direct tool recorded self scope before the read, no child; run `606bf80c-37d6-4de1-8341-5c7d52a79206` |
+| Two-role objective | JAR-36 / `0ea710dd-98ac-456f-93ea-41e03be73d7d` | Done; model selected and scoped existing JARVIS-01, delegate run `42e1c990-17dc-4968-a88d-e7e0a68d9cea` |
+| Worker child | JAR-37 / `ac83a32e-e476-4648-b615-dbe2cdbe7665` | Done; worker run `d95e85c8-68dc-4e6f-bf4d-2bccb82bf18e` succeeded with scoped HMAC v2/nine models |
+| Native CEO consolidation | `d3599b2f-2ec4-4779-ba08-9df1a8fdef33` | Succeeded; `issue_children_completed` / `issue.children_completed`, verified child results delivered for review, substantive final report visible |
+| Browser refresh and roster | Same two objectives and two employees | Passed; no unnecessary hire |
+| Source tests | Current deployed plugin/source | 131 passed, three existing warnings |
+| Five-service restart | `docs/evidence/ceo-tuning-restart.json` | Same JAR-35/36/37 IDs/statuses/comments/runs and complete task-ID set; zero new objectives; actual browser `--resume` passed |
+| Separate direct chat | `docs/evidence/direct-chat-regression.json` | Passed actual selected-model turn, visible READY, authentication/WebSocket, task/session isolation and response/DOM scan |
+| Existing chat model migration | `docs/evidence/direct-chat-model-migration.json` | Supported endpoint preserved the same session and all 11 projected messages/count/hash; actual next turn verified selected local alias |
+| AIgoat restoration | `docs/evidence/aigoat-restored.json` | Explicitly unpaused at 11:47:44.873 UTC; same ID/start time, marker removed, guard stopped |
+| Final read-only delivery checks | `docs/evidence/final-delivery-check.json` | All 10 passed; exact service/configuration preservation, original eight models plus new alias, human hiring gate, auth/health and text-secret scan |
+| Delivery commit | This delivery commit (see `git log`) | Verified profile, tool contract, documentation and evidence |
 
 ## Architecture
 
@@ -54,9 +89,11 @@ The initial organization contains exactly two operating identities:
 | JARVIS-CEO | Plan, select the minimum team, delegate when needed, review evidence and consolidate the objective | Isolated `hermes-ceo` service / container `jarvis-hermes-ceo` |
 | JARVIS-01 | Existing scoped local inspection and read-only execution | Existing `hermes` service / container `jarvis-hermes` |
 
-Both use the existing local `jarvis-hermes:3b` Ollama alias. This extension does
-not require changing existing model definitions, downloading another model or
-changing the existing Ollama installation. PentAGI remains outside this work.
+The verified baseline used `jarvis-hermes:3b`. Both runtimes now select the
+separate local `jarvis-hermes-aigoat24:3b` profile for final compatibility
+testing, using the same installed weights. The original alias/models and
+shared Ollama server configuration remain preserved. PentAGI remains outside
+this integration.
 
 ## CEO operating policy
 
@@ -114,11 +151,13 @@ Origin/WebSocket protections remain required.
 
 ## Deployed configuration
 
-The table below records the configured runtime identities and boundaries.
-The native-input restoration and authenticated preflight are now deployed for
-the fresh JAR-14/JAR-15 acceptance cycle. Actual worker execution, native CEO
-continuation, final consolidation and restart persistence have passed; the
-evidence below establishes behavior beyond configuration.
+The table records current configured identities and boundaries. Native input,
+authenticated preflight and the original JAR-14/JAR-15/JAR-16 execution/restart
+proof remain the verified baseline. The copied profile and direct-tool
+self-scope contract are deployed after 131 passing source tests; fresh
+JAR-35 self execution and JAR-36/JAR-37 delegation passed through the actual
+HUD. Restart, direct-chat and restoration checks also passed; the evidence
+above establishes behavior beyond configuration.
 
 
 The operator bootstrap is `deploy/bootstrap_ceo.py`; the CEO policy is
@@ -137,13 +176,16 @@ the same CEO and worker IDs; no duplicate employee was provisioned.
 | Adapter | `hermes_gateway` | `hermes_gateway` |
 | Private TLS endpoint | `https://hermes-tls:8644` | `https://hermes-tls:8643` |
 | Session strategy | `issue` | `issue` |
-| Local model | `jarvis-hermes:3b`, custom provider | Same preserved alias/provider |
+| Local model | `jarvis-hermes-aigoat24:3b`, custom provider; JAR-35/36 functional acceptance passed | Same selected alias/provider |
 | Ollama API | `http://ollama-models:11434/v1` | Same existing private-network service |
 | Context | 65,536 tokens | 65,536 tokens |
+| Current copied profile | 24 threads, batch 1,024, output cap 768, temperature 0.1 | Same |
+| Preserved baseline / fresh-install source default | `jarvis-hermes:3b`, four threads | Same |
 | Execution timeout | 1,800 seconds | 900 seconds |
 | Timer heartbeat | Disabled | Disabled |
 | Assignment/on-demand wakes | Enabled | Enabled |
 | Concurrent runs per runtime | One | One |
+| Shared selected-model inference slots | One (`-np 1`), shared with worker | Same shared slot |
 | Persistent runtime data | `.runtime/hermes-ceo` | `.runtime/hermes` |
 | Runtime template | `deploy/hermes.ceo.config.example.yaml` | `deploy/hermes.config.example.yaml` |
 
@@ -151,20 +193,64 @@ The internal TLS proxy has separate upstreams and matching bounded timeouts.
 Neither Hermes container publishes a host port. Both remain attached only to the
 internal agent network, without a Docker socket or host workspace mount.
 
+Separate CEO and worker identities/sessions do not imply parallel model
+capacity. The current shared model runner uses `-np 1`: one inference request
+is served at a time, and another agent/chat request may queue or encounter
+the configured Hermes admission limit. Paperclip can retain several tasks
+while their model calls wait. Twenty-four CPU threads apply to one eligible
+inference call; they are not 24 users or agents. Shared Ollama concurrency has
+not been increased, and the performance measurements used serial calls.
+
 The active CEO toolsets are `jarvis_ceo` and `jarvis_readonly`, exposing exactly
 three tools:
 
 - `paperclip_context`: authenticated objective, goals, employees and children.
 - `paperclip_ceo`: scoped `plan`, `delegate`, `review` and `request_hire`
   actions through Paperclip.
-- `local_ollama_models`: real read-only local inventory, gated in the CEO
-  runtime to an explicit recorded `self` plan.
+- `local_ollama_models`: real read-only local inventory; the CEO's actual
+  selection may atomically record a self-work scope before the read.
 
-A CEO with a `delegate`, `hire` or absent plan receives `not_executed` from the
-direct inventory tool and no Ollama HTTP request occurs. It cannot substitute
-its own inventory call for the assigned worker's execution. This gate applies
-only to the CEO runtime; worker inventory and user-facing direct chat retain
-their existing behavior.
+For a validated current CEO/company/assigned issue/run with no plan and no
+child issues, invoking the inventory tool is the model's explicit choice to
+perform that authorized read itself. The handler records a clearly labeled
+runtime-generated scope from the real objective and existing tool capability
+in Paperclip **before** HTTP, then performs the requested read. A persisted
+explicit self plan remains supported. This is symmetric to atomic delegation,
+which persists the model-selected assignment scope before creating a child.
+
+The scope is not model-authored rationale and no separate `paperclip_ceo`
+planning-tool call is claimed. No prose/keyword routing or hook-initiated tool
+execution is involved. A delegate/hire decision or any child issue retains the
+error/no-HTTP boundary, preventing the CEO from substituting its own read for
+the assigned worker. Missing authorization and failed plan persistence also
+stop the read. A denied call explicitly reports an error with no asynchronous
+work pending. Worker inventory and user-facing direct chat retain their
+existing behavior.
+
+Completion still requires the recorded decision, fresh real tool data or
+verified worker evidence, and a substantive model report. The atomic scope
+contract is deployed and source-tested. Fresh JAR-35
+(`44a371b4-603a-4f13-9952-4940ec4e54d1`) is done: actual HUD checks confirm
+canonical status, visible substantive verified inventory, and self selection
+without a child. JAR-36 and its real JAR-37 worker also passed the separate
+delegation/native-continuation/final-report path; the current two-objective
+functional compatibility acceptance is complete. Separate restart, direct-chat
+and restoration checks passed as recorded above.
+
+Existing direct-chat sessions can retain a prior model even after runtime
+defaults change. The operator migrated the existing direct-chat session using
+Hermes's supported `POST /api/sessions/{session_id}/model` endpoint while the
+session was idle. A default-selector change alone does not override an
+existing session lock. The receipt
+verifies the same session and all 11 projected messages (oldest order,
+including compacted history), count and SHA-256 before/after; it does not claim
+inspection of hidden/rewound raw database columns. The subsequent real HUD turn
+used the selected alias/provider, returned HTTP 200 and displayed READY without
+creating Paperclip work or altering CEO conversations. The model added prose
+before READY; exact one-word compliance is not claimed. The archived
+`direct-chat-sticky-model-diagnostic.json` preserves the earlier default/model
+mismatch instead of treating it as a failed CEO execution.
+[Supported pinned Hermes handler](https://github.com/NousResearch/hermes-agent/blob/v0.23.1/gateway/platforms/api_server.py#L3246)
 
 The worker's active toolset remains `jarvis_readonly` with only
 `local_ollama_models`. Terminal, filesystem modification, external web,
@@ -809,7 +895,10 @@ configuration. Functional and service-restart acceptance are verified. The
 remaining full direct-chat helper limitation does not represent a failed CEO
 execution or a claimed complete regression-suite pass.
 
-| Acceptance record | Canonical issue | Status |
+The following table records the original four-thread `a0f7fc7` baseline,
+not the copied-profile acceptance above.
+
+| Baseline acceptance record | Canonical issue | Status |
 | --- | --- | --- |
 | Historical self-execution | JAR-10 / `688cb31a-9c24-4fa9-a068-9b07abe4bb61` | Earlier pass retained separately; not the final-cycle direct report |
 | Superseded initial delegation | JAR-11 / `3c19ceb9-dd44-47a8-852c-9f1cc650fa18` | Cancelled/superseded after legacy execution quarantine; not accepted |
@@ -821,11 +910,11 @@ execution or a claimed complete regression-suite pass.
 | Fresh authenticated result delivery | Same JAR-15/CEO run and exact JAR-16 child | `verified_child_results_delivered` and RESULTS READY for review recorded |
 | Final substantive delegated CEO report | JAR-15 / same native CEO continuation | Passed; all eight model names and exact sizes in the final table, with source-claim limits noted above |
 | Final plugin/image regression suite | Final image ID recorded above | 111 passed before current acceptance run |
-| Browser refresh and two-agent roster | `docs/evidence/ceo-browser.json` | Passed; unchanged result hashes, no browser errors and no unnecessary employees |
+| Browser refresh and two-agent roster | Archived `docs/evidence/ceo-before-tuning.json` | Passed; unchanged result hashes, no browser errors and no unnecessary employees |
 | Service restart | `docs/evidence/ceo-restart.json`, `docs/evidence/ceo-delivery.json` | Passed at 09:33 UTC; same JAR-14/15/16 statuses, comment hashes and runs, zero new objectives; browser `--resume` exit 0 after restart |
 | Legacy Phase 5 persistence | `tests/live_persistence.py` | Passed against existing baseline records after restart |
 | Live direct-chat regression | `docs/evidence/direct-chat-regression.json` | Observed working with first-attempt UI/session/task-isolation assertions passed; complete helper pass is not claimed |
-| Final delivery commit | This delivery commit (see `git log`) | Verified implementation, docs and evidence recorded together |
+| Baseline delivery commit | `a0f7fc7` | Verified original implementation, docs and evidence |
 
 Both fresh objectives were submitted through the actual HUD under the final
 configuration. JAR-16 now supplies real worker execution, signed data and a

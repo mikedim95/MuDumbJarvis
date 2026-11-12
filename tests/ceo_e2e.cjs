@@ -2,6 +2,7 @@
    audits and local Ollama data are required. No mocks or alternate scheduler. */
 const { chromium } = require('playwright');
 const fs = require('node:fs');
+const expectedModel = process.env.JARVIS_TEST_MODEL || 'jarvis-hermes:3b';
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const root = '/workspace';
@@ -53,7 +54,7 @@ function runtimeLines(directory, issueId) {
     line.includes('issue:' + issueId) && (line.includes('conversation turn:') || line.includes('tool local_ollama_models completed')));
 }
 function assertLocalRuntime(lines) {
-  assert(lines.some(line => line.includes('model=jarvis-hermes:3b provider=custom')), 'Missing issue-correlated local model execution');
+  assert(lines.some(line => line.includes('model=' + expectedModel + ' provider=custom')), 'Missing issue-correlated local model execution');
 }
 function assertVisibleInventory(text, models) {
   assert(models.length > 0, 'No actual model inventory was retrieved');

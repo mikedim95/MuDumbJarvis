@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-12T10:03:36.293412+00:00",
+  "status": "verified_with_documented_parameter_baseline_limit",
+  "all_observed_preservation_checks_passed": true,
+  "scope": "Read-only comparison captured while the experimental worker run is active; no inference/reload/restart/pull/model-write requests were made by this check.",
+  "checks": {
+    "ai_goat_container_checks_pass": true,
+    "ai_goat_source_files_unchanged": true,
+    "ai_goat_model_checks_pass": true,
+    "pentagi_and_main_ollama_checks_pass": true,
+    "original_eight_names_and_sizes_unchanged": true,
+    "original_jarvis_alias_parameters_unchanged": true,
+    "only_allowed_experimental_alias_added": true,
+    "all_eight_individual_parameter_baselines_available": false
+  },
+  "ai_goat": {
+    "baseline": "docs/evidence/aigoat-reference.json",
+    "containers": {
+      "aigoat-ollama-1": {
+        "before": {
+          "id": "e20fe477386f275539e466fc48ad609da25be91bb987d932a4fa794adee7eb17",
+          "started_at": "2026-11-04T12:30:24.113201001Z",
+          "image_id": "sha256:5aefd07598b55ea910b65abe42d1b5ad8ce3311d35b598c16586a318b5294459",
+          "configuration_sha256_original_order": "7e48b69ff13ed8a9602781da7c8d32a023681dad992bbc75b3126a9a1a548c57",
+          "configuration_sha256_normalized": "7e48b69ff13ed8a9602781da7c8d32a023681dad992bbc75b3126a9a1a548c57"
+        },
+        "after": {
+          "id": "e20fe477386f275539e466fc48ad609da25be91bb987d932a4fa794adee7eb17",
+          "started_at": "2026-11-04T12:30:24.113201001Z",
+          "image_id": "sha256:5aefd07598b55ea910b65abe42d1b5ad8ce3311d35b598c16586a318b5294459",
+          "configuration_sha256_normalized": "7e48b69ff13ed8a9602781da7c8d32a023681dad992bbc75b3126a9a1a548c57",
+          "status": "running"
+        },
+        "checks": {
+          "id_unchanged": true,
+          "started_at_unchanged": true,
+          "image_id_unchanged": true,
+          "configuration_unchanged_after_mount_order_normalization": true,
+          "running": true
+        },
+        "mount_order_verification": {
+          "method": "same_current_order",
+          "permutations_tested": 1,
+          "mount_count": 1,
+          "note": "No baseline configuration values are reconstructed or printed. Matching a full-record permutation to its original digest proves equivalent Config/HostConfig/mount records before sorting by Destination."
+        }
+      },
+      "aigoat-backend-1": {
+        "before": {
+          "id": "f174d9547b0618b5f8da8307a9710cd442a1f835701a1e5186772b4372efe66d",
+          "started_at": "2026-11-04T12:30:24.1421021Z",
+          "image_id": "sha256:09aae8d8af4283f892eddebfbc468691f6a857c46d06146bda00453f282d58fb",
+          "configuration_sha256_original_order": "e35dfc3b0479a11a9ae2fa63f18c52360fc0cba73bee688166a9c743c702615b",
+          "configuration_sha256_normalized": "86d0c04b1d51dabeeff13bc80274695c8060de2b7b8974eb9b6ea6fb74c44af0"
+        },
+        "after": {
+          "id": "f174d9547b0618b5f8da8307a9710cd442a1f835701a1e5186772b4372efe66d",
+          "started_at": "2026-11-04T12:30:24.1421021Z",
+          "image_id": "sha256:09aae8d8af4283f892eddebfbc468691f6a857c46d06146bda00453f282d58fb",
+          "configuration_sha256_normalized": "86d0c04b1d51dabeeff13bc80274695c8060de2b7b8974eb9b6ea6fb74c44af0",
+          "status": "running"
+        },
+        "checks": {
+          "id_unchanged": true,
+          "started_at_unchanged": true,
+          "image_id_unchanged": true,
+          "configuration_unchanged_after_mount_order_normalization": true,
+          "running": true
+        },
+        "mount_order_verification": {
+          "method": "current_full_mount_records_permuted_to_original_digest",
+          "permutations_tested": 5915,
+          "mount_count": 8,
+          "note": "No baseline configuration values are reconstructed or printed. Matching a full-record permutation to its original digest proves equivalent Config/HostConfig/mount records before sorting by Destination."
+        }
+      },
+      "aigoat-frontend-1": {
+        "before": {
+          "id": "aa59987b76287dd3e573998beec382ef1350cecaaf512460d9e5082e4e0c556f",
+          "started_at": "2026-11-04T12:30:24.133388797Z",
+          "image_id": "sha256:8b2994312871b18481bba0c7173cbac88777cb9235a449289c37e477d01e8113",
+          "configuration_sha256_original_order": "ba793a26bf37d4e3245ec4586145a6b2da01187d048de4f40b6f6cb4eadb52d6",
+          "configuration_sha256_normalized": "ba793a26bf37d4e3245ec4586145a6b2da01187d048de4f40b6f6cb4eadb52d6"
+        },
+        "after": {
+          "id": "aa59987b76287dd3e573998beec382ef1350cecaaf512460d9e5082e4e0c556f",
+          "started_at": "2026-11-04T12:30:24.133388797Z",
+          "image_id": "sha256:8b2994312871b18481bba0c7173cbac88777cb9235a449289c37e477d01e8113",
+          "configuration_sha256_normalized": "ba793a26bf37d4e3245ec4586145a6b2da01187d048de4f40b6f6cb4eadb52d6",
+          "status": "running"
+        },
+        "checks": {
+          "id_unchanged": true,
+          "started_at_unchanged": true,
+          "image_id_unchanged": true,
+          "configuration_unchanged_after_mount_order_normalization": true,
+          "running": true
+        },
+        "mount_order_verification": {
+          "method": "same_current_order",
+          "permutations_tested": 1,
+          "mount_count": 1,
+          "note": "No baseline configuration values are reconstructed or printed. Matching a full-record permutation to its original digest proves equivalent Config/HostConfig/mount records before sorting by Destination."
+        }
+      }
+    },
+    "source_files": {
+      "/home/kali/AIGoat/docker/docker-compose.yml": {
+        "before_sha256": "374f1ac47acc0b9c8deffe707b32391dc791a8af3fd5775a34caf40dae1ff8a0",
+        "after_sha256": "374f1ac47acc0b9c8deffe707b32391dc791a8af3fd5775a34caf40dae1ff8a0",
+        "unchanged": true
+      },
+      "/home/kali/AIGoat/docker/docker-compose.override.yml": {
+        "before_sha256": "7aa6320b329606861f55dcb8894fba45f0d38cff9b0ccaa522079146e12d4683",
+        "after_sha256": "7aa6320b329606861f55dcb8894fba45f0d38cff9b0ccaa522079146e12d4683",
+        "unchanged": true
+      },
+      "/home/kali/AIGoat/docker/config.yml": {
+        "before_sha256": "9bac75189296160f6b96e28f45d58365f06b3d0df03c6ad5eff2410e25e72595",
+        "after_sha256": "9bac75189296160f6b96e28f45d58365f06b3d0df03c6ad5eff2410e25e72595",
+        "unchanged": true
+      },
+      "/home/kali/AIGoat/config/config.yml": {
+        "before_sha256": "3ef5a588c6bc26140255559151b4ebb00184fd366d77b1d725ce742a525160c3",
+        "after_sha256": "3ef5a588c6bc26140255559151b4ebb00184fd366d77b1d725ce742a525160c3",
+        "unchanged": true
+      },
+      "/home/kali/AIGoat/app/services/ollama_client.py": {
+        "before_sha256": "8331c23cf037ccacbbddc6c9fe01649797fc5e362fe81281eaedc2603d3d6652",
+        "after_sha256": "8331c23cf037ccacbbddc6c9fe01649797fc5e362fe81281eaedc2603d3d6652",
+        "unchanged": true
+      },
+      "/home/kali/AIGoat/app/core/config.py": {
+        "before_sha256": "1595ce75eeebca8031e08ba29937d9841a930c6b8c00acf787173cf38fa79ba7",
+        "after_sha256": "1595ce75eeebca8031e08ba29937d9841a930c6b8c00acf787173cf38fa79ba7",
+        "unchanged": true
+      }
+    },
+    "model_metadata": {
+      "before": {
+        "version": "0.40.11",
+        "model_name": "ministral-3:3b",
+        "model_manifest": {
+          "name": "ministral-3:3b",
+          "model": "ministral-3:3b",
+          "modified_at": "2026-11-03T08:47:06.766620862Z",
+          "size": 2953840485,
+          "digest": "0474dc0a3226a8487657d1d98d15b28b1b058984c711cdc670b16b52a2cd5b97",
+          "details": {
+            "parent_model": "ministral-3:3b",
+            "format": "gguf",
+            "family": "mistral3",
+            "families": [
+              "mistral3"
+            ],
+            "parameter_size": "3.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 3072,
+            "runner": "ggml"
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools"
+          ]
+        },
+        "parameters_sha256": "4653f668152751fc4fc5c6dc3d336136bfd462ef432be821a44a556fcb10072b",
+        "template_sha256": "24c6226aca35b16350187fb9125e7cb4e746795c78edd3cb1de45654c7e77181"
+      },
+      "after": {
+        "version": "0.40.11",
+        "model_manifest": {
+          "name": "ministral-3:3b",
+          "model": "ministral-3:3b",
+          "modified_at": "2026-11-03T08:47:06.766620862Z",
+          "size": 2953840485,
+          "digest": "0474dc0a3226a8487657d1d98d15b28b1b058984c711cdc670b16b52a2cd5b97",
+          "details": {
+            "parent_model": "ministral-3:3b",
+            "format": "gguf",
+            "family": "mistral3",
+            "families": [
+              "mistral3"
+            ],
+            "parameter_size": "3.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 3072,
+            "runner": "ggml"
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools"
+          ]
+        },
+        "parameters_sha256": "4653f668152751fc4fc5c6dc3d336136bfd462ef432be821a44a556fcb10072b",
+        "template_sha256": "24c6226aca35b16350187fb9125e7cb4e746795c78edd3cb1de45654c7e77181"
+      },
+      "checks": {
+        "server_version_unchanged": true,
+        "model_manifest_unchanged": true,
+        "model_parameters_unchanged": true,
+        "model_template_unchanged": true
+      }
+    }
+  },
+  "existing_services": {
+    "baseline": "docs/evidence/ceo-delivery.json",
+    "fingerprint_algorithm": "SHA256 of default json.dumps(sort_keys=True) over image/config/host_config/mounts, mounts sorted by Destination",
+    "services": {
+      "ollama": {
+        "before": {
+          "id": "954d55068a3ee821b34070c2e2ac875273497c8674de35ef655b3b74695d5da9",
+          "started_at": "2026-11-04T12:30:24.115578626Z",
+          "configuration_sha256": "2705640c3edded53811644191ebff2e3666b8f6c9e8935546679ef75659ef2cc"
+        },
+        "after": {
+          "id": "954d55068a3ee821b34070c2e2ac875273497c8674de35ef655b3b74695d5da9",
+          "started_at": "2026-11-04T12:30:24.115578626Z",
+          "configuration_sha256": "2705640c3edded53811644191ebff2e3666b8f6c9e8935546679ef75659ef2cc"
+        },
+        "checks": {
+          "id_unchanged": true,
+          "started_at_unchanged": true,
+          "configuration_unchanged": true,
+          "running": true
+        }
+      },
+      "pentagi": {
+        "before": {
+          "id": "bb867cd5d2664e5023c0a28bac366181eac9ca71774c103bef412892afee0f5b",
+          "started_at": "2026-11-11T11:52:57.790873869Z",
+          "configuration_sha256": "c13f91a6c7af4beb9a3da948134b4079254e17fe982c81776e4b43c766e20d51"
+        },
+        "after": {
+          "id": "bb867cd5d2664e5023c0a28bac366181eac9ca71774c103bef412892afee0f5b",
+          "started_at": "2026-11-11T11:52:57.790873869Z",
+          "configuration_sha256": "c13f91a6c7af4beb9a3da948134b4079254e17fe982c81776e4b43c766e20d51"
+        },
+        "checks": {
+          "id_unchanged": true,
+          "started_at_unchanged": true,
+          "configuration_unchanged": true,
+          "running": true
+        }
+      }
+    }
+  },
+  "jarvis_models": {
+    "inventory_baseline": "docs/evidence/phase2-tool.json .tool_audit.models",
+    "original_count": 8,
+    "current_count": 9,
+    "added_names": [
+      "jarvis-hermes-aigoat24:3b"
+    ],
+    "expected_allowed_added_names": [
+      "jarvis-hermes-aigoat24:3b"
+    ],
+    "original_model_checks": [
+      {
+        "name": "jarvis-hermes:3b",
+        "before_size_bytes": 2953840466,
+        "after_size_bytes": 2953840466,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+        "current_manifest_modified_at": "2026-11-11T12:46:10.072128633Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [
+          {
+            "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+            "source": "docs/evidence/ollama-speed-screen.json",
+            "json_path": ".model.digest"
+          }
+        ],
+        "manifest_digest_unchanged": true,
+        "current_inference_parameters": {
+          "num_ctx": 65536,
+          "num_thread": 4,
+          "temperature": 0.1
+        },
+        "current_full_parameters_sha256": "486a8208e34eaf8e66fbd7377f7fa18d36ed24a4822adf88751a0511f1a0ceaa",
+        "individual_parameter_baseline_available": true,
+        "parameters_unchanged": true,
+        "parameter_comparison_basis": "Exact pre-tuning parameters and matching manifest"
+      },
+      {
+        "name": "pentagi-basilisk:7b",
+        "before_size_bytes": 4683075812,
+        "after_size_bytes": 4683075812,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "c6762a7785835b9b3d9f753f9d6ba43aa33e6ee11450784538c8ef1ab84a517e",
+        "current_manifest_modified_at": "2026-11-10T11:23:47.400034046Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {
+          "num_ctx": 16384,
+          "num_thread": 4,
+          "temperature": 0.2
+        },
+        "current_full_parameters_sha256": "2803186d2d2c5f8d2458fb854699286d84a3e2dc1c7479f26249bc10347f2203",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "pentagi-whiterabbitneo:7b",
+        "before_size_bytes": 4505856135,
+        "after_size_bytes": 4505856135,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "201c994e8e1aa4e50feac900eaa744b7eefd5e5611dd93f517f97849c7e11ac1",
+        "current_manifest_modified_at": "2026-11-10T11:12:29.578721908Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {
+          "num_ctx": 16384,
+          "num_thread": 4,
+          "temperature": 0.2
+        },
+        "current_full_parameters_sha256": "23b26e734a10517ecd9bdb0e2aacd1a959ced56e1452429c1378fa1e75887216",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+        "before_size_bytes": 4505855004,
+        "after_size_bytes": 4505855004,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "09a59953597386d63be95e71f40456a5136147c5751cc51330f0d03d2887b3c4",
+        "current_manifest_modified_at": "2026-11-10T11:12:22.418708472Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {},
+        "current_full_parameters_sha256": "8685c085645e701326881085cfd91cd1fa6f8aff42eba39a99ecf35a60be8eab",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "ministral-3:3b",
+        "before_size_bytes": 2953840808,
+        "after_size_bytes": 2953840808,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "f04aa1c738f64e13c625b82ae92504fc0260fa6723b509ed1ece0fa188179b1d",
+        "current_manifest_modified_at": "2026-11-10T11:03:51.769751495Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {
+          "temperature": 0.15
+        },
+        "current_full_parameters_sha256": "e96fd3cee0f18f63a5df2dc1115f0bdf681fd2c9f75aa0f082f840f974111b9a",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "granite-code:3b",
+        "before_size_bytes": 1997354777,
+        "after_size_bytes": 1997354777,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "becc94fe18760be2de6f1c8b0a5ce3656bcf1f3a6b8a2e48519098fa214a149b",
+        "current_manifest_modified_at": "2026-11-06T09:25:31.219586754Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {},
+        "current_full_parameters_sha256": "5b1d6e164816b6343e56192c8b5ab1761bec8e234f8cdc692183617ab07c9132",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "before_size_bytes": 274302450,
+        "after_size_bytes": 274302450,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "current_manifest_modified_at": "2026-11-06T09:00:18.264570858Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {
+          "num_ctx": 8192
+        },
+        "current_full_parameters_sha256": "f8fd968218f6656cf1777924c1999c76ef6c96d5767d9d1435095d511b440ec1",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      },
+      {
+        "name": "llama3.2:3b",
+        "before_size_bytes": 2019393189,
+        "after_size_bytes": 2019393189,
+        "name_and_size_unchanged": true,
+        "current_manifest_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+        "current_manifest_modified_at": "2026-10-26T09:02:40.993850358Z",
+        "manifest_modified_before_first_benchmark": true,
+        "pre_tuning_manifest_digest_sources": [],
+        "manifest_digest_unchanged": null,
+        "current_inference_parameters": {},
+        "current_full_parameters_sha256": "2801e61a8848e505a6e20beeaea63cca1600200f6720e5f916ba7d6da5c3ba39",
+        "individual_parameter_baseline_available": false,
+        "parameters_unchanged": null,
+        "parameter_comparison_basis": "No earlier per-model parameter or manifest digest retained; equality not claimed"
+      }
+    ],
+    "limit": "Seven original models lack a retained individual pre-tuning /api/show parameter hash or manifest digest unless listed above. Their names/sizes and existing pre-tuning modified timestamps are checked, current numeric parameter snapshots are retained, and parameter equality is not invented.",
+    "authorized_operation_reported_by_operator": "Created only the separately named experimental alias from existing layers; no original model edited, removed or pulled."
+  },
+  "real_worker_comparison_status": "candidate_pending_not_finalized"
+}

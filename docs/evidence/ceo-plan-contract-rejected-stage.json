@@ -1,0 +1,524 @@
+{
+  "status": "failed",
+  "started_at": "2026-11-12T10:50:22.682Z",
+  "submitted": [
+    {
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "identifier": "JAR-25",
+      "prompt": "Inspect the local Ollama installation, identify installed models, and produce a technical inventory report."
+    },
+    {
+      "id": "3a92a8e5-0fea-4cbf-b108-76c04d6d22e9",
+      "identifier": "JAR-26",
+      "prompt": "Use two distinct roles for this objective: delegate read-only local Ollama data collection to the existing JARVIS-01 operator, then act as the CEO to independently review the completed worker execution evidence and consolidate a technical inventory report. Record a clear scoped Paperclip child task with acceptance criteria, reuse the existing employee, and do not request or create any hires. The worker must use local_ollama_models to retrieve actual model names and sizes. Wait for Paperclip to wake you after the child completes, review the succeeded run and signed tool evidence, then report verified findings and unresolved limits."
+    }
+  ],
+  "progress": [
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "running"
+        }
+      ],
+      "children": [],
+      "observed_at": "2026-11-12T10:50:28.841Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "running"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "in_progress",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "running"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "running"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:53:06.020Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "in_progress",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "running"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:53:23.650Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 0,
+      "observed_at": "2026-11-12T10:56:36.705Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 3478,
+      "observed_at": "2026-11-12T10:56:40.183Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 7032,
+      "observed_at": "2026-11-12T10:56:43.737Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 10455,
+      "observed_at": "2026-11-12T10:56:47.160Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 13919,
+      "observed_at": "2026-11-12T10:56:50.624Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 17468,
+      "observed_at": "2026-11-12T10:56:54.173Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 21017,
+      "observed_at": "2026-11-12T10:56:57.722Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "queued"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 24570,
+      "observed_at": "2026-11-12T10:57:01.275Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "running"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:57:04.809Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "done",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "running"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T11:00:26.899Z"
+    },
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "status": "done",
+      "runs": [
+        {
+          "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+          "status": "succeeded"
+        },
+        {
+          "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+          "identifier": "JAR-27",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+              "status": "succeeded"
+            },
+            {
+              "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T11:00:30.596Z"
+    }
+  ],
+  "browser_errors": [],
+  "updated_at": "2026-11-12T11:00:32.285Z",
+  "roster_before": [
+    {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS-CEO",
+      "role": "ceo",
+      "reportsTo": null
+    },
+    {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS-01",
+      "role": "general",
+      "reportsTo": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    }
+  ],
+  "error": "The expression evaluated to a falsy value:\n\n  assert(plans.some(comment => comment.body.startsWith('[JARVIS CEO PLAN decision=self]')))\n",
+  "current_task": "494849fa-2990-430a-8952-df155492f73a",
+  "current_progress": {
+    "identifier": "JAR-25",
+    "id": "494849fa-2990-430a-8952-df155492f73a",
+    "status": "done",
+    "runs": [
+      {
+        "id": "64f70c01-5b9c-47e3-abad-3385e1f06c4a",
+        "status": "succeeded"
+      },
+      {
+        "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+        "status": "succeeded"
+      }
+    ],
+    "children": [
+      {
+        "id": "14772b8a-b3db-41cd-b22b-121eb0fe7986",
+        "identifier": "JAR-27",
+        "status": "done",
+        "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "runs": [
+          {
+            "id": "45d6341f-0249-47c4-81b6-2e074b909590",
+            "status": "succeeded"
+          },
+          {
+            "id": "0085d68a-65a3-450d-b2d1-f9d3c3efc654",
+            "status": "succeeded"
+          }
+        ]
+      }
+    ]
+  }
+}

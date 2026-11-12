@@ -1,0 +1,109 @@
+{
+  "checked_at": "2026-11-12T09:33:16.973232+00:00",
+  "status": "observed_with_harness_limitations",
+  "full_helper_pass": false,
+  "session_id": "api_1794464162_4c830cc5",
+  "attempts": [
+    {
+      "attempt": 1,
+      "assistant_message_id": 78,
+      "assistant_response": "READY",
+      "runtime_and_http_completed": true,
+      "actual_visible_ready_assertion_passed": true,
+      "exact_hud_and_company_issue_ids_unchanged_assertions_passed": true,
+      "separate_api_session_and_no_ceo_turn_assertions_passed": true,
+      "first_attempt_evidence": {
+        "checked_at": "2026-11-12T09:28:59.806153+00:00",
+        "status": "real_chat_passed_browser_scan_failed",
+        "session_id": "api_1794464162_4c830cc5",
+        "assistant_response": "READY",
+        "assistant_message_id": 78,
+        "runtime_response_ready_at": "2026-11-12T09:24:18.861Z",
+        "fastapi_chat_http_status": 200,
+        "fastapi_chat_response_at": "2026-11-12T09:24:18.939Z",
+        "source": "Existing Hermes authenticated session messages read; gateway response-ready log and FastAPI access log",
+        "browser_scan_failure": "Pre-login background /api/usage response body was aborted by authenticated navigation",
+        "service_restarts": false,
+        "new_paperclip_jobs": false,
+        "original_browser_failure": {
+          "checked_at": "2026-11-12T09:27:13.524Z",
+          "status": "failed",
+          "error": "Some received same-origin text responses could not be scanned\n+ actual - expected\n\n+ [\n+   '/api/usage'\n+ ]\n- []\n",
+          "secret_scan": {
+            "responses_scanned": 57,
+            "leaked_fields": []
+          },
+          "browser_errors": []
+        }
+      },
+      "limitation": "Reached final secret-scan assertion after routing/session/UI/task-isolation checks, then failed because a pre-login /api/usage response body was aborted during navigation. Not a complete browser-secret-scan PASS.",
+      "actual_http_status": 200,
+      "runtime_started_at": "2026-11-12T09:21:29.860Z",
+      "runtime_response_ready_at": "2026-11-12T09:24:18.861Z",
+      "fastapi_response_at": "2026-11-12T09:24:18.939Z",
+      "run_id": null,
+      "run_id_limit": "Original browser assertion required an actual run_ ID and passed; the raw ID was not saved before the later scan failure, so none is invented here."
+    },
+    {
+      "attempt": 2,
+      "assistant_message_id": 80,
+      "assistant_response": "Current active model: mistral3 family (`jarvis-hermes:3b` running `ministral-3:3b`).\nI am operational with installed 3B and 7B models from families mistral3, qwen2, and llama. **No code, prompts, or tooling is invoked unless actively requested by you.**\n\n---\nREADY",
+      "runtime_and_http_completed": true,
+      "reply_exactly_ready": false,
+      "failure": {
+        "checked_at": "2026-11-12T09:31:07.360Z",
+        "status": "failed",
+        "stage": "chat_response_received",
+        "error": "Direct chat did not return READY with a real Hermes run ID",
+        "secret_scan": {
+          "responses_scanned": 37,
+          "leaked_fields": []
+        },
+        "browser_errors": []
+      },
+      "limitation": "Actual HTTP200 chat returned a READY acknowledgement plus model boilerplate. The strict equality assertion stopped the helper before later UI/task/complete secret-scan assertions. The raw HTTP response/run ID were not retained; stored assistant message was independently read through authenticated Hermes messages API.",
+      "actual_http_status": 200,
+      "runtime_started_at": "2026-11-12T09:29:06.899Z",
+      "runtime_response_ready_at": "2026-11-12T09:31:07.240Z",
+      "run_id": null
+    }
+  ],
+  "canonical_company_issue_ids_after": [
+    "00b34673-2995-460d-af5e-7622e5ee1b6d",
+    "2d33efc6-446e-48b7-b4ff-fbb76032833e",
+    "3c19ceb9-dd44-47a8-852c-9f1cc650fa18",
+    "4ced33fc-58d1-4053-8303-02963c645763",
+    "4fb6f16e-df86-4f2a-ab78-80352add2000",
+    "688cb31a-9c24-4fa9-a068-9b07abe4bb61",
+    "76a3de7f-f624-4a95-8e7d-6ca46e41af77",
+    "86e0f800-6f54-44fb-a799-99982ef783dc",
+    "886fde66-3bb3-4f9e-8ec8-cd65cd757d58",
+    "8ea14a70-8f37-4c8b-81f4-7636aecd9706",
+    "aa194673-bc9b-4ee2-827c-20ceddc13794",
+    "b58af7b0-e4d1-4343-bc05-15e12defcdbc",
+    "b5c84f82-095c-4235-ac40-0b963b301c7f",
+    "b76a924a-d1ed-4f06-9b84-68709bf8ad4f",
+    "ccd51df4-2119-45cf-a889-41e6ff2f9db2",
+    "f8f4222d-6a0b-4b08-ad5c-5beec6abf0e0"
+  ],
+  "canonical_snapshot_read_error": null,
+  "canonical_snapshot_note": "Read-only current snapshot. First-attempt source order proves its exact before/after ID comparisons passed, but those original arrays were not retained; they have not been reconstructed.",
+  "runtime_log": [
+    "2026-11-12 09:21:29,860 INFO [api_1794464162_4c830cc5] agent.turn_context: conversation turn: session=api_1794464162_4c830cc5 model=jarvis-hermes:3b provider=custom platform=api_server history=3 msg='Reply with READY only.'",
+    "2026-11-12 09:24:18,861 INFO gateway.run: response ready: platform=api_server chat=api_1794464162_4c830cc5 session=agent:main:api_server:dm:api_1794464162_4c830cc5 time=169.2s api_calls=2 response=5 chars",
+    "2026-11-12 09:29:06,899 INFO [api_1794464162_4c830cc5] agent.turn_context: conversation turn: session=api_1794464162_4c830cc5 model=jarvis-hermes:3b provider=custom platform=api_server history=7 msg='Reply with READY only.'",
+    "2026-11-12 09:31:07,240 INFO gateway.run: response ready: platform=api_server chat=api_1794464162_4c830cc5 session=agent:main:api_server:dm:api_1794464162_4c830cc5 time=120.5s api_calls=1 response=264 chars"
+  ],
+  "fastapi_chat_access_log": [],
+  "services_restarted_by_helper": false,
+  "new_paperclip_tasks_created_by_helper": false,
+  "third_chat_sent": false,
+  "future_helper_fixes": [
+    "Bounded response reads and drain with progress stages",
+    "Observe background responses after authenticated navigation; separately scan explicit pre-login usage, WebSocket frames, DOM and script sources",
+    "READY acknowledgement inclusion matches original Phase5 contract; exact-only adherence recorded separately",
+    "Capture actual HTTP response before semantic assertions and capture secret-checked failure DOM screenshot before browser closes"
+  ],
+  "future_helper_fixes_executed_after_second_attempt": false,
+  "fastapi_chat_access_log_note": "The first response HTTP200 timestamp was observed before the root service restart; current container logs no longer retain that old process access log. The second helper explicitly logged HTTP200 before its semantic assertion failed."
+}

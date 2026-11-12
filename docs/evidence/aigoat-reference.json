@@ -1,0 +1,164 @@
+{
+  "captured_at": "2026-11-12T09:41:00.392468+00:00",
+  "kind": "pre_tuning_read_only_baseline",
+  "no_inference_requests": true,
+  "no_service_or_model_mutations": true,
+  "container_fingerprint_algorithm": "SHA256 of compact sorted UTF-8 JSON containing Config, HostConfig and Mounts from docker inspect; only hash is retained",
+  "containers": {
+    "aigoat-ollama-1": {
+      "id": "e20fe477386f275539e466fc48ad609da25be91bb987d932a4fa794adee7eb17",
+      "started_at": "2026-11-04T12:30:24.113201001Z",
+      "image_id": "sha256:5aefd07598b55ea910b65abe42d1b5ad8ce3311d35b598c16586a318b5294459",
+      "status": "running",
+      "configuration_sha256": "7e48b69ff13ed8a9602781da7c8d32a023681dad992bbc75b3126a9a1a548c57",
+      "inference_environment": {
+        "OLLAMA_CONTEXT_LENGTH": "8192",
+        "OLLAMA_KEEP_ALIVE": "24h",
+        "OLLAMA_MAX_LOADED_MODELS": "1",
+        "OLLAMA_NUM_PARALLEL": "1"
+      },
+      "limits": {
+        "NanoCpus": 0,
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpusetCpus": "",
+        "Memory": 0,
+        "DeviceRequests": null
+      },
+      "effective_cgroup": {
+        "cpu.max": "max 100000",
+        "cpuset.cpus.effective": "0-31",
+        "memory.max": "max"
+      }
+    },
+    "aigoat-backend-1": {
+      "id": "f174d9547b0618b5f8da8307a9710cd442a1f835701a1e5186772b4372efe66d",
+      "started_at": "2026-11-04T12:30:24.1421021Z",
+      "image_id": "sha256:09aae8d8af4283f892eddebfbc468691f6a857c46d06146bda00453f282d58fb",
+      "status": "running",
+      "configuration_sha256": "e35dfc3b0479a11a9ae2fa63f18c52360fc0cba73bee688166a9c743c702615b",
+      "inference_environment": {},
+      "limits": {
+        "NanoCpus": 0,
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpusetCpus": "",
+        "Memory": 0,
+        "DeviceRequests": null
+      },
+      "effective_cgroup": {
+        "cpu.max": "max 100000",
+        "cpuset.cpus.effective": "0-31",
+        "memory.max": "max"
+      }
+    },
+    "aigoat-frontend-1": {
+      "id": "aa59987b76287dd3e573998beec382ef1350cecaaf512460d9e5082e4e0c556f",
+      "started_at": "2026-11-04T12:30:24.133388797Z",
+      "image_id": "sha256:8b2994312871b18481bba0c7173cbac88777cb9235a449289c37e477d01e8113",
+      "status": "running",
+      "configuration_sha256": "ba793a26bf37d4e3245ec4586145a6b2da01187d048de4f40b6f6cb4eadb52d6",
+      "inference_environment": {},
+      "limits": {
+        "NanoCpus": 0,
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpusetCpus": "",
+        "Memory": 0,
+        "DeviceRequests": null
+      },
+      "effective_cgroup": {
+        "cpu.max": "max 100000",
+        "cpuset.cpus.effective": "0-31",
+        "memory.max": "max"
+      }
+    }
+  },
+  "source_files": {
+    "/home/kali/AIGoat/docker/docker-compose.yml": {
+      "sha256": "374f1ac47acc0b9c8deffe707b32391dc791a8af3fd5775a34caf40dae1ff8a0",
+      "modified_utc": "2026-11-02T10:30:51.095682+00:00"
+    },
+    "/home/kali/AIGoat/docker/docker-compose.override.yml": {
+      "sha256": "7aa6320b329606861f55dcb8894fba45f0d38cff9b0ccaa522079146e12d4683",
+      "modified_utc": "2026-11-03T08:44:06+00:00"
+    },
+    "/home/kali/AIGoat/docker/config.yml": {
+      "sha256": "9bac75189296160f6b96e28f45d58365f06b3d0df03c6ad5eff2410e25e72595",
+      "modified_utc": "2026-11-03T08:42:49+00:00"
+    },
+    "/home/kali/AIGoat/config/config.yml": {
+      "sha256": "3ef5a588c6bc26140255559151b4ebb00184fd366d77b1d725ce742a525160c3",
+      "modified_utc": "2026-11-03T08:42:49+00:00"
+    },
+    "/home/kali/AIGoat/app/services/ollama_client.py": {
+      "sha256": "8331c23cf037ccacbbddc6c9fe01649797fc5e362fe81281eaedc2603d3d6652",
+      "modified_utc": "2026-11-03T08:42:49+00:00"
+    },
+    "/home/kali/AIGoat/app/core/config.py": {
+      "sha256": "1595ce75eeebca8031e08ba29937d9841a930c6b8c00acf787173cf38fa79ba7",
+      "modified_utc": "2026-11-03T08:42:49+00:00"
+    }
+  },
+  "ollama_version": "0.40.11",
+  "model_name": "ministral-3:3b",
+  "model_manifest": {
+    "name": "ministral-3:3b",
+    "model": "ministral-3:3b",
+    "modified_at": "2026-11-03T08:47:06.766620862Z",
+    "size": 2953840485,
+    "digest": "0474dc0a3226a8487657d1d98d15b28b1b058984c711cdc670b16b52a2cd5b97",
+    "details": {
+      "parent_model": "ministral-3:3b",
+      "format": "gguf",
+      "family": "mistral3",
+      "families": [
+        "mistral3"
+      ],
+      "parameter_size": "3.8B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 262144,
+      "embedding_length": 3072,
+      "runner": "ggml"
+    },
+    "capabilities": [
+      "completion",
+      "vision",
+      "tools"
+    ]
+  },
+  "saved_model_parameters": {
+    "num_ctx": 8192,
+    "num_predict": 768,
+    "num_thread": 16,
+    "temperature": 0.15
+  },
+  "saved_model_parameters_sha256": "4653f668152751fc4fc5c6dc3d336136bfd462ef432be821a44a556fcb10072b",
+  "model_template_sha256": "24c6226aca35b16350187fb9125e7cb4e746795c78edd3cb1de45654c7e77181",
+  "observed_active_runners": [
+    {
+      "pid": 1449391,
+      "binary": "llama-server",
+      "started_at": "2026-11-12T06:19:54.020000+00:00",
+      "performance_flags": {
+        "--offline": true,
+        "-c": "8192",
+        "-np": "1",
+        "--no-jinja": true,
+        "--load-mode": "none",
+        "--flash-attn": "auto",
+        "-b": "1024",
+        "-ub": "1024",
+        "-t": "24",
+        "--context-shift": true,
+        "--keep": "4"
+      },
+      "process_status": {
+        "Threads": "59",
+        "Cpus_allowed_list": "0-31",
+        "Mems_allowed_list": "0"
+      }
+    }
+  ],
+  "post_tuning_comparison": "pending"
+}

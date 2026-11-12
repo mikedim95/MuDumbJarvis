@@ -13,6 +13,28 @@ child to the existing JARVIS-01 worker. Paperclip wakes the CEO to review signed
 execution evidence and consolidate the result. Future hires require human
 approval. See [CEO architecture, configuration and verification](docs/CEO_ORCHESTRATION.md).
 
+The verified CEO baseline is commit `a0f7fc7`. A subsequent local performance
+profile, `jarvis-hermes-aigoat24:3b`, is selected in the existing runtimes for
+the verified JAR-35/JAR-36 compatibility workflow. A clean native test measured 2.44× decode
+throughput; one real worker task took 80.089 seconds versus 352.719 seconds on
+the original profile. The worker comparison includes different batch/output
+settings and has documented prose limitations. Fresh JAR-35 passed the actual
+HUD self-execution test with verified inventory and no child tasks. JAR-36
+passed real JAR-37 worker execution, native CEO wake and a visible final
+report; refresh preserved both objectives and the roster stayed at two.
+A five-service restart preserved the complete task history; direct chat passed
+with its existing history preserved, and AIgoat was restored. See
+[measurements, profile selection and rollback](docs/OLLAMA_TUNING.md).
+CEO and worker have separate contexts but share the selected model's single
+inference slot; calls can queue. Twenty-four CPU threads accelerate one call
+and do not provide 24 concurrent agents.
+
+For simple inventory work, the CEO's actual read-tool choice records its
+self-work scope in Paperclip before the read. Delegation similarly records
+the chosen assignment scope before creating a child. These records identify
+runtime-derived scope separately from model-authored rationale; no separate
+planning-tool call or execution evidence is fabricated.
+
 Paperclip is the only task orchestrator and task database. Direct Hermes chat
 uses separate sessions. Agent tools are limited to read-only local model
 inventory; host files, shell execution and external actions are unavailable.
@@ -26,8 +48,11 @@ With Docker/Compose installed and the existing `ollama` container running with
 ```
 
 Open http://localhost:8765/hud/ and unlock with `JARVIS_HUD_TOKEN` from
-`deploy/.env`. Choose **Persistent task**, select **JARVIS-01**, and type your
-command. Choose **Direct chat** for ordinary conversation. Task history and
+`deploy/.env`. Choose **CEO objective** and submit one objective. The CEO
+chooses direct work or a scoped assignment to the existing worker, and the HUD
+shows Paperclip's plan, hierarchy, progress and final result. **Persistent task**
+remains available to assign a task directly to **JARVIS-01**. Choose **Direct
+chat** for ordinary conversation in its separate session. Task history and
 results come from Paperclip and survive browser refresh and service restart.
 Paperclip's operator UI is http://localhost:3100; its generated login is in
 `.runtime/operator.json`.
@@ -35,8 +60,12 @@ Paperclip's operator UI is http://localhost:3100; its generated login is in
 For remote access, use the SSH tunnel in [COMMAND_CENTER.md](docs/COMMAND_CENTER.md#access-from-another-computer).
 
 Configuration: `server/config/server.yaml`, `.runtime/hermes/config.yaml`,
+`.runtime/hermes-ceo/config.yaml`,
 and server-side `deploy/.env`. Secret-free templates are in `deploy/` and
 `server/config/`. Generated secrets and runtime data are excluded from Git.
+Fresh-install source defaults retain `jarvis-hermes:3b`; selecting an already
+installed copied profile is an explicit operator action through
+`deploy/select_ollama_profile.py`.
 
 ```sh
 docker compose -f deploy/compose.yaml restart

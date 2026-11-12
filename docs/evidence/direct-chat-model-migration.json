@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-11-12T11:46:22.504352+00:00",
+  "migration_applied": true,
+  "supported_endpoint": "POST /api/sessions/{id}/model",
+  "model": "jarvis-hermes-aigoat24:3b",
+  "provider": "custom",
+  "history_reset": false,
+  "inference_requested": false,
+  "actual_next_turn_model_verified": true,
+  "history_receipt": {
+    "session_id": "api_1794464162_4c830cc5",
+    "target_model": "jarvis-hermes-aigoat24:3b",
+    "provider": "custom",
+    "stage": "verified_after_supported_model_lock",
+    "message_count_before": 11,
+    "message_payload_sha256_before": "3af9f3b4d86107e07b910e2627c903e80a0fa9a9a03fa39fc45283e0052ea28b",
+    "scope": "All projected client-message history with order=oldest/include_compacted=true; not hidden/rewound raw database columns",
+    "message_count_after": 11,
+    "message_payload_sha256_after": "3af9f3b4d86107e07b910e2627c903e80a0fa9a9a03fa39fc45283e0052ea28b",
+    "message_count_preserved": true,
+    "message_sha256_preserved": true,
+    "session_id_preserved": true,
+    "local_provider_configuration_preserved": true,
+    "selected_model": "jarvis-hermes-aigoat24:3b"
+  },
+  "operator_note": "Model update succeeded; receipt was read through the container because its private 0600 permissions correctly block host-user access.",
+  "actual_next_turn_run_id": "run_8fe9ac4a8652422cae44af2acb726e62",
+  "actual_next_turn_evidence": "direct-chat-regression.json"
+}

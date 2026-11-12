@@ -1,0 +1,179 @@
+{
+  "checked_at": "2026-11-12T11:10:46.012657+00:00",
+  "source": "Authenticated reads of actual stored Hermes message records and canonical Paperclip issues; no mocked execution",
+  "cases": [
+    {
+      "identifier": "JAR-25",
+      "id": "494849fa-2990-430a-8952-df155492f73a",
+      "defect": "Explicit self plan without optional rationale or with plan alias was wrongly rejected",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:494849fa-2990-430a-8952-df155492f73a",
+      "actual_message_records": [
+        {
+          "message_id": 88,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_cvhbtrz3",
+            "call_id": "call_cvhbtrz3",
+            "response_item_id": "fc_cvhbtrz3",
+            "type": "function",
+            "function": {
+              "name": "local_ollama_models",
+              "arguments": "{}"
+            }
+          }
+        },
+        {
+          "message_id": 89,
+          "role": "tool",
+          "tool_call_id": "call_cvhbtrz3",
+          "content": "{\"status\": \"not_executed\", \"reason\": \"Direct CEO inventory requires a recorded self decision. Delegated objectives use the existing worker.\", \"next\": \"Use paperclip_ceo to assign the scoped child, then end with a short waiting update. When the child is done, review its signed evidence. Do not produce an inventory report before that review.\"}"
+        },
+        {
+          "message_id": 90,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_dd263i5h",
+            "call_id": "call_dd263i5h",
+            "response_item_id": "fc_dd263i5h",
+            "type": "function",
+            "function": {
+              "name": "paperclip_ceo",
+              "arguments": "{\"action\":\"plan\",\"decision\":\"self\"}"
+            }
+          }
+        },
+        {
+          "message_id": 91,
+          "role": "tool",
+          "tool_call_id": "call_dd263i5h",
+          "content": "{\"error\": \"[TOOL_ERROR] Tool execution failed: ValueError: A self/delegate/hire decision and a clear scoped plan are required\"}"
+        },
+        {
+          "message_id": 92,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_805hut7f",
+            "call_id": "call_805hut7f",
+            "response_item_id": "fc_805hut7f",
+            "type": "function",
+            "function": {
+              "name": "local_ollama_models",
+              "arguments": "{}"
+            }
+          }
+        },
+        {
+          "message_id": 93,
+          "role": "tool",
+          "tool_call_id": "call_805hut7f",
+          "content": "{\"status\": \"not_executed\", \"reason\": \"Direct CEO inventory requires a recorded self decision. Delegated objectives use the existing worker.\", \"next\": \"Use paperclip_ceo to assign the scoped child, then end with a short waiting update. When the child is done, review its signed evidence. Do not produce an inventory report before that review.\"}"
+        },
+        {
+          "message_id": 94,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_wtpxviov",
+            "call_id": "call_wtpxviov",
+            "response_item_id": "fc_wtpxviov",
+            "type": "function",
+            "function": {
+              "name": "paperclip_ceo",
+              "arguments": "{\"action\":\"plan\",\"decision\":\"self\",\"plan\":\"Complete the inventory by reading the *actual* installed Ollama models using the local_ollama_models tool. Produce the verified technical report with exact model names, sizes (bytes/GiB), and source once retrieved. Do not delegate unless the task explicitly requires dual roles.\"}"
+            }
+          }
+        },
+        {
+          "message_id": 95,
+          "role": "tool",
+          "tool_call_id": "call_wtpxviov",
+          "content": "{\"error\": \"[TOOL_ERROR] Tool execution failed: ValueError: A self/delegate/hire decision and a clear scoped plan are required\"}"
+        },
+        {
+          "message_id": 96,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_8760xg0p",
+            "call_id": "call_8760xg0p",
+            "response_item_id": "fc_8760xg0p",
+            "type": "function",
+            "function": {
+              "name": "local_ollama_models",
+              "arguments": "{}"
+            }
+          }
+        },
+        {
+          "message_id": 97,
+          "role": "tool",
+          "tool_call_id": "call_8760xg0p",
+          "content": "{\"status\": \"not_executed\", \"reason\": \"Direct CEO inventory requires a recorded self decision. Delegated objectives use the existing worker.\", \"next\": \"Use paperclip_ceo to assign the scoped child, then end with a short waiting update. When the child is done, review its signed evidence. Do not produce an inventory report before that review.\"}"
+        },
+        {
+          "message_id": 98,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_4rsde4bg",
+            "call_id": "call_4rsde4bg",
+            "response_item_id": "fc_4rsde4bg",
+            "type": "function",
+            "function": {
+              "name": "paperclip_ceo",
+              "arguments": "{\"action\":\"delegate\",\"agent_id\":\"09f66b7a-d435-4332-be9a-9223055d0bef\",\"title\":\"Technical Ollama Model Inventory Operator\",\"text\":\"Collect *exact* model names, sizes (bytes/GiB), sizes (architecture details) and *actual* completion source using the local_ollama_models tool. Produce one compact table with the requested report. Review results and verify compliance with this task.\"}"
+            }
+          }
+        },
+        {
+          "message_id": 99,
+          "role": "tool",
+          "tool_call_id": "call_4rsde4bg",
+          "content": "{\"child_id\": \"14772b8a-b3db-41cd-b22b-121eb0fe7986\", \"identifier\": \"JAR-27\", \"assigned_to\": \"JARVIS-01\", \"status\": \"todo\", \"next\": \"End this turn with a short waiting update. Do not poll or hire. Paperclip will wake the CEO when the worker finishes.\"}"
+        }
+      ],
+      "canonical_issue": {
+        "id": "494849fa-2990-430a-8952-df155492f73a",
+        "identifier": "JAR-25",
+        "status": "done",
+        "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+        "projectId": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+        "assigneeAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+      }
+    },
+    {
+      "identifier": "JAR-29",
+      "id": "eeb52003-acef-4a34-98cf-45ffe585919e",
+      "defect": "Gated inventory returned successful not_executed payload although no request ran; waiting prose was blocked",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:eeb52003-acef-4a34-98cf-45ffe585919e",
+      "actual_message_records": [
+        {
+          "message_id": 112,
+          "role": "assistant",
+          "tool_call": {
+            "id": "call_2k5lwi5a",
+            "call_id": "call_2k5lwi5a",
+            "response_item_id": "fc_2k5lwi5a",
+            "type": "function",
+            "function": {
+              "name": "local_ollama_models",
+              "arguments": "{}"
+            }
+          }
+        },
+        {
+          "message_id": 113,
+          "role": "tool",
+          "tool_call_id": "call_2k5lwi5a",
+          "content": "{\"status\": \"not_executed\", \"reason\": \"Direct CEO inventory requires a recorded self decision. Delegated objectives use the existing worker.\", \"next\": \"Use paperclip_ceo to assign the scoped child, then end with a short waiting update. When the child is done, review its signed evidence. Do not produce an inventory report before that review.\"}"
+        }
+      ],
+      "canonical_issue": {
+        "id": "eeb52003-acef-4a34-98cf-45ffe585919e",
+        "identifier": "JAR-29",
+        "status": "blocked",
+        "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+        "projectId": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+        "assigneeAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+      }
+    }
+  ],
+  "acceptance_status": "These attempts are retained as failed/rejected verification history; not a successful final acceptance"
+}

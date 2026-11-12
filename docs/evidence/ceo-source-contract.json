@@ -1,0 +1,230 @@
+{
+  "recorded_at": "2026-11-12T11:31:18.255938+00:00",
+  "artifact_scope": "Source regression and contract provenance only; does not replace or overwrite final real-browser proof",
+  "test_result": {
+    "status": "passed",
+    "tests_passed": 131,
+    "warnings": 3,
+    "duration_seconds": 4.92,
+    "observed_stdout_summary": "131 passed, 3 warnings in 4.92s",
+    "command": "docker run --rm --network none --user 1000:1000 -e PYTHONDONTWRITEBYTECODE=1 -v \"$PWD:/workspace:ro\" -v /tmp/jarvis-direct-self-init.py:/workspace/hermes-plugin/jarvis_readonly/__init__.py:ro -v /tmp/jarvis-direct-self-ceo_tools.py:/workspace/hermes-plugin/jarvis_readonly/ceo_tools.py:ro -v /tmp/jarvis-direct-self-test_ceo_tools.py:/workspace/tests/test_ceo_tools.py:ro --entrypoint /opt/venv/bin/python jarvis-command-center:hud -m pytest -q -p no:cacheprovider /workspace/tests",
+    "network": "none",
+    "runtime": "Existing jarvis-command-center:hud isolated test container; synthetic test data and mocked APIs",
+    "exact_run_timestamp": "Not separately captured by runner; result and tested source digests recorded here",
+    "warnings_summary": [
+      "Starlette httpx TestClient deprecation",
+      "FastAPI startup on_event deprecation (two warnings)"
+    ]
+  },
+  "source_files": {
+    "hermes-plugin/jarvis_readonly/__init__.py": {
+      "tested_or_reviewed_source_sha256": "fd202c62c426548a9986386d18dc595db040629f6121d1eeb2a9897ff637bb91",
+      "current_repository_sha256": "fd202c62c426548a9986386d18dc595db040629f6121d1eeb2a9897ff637bb91",
+      "current_matches_staged": true,
+      "scope": "Source mounted in isolated regression container"
+    },
+    "hermes-plugin/jarvis_readonly/ceo_tools.py": {
+      "tested_or_reviewed_source_sha256": "56fce34854ec256e0c6c4da6641ad943d4132d25b93d4ebb26b2dc63e33bb502",
+      "current_repository_sha256": "56fce34854ec256e0c6c4da6641ad943d4132d25b93d4ebb26b2dc63e33bb502",
+      "current_matches_staged": true,
+      "scope": "Source mounted in isolated regression container"
+    },
+    "tests/test_ceo_tools.py": {
+      "tested_or_reviewed_source_sha256": "ef38b9fe15f608ba88adae2cefe544c702c5386200a56addd138738845c43b3a",
+      "current_repository_sha256": "ef38b9fe15f608ba88adae2cefe544c702c5386200a56addd138738845c43b3a",
+      "current_matches_staged": true,
+      "scope": "Source mounted in isolated regression container"
+    },
+    "deploy/CEO_POLICY.md": {
+      "tested_or_reviewed_source_sha256": "73f616e8c20ede37843e3aae8b4675544747cc4cb1612a7d99c83fdd8c5f1a39",
+      "current_repository_sha256": "73f616e8c20ede37843e3aae8b4675544747cc4cb1612a7d99c83fdd8c5f1a39",
+      "current_matches_staged": true,
+      "scope": "Policy wording manually reviewed; no model execution is implied by unit tests"
+    }
+  },
+  "source_contract": {
+    "model_agency": "Only an actual call to local_ollama_models selects direct self execution; no keyword routing, hook execution, employee selection, or task scheduling",
+    "ordering": "Authenticated scope/issue/run/project and authoritative child checks, then persistent self-scope comment, then model_direct_tool_choice audit, then only the already-requested read",
+    "plan_provenance": "Runtime-recorded objective/tool scope from the model direct choice; explicitly not model rationale or a separate paperclip_ceo invocation",
+    "audit": {
+      "source": "model_direct_tool_choice",
+      "tool": "local_ollama_models",
+      "action": "self_execution_selected",
+      "separate_paperclip_ceo_invocation": false
+    },
+    "authorization": "Existing role/current-agent/current-assignee/company/execution/project checks remain. Delegated/hiring decisions and any existing children block competing inventory. Scope/plan-write failure performs no Ollama read. Worker and direct-chat behavior remain unchanged.",
+    "execution_evidence": "Choice audit is not retrieval proof. Real successful read and lifecycle reporting still produce independent actual tool data and signed evidence."
+  },
+  "dispatch_review": {
+    "status": "Confirmed sequential for these plugin tools in pinned Hermes; no speculative lock added",
+    "source_paths": [
+      "/opt/hermes/run_agent.py:1315-1338",
+      "/opt/hermes/agent/tool_dispatch_helpers.py:182-209",
+      "/opt/hermes/agent/tool_dispatch_helpers.py:212-261",
+      "/opt/hermes/agent/tool_executor.py:1871-1911",
+      "/opt/hermes/tools/mcp_tool_discovery.py:814-818"
+    ],
+    "actual_pure_planner_checks": [
+      {
+        "emission_order": [
+          "paperclip_ceo",
+          "local_ollama_models"
+        ],
+        "result": "one sequential segment"
+      },
+      {
+        "emission_order": [
+          "local_ollama_models",
+          "paperclip_ceo"
+        ],
+        "result": "one sequential segment"
+      }
+    ],
+    "mcp_parallel_opt_in": {
+      "paperclip_ceo": false,
+      "local_ollama_models": false
+    },
+    "correction": "A code-level concurrent-interleaving concern was retracted after verifying actual planner admission; multi-call model emission does not mean these handlers overlap."
+  },
+  "rejected_compatibility_history": {
+    "narrative": "JAR32/33 used the prior real-error inventory gate. Direct inventory without a separate plan was blocked; the model did not reliably recover through bookkeeping, so these were not accepted as the final two-objective proof. The new interface preserves the actual direct tool choice and records its scope before execution. Completed historical child results remain retained.",
+    "cases": [
+      {
+        "identifier": "JAR-32",
+        "id": "48560754-910f-4521-b5c9-ad4078efef24",
+        "canonical_status": "blocked",
+        "runs": [
+          {
+            "runId": "3871e1a1-5422-421c-82ee-f0160299039f",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T11:15:12.039Z",
+            "finishedAt": "2026-11-12T11:16:11.500Z",
+            "errorCode": null
+          }
+        ],
+        "children": [],
+        "latest_comment_header": "CEO verification blocked: no plan/assignment decision was recorded in Paperclip.",
+        "acceptance_status": "Rejected/superseded compatibility attempt; no claim of final acceptance"
+      },
+      {
+        "identifier": "JAR-33",
+        "id": "5ecf4080-ee0a-41fb-b7b0-2b544bfb9f36",
+        "canonical_status": "done",
+        "runs": [
+          {
+            "runId": "b77544a4-bc61-44cd-bf1e-77120cb837c3",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T11:18:59.319Z",
+            "finishedAt": "2026-11-12T11:22:08.180Z",
+            "errorCode": null
+          },
+          {
+            "runId": "18b8c0af-6d6e-49f1-9a8f-cf6b73c361af",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T11:16:12.165Z",
+            "finishedAt": "2026-11-12T11:17:14.488Z",
+            "errorCode": null
+          }
+        ],
+        "children": [
+          {
+            "id": "bf8551ba-f53a-4203-926a-762f53093aba",
+            "identifier": "JAR-34",
+            "status": "done",
+            "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef"
+          }
+        ],
+        "latest_comment_header": "JARVIS-01 has returned the verified inventory via `local_ollama_models`:",
+        "acceptance_status": "Actual delegation/completion retained; paired final acceptance superseded because its simple-objective companion JAR-32 failed."
+      }
+    ],
+    "related_actual_protocol_evidence": "docs/evidence/ceo-tool-contract-mismatches.json"
+  },
+  "live_acceptance": "Pending/recorded separately in docs/evidence/ceo-browser.json; unit results do not claim a live model result",
+  "live_direct_choice_observation": {
+    "recorded_at": "2026-11-12T11:31:53.260700+00:00",
+    "issue_id": "44a371b4-603a-4f13-9952-4940ec4e54d1",
+    "identifier": "JAR-35",
+    "canonical_issue_status": "done",
+    "canonical_run": {
+      "id": "606bf80c-37d6-4de1-8341-5c7d52a79206",
+      "agentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "status": "succeeded",
+      "startedAt": "2026-11-12T11:27:57.143Z",
+      "finishedAt": "2026-11-12T11:31:15.225Z"
+    },
+    "actual_choice_audit": {
+      "timestamp": 1794482962.3510711,
+      "source": "model_direct_tool_choice",
+      "tool": "local_ollama_models",
+      "action": "self_execution_selected",
+      "issue_id": "44a371b4-603a-4f13-9952-4940ec4e54d1",
+      "paperclip_run_id": "606bf80c-37d6-4de1-8341-5c7d52a79206",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:44a371b4-603a-4f13-9952-4940ec4e54d1",
+      "result": {
+        "recorded": true,
+        "decision": "self",
+        "basis": "The model directly invoked this read-only tool; the runtime recorded its assigned-objective scope before the read.",
+        "separate_paperclip_ceo_invocation": false
+      }
+    },
+    "plan_comment": {
+      "id": "3a513b97-7369-4933-a279-fb19213c95f8",
+      "createdAt": "2026-11-12T11:29:22.254Z",
+      "authorAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "createdByRunId": "606bf80c-37d6-4de1-8341-5c7d52a79206",
+      "body": "[JARVIS CEO PLAN decision=self]\nRuntime-recorded scope from the model's direct local_ollama_models selection. This is not a model-supplied rationale or a separate paperclip_ceo invocation.\nAssigned objective: Inspect the local Ollama installation, identify installed models, and produce a technical inventory report.\nAuthorized requested action: read local Ollama model names and sizes with local_ollama_models, then report verified facts or actual blockers. No employee assignment or new permission is created."
+    },
+    "actual_tool_completion": {
+      "timestamp": 1794482962.3857546,
+      "paperclip_run_id": "606bf80c-37d6-4de1-8341-5c7d52a79206",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:44a371b4-603a-4f13-9952-4940ec4e54d1",
+      "tool": "local_ollama_models",
+      "source": "Ollama /api/tags",
+      "models": 9
+    },
+    "observed_order_verified": "Persisted plan timestamp <= honest direct-choice audit timestamp <= actual tool-result timestamp",
+    "http_start_order_basis": "Source code and isolated ordered-write regression establish that HTTP starts after plan PATCH and choice audit; no separate HTTP-start timestamp is invented.",
+    "separate_paperclip_ceo_invocation_claimed": false
+  },
+  "additional_operator_validation": {
+    "recorded_at": "2026-11-12T11:34:12.940751+00:00",
+    "source": "Root operator reported these actual tool executions in this session; not repeated by this evidence packager",
+    "checks": [
+      {
+        "name": "Both JS browser helpers node --check in network-none existing browser image",
+        "status": "passed",
+        "exit_code": 0,
+        "source_sha256": {
+          "tests/ceo_e2e.cjs": "fb5eab41a53143d24e167f60c587c3159bc32b5fd51da64b5873cb138d80f610",
+          "tests/direct_chat_regression.cjs": "ef80ce46e22a531e9bb2ed0a47371c943ba5e4224739f68065c544bd6e7b40b4"
+        }
+      },
+      {
+        "name": "agent_speed candidate24 offline plan without --create",
+        "status": "not_executed",
+        "exit_code": 0,
+        "http_requests": 0,
+        "source_sha256": "790859d4ea908e5c8d933c014aeeef318c8641b8ff0c41c35698e5bc8aab09d8"
+      }
+    ]
+  },
+  "prepared_final_checker": {
+    "path": "/tmp/jarvis-final-delivery-check.py",
+    "sha256": "be178a34861df294f49ccefed3bbd0fb5da69741a035237b3667d079b022ed06",
+    "status": "source_prepared_not_executed",
+    "execution_owner": "Root operator after restart, direct-chat validation and AIgoat restoration",
+    "additional_scope": "Future internal-env protected /v1/models unauth401/auth200 and authenticated /health200 for both isolated Hermes runtimes; source prepared only, not executed"
+  },
+  "final_operator_verification": {
+    "checker_executed": true,
+    "checker_sha256": "199c53eeaa99ffa315344c4bd7b91a640618cf48b2b51eaad7f8225000081eba",
+    "result": "passed",
+    "evidence": "final-delivery-check.json",
+    "fresh_ceo_browser": "ceo-browser.json",
+    "restart": "ceo-tuning-restart.json",
+    "separate_chat": "direct-chat-regression.json",
+    "supported_chat_model_migration": "direct-chat-model-migration.json",
+    "aigoat_restored": "aigoat-restored.json"
+  }
+}

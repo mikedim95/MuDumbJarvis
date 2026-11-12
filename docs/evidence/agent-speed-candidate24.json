@@ -1,0 +1,96 @@
+{
+  "started_at": "2026-11-12T10:00:41.140859+00:00",
+  "status": "failed",
+  "profile": "candidate24",
+  "model": "jarvis-hermes-aigoat24:3b",
+  "prompt": "Use local_ollama_models to retrieve installed Ollama models. Report the total count and exact name and byte size of the first three models returned. Keep prose under 60 words.",
+  "submission_provenance": "Operator-created Paperclip API issue; authenticated JARVIS result reads, not a HUD-submission test",
+  "assigneeAdapterOverrides": {
+    "adapterConfig": {
+      "payloadTemplate": {
+        "model": "jarvis-hermes-aigoat24:3b"
+      }
+    }
+  },
+  "inventory_before": [
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size_bytes": 2953840525
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size_bytes": 2953840466
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size_bytes": 4683075812
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size_bytes": 4505856135
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size_bytes": 4505855004
+    },
+    {
+      "name": "ministral-3:3b",
+      "size_bytes": 2953840808
+    },
+    {
+      "name": "granite-code:3b",
+      "size_bytes": 1997354777
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size_bytes": 274302450
+    },
+    {
+      "name": "llama3.2:3b",
+      "size_bytes": 2019393189
+    }
+  ],
+  "model_before": {
+    "name": "jarvis-hermes-aigoat24:3b",
+    "digest": "d407fe1dccfbc7e2e09a052925d11dcd235561a6bf0c297b520a078d1bbbabc8",
+    "size": 2953840525,
+    "details": {
+      "parent_model": "jarvis-hermes:3b",
+      "format": "gguf",
+      "family": "mistral3",
+      "families": [
+        "mistral3"
+      ],
+      "parameter_size": "3.8B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 262144,
+      "embedding_length": 3072,
+      "runner": "ggml"
+    },
+    "weight_blob_sha256": "910e4bf4e2338f181e99796d7452404e85c1b6bbbf8cd0bb094672cf9b6f2f22",
+    "parameters": "num_thread                     24\ntemperature                    0.1\ntop_k                          40\ntop_p                          0.9\nnum_batch                      1024\nnum_ctx                        65536\nnum_predict                    768",
+    "template_sha256": "00f34c7aae2f0bb051d77b7d9ab69159145384f0f7936e61aeb2af3acbd3174a",
+    "system_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+  },
+  "request_id": "f6748535-2037-4bb2-9f4e-b568fab6cd10",
+  "submission_started_at": "2026-11-12T10:00:41.227648+00:00",
+  "issue_id": "c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+  "identifier": "JAR-18",
+  "idempotency_replay_same_id": true,
+  "last_observed_at": "2026-11-12T10:10:23.254260+00:00",
+  "last_observed_status": "blocked",
+  "finished_at": "2026-11-12T10:10:23.254978+00:00",
+  "error": "Real task failed/blocked; no false completion or automatic retry",
+  "post_measurement_review": {
+    "status": "superseded_for_performance_decisions",
+    "reason": "The user reported competing work, and an active AIgoat inference runner was subsequently observed. These measurements did not establish an uncontended host.",
+    "raw_measurements_preserved": true,
+    "accepted_replacements": [
+      "ollama-speed-clean.json",
+      "ollama-speed-clean-summary.json",
+      "agent-speed-clean-control4.json",
+      "agent-speed-clean-candidate24.json"
+    ],
+    "resource_gate": "ollama-clean-gate.json"
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "computed_at": "2026-11-12T09:55:45.983370+00:00",
+  "status": "native_measurements_verified_real_agent_comparison_pending",
+  "source_files": [
+    {
+      "path": "docs/evidence/ollama-speed-screen.json",
+      "sha256": "fc58f5c9028cdb4995b6b57c0e99504af07c69f805e72a34cc6e56026d0d8532",
+      "started_at": "2026-11-12T09:41:01.220886+00:00",
+      "finished_at": "2026-11-12T09:44:40.404423+00:00",
+      "sha256_before_post_measurement_review": "657a5429f3ff5355800519d1d2a1b47a26136154faa1f8ed604568a7068b75a2"
+    },
+    {
+      "path": "docs/evidence/ollama-speed-repeat.json",
+      "sha256": "b8a636524b0fef73bf44f172b02d9553ec2769cc414ebb4157be29f207a4c534",
+      "started_at": "2026-11-12T09:46:19.884934+00:00",
+      "finished_at": "2026-11-12T09:52:50.932643+00:00",
+      "sha256_before_post_measurement_review": "b2786f59eb8562e9753114a501f069092784c7f32e88eadfe1e9673312bee170"
+    }
+  ],
+  "verified_shared_parameters": {
+    "model": "jarvis-hermes:3b",
+    "num_ctx": 65536,
+    "num_predict": 32,
+    "seed": 42,
+    "temperature": 0.1,
+    "num_batch": 1024,
+    "prompt_sha256": "11fa9f34b82fa81901f10c9ec70ec594344dc48722b00cbc2961d320864d896a",
+    "system_sha256": "a8bdab3c31350eb53a6a13030be9a5d8ddc5bb98e8624746f0b5e8249c46b715"
+  },
+  "model_digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+  "ollama_version": "0.40.11",
+  "prompt_count_each": 404,
+  "cached_prompt_count_each_warm": 403,
+  "generated_tokens_each_warm": 32,
+  "parallel_requests": 1,
+  "all_effective_runner_flags_matched": true,
+  "all_original_model_configuration_snapshots_matched": true,
+  "groups": [
+    {
+      "num_thread": 4,
+      "warm_sample_count": 3,
+      "warm_generation_tps_median": 5.550519615362867,
+      "warm_generation_tps_min": 5.129361700627048,
+      "warm_generation_tps_max": 5.602539070706844,
+      "warm_generation_tps_total_tokens_over_total_eval_seconds": 5.418978787802669,
+      "warm_wall_seconds_median": 6.001531,
+      "warm_load_seconds_median": 0.001693284,
+      "uncached_setup_sample_count": 3,
+      "uncached_setup_prefill_tps_median": 22.917562238483104,
+      "warm_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 2,
+          "generation_tokens_per_second": 5.602539070706844,
+          "eval_count": 32,
+          "eval_seconds": 5.711696,
+          "wall_seconds": 5.944322,
+          "load_seconds": 0.001092129,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 2,
+          "generation_tokens_per_second": 5.129361700627048,
+          "eval_count": 32,
+          "eval_seconds": 6.238593,
+          "wall_seconds": 6.497754,
+          "load_seconds": 0.004673951,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 6,
+          "generation_tokens_per_second": 5.550519615362867,
+          "eval_count": 32,
+          "eval_seconds": 5.765226,
+          "wall_seconds": 6.001531,
+          "load_seconds": 0.001693284,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        }
+      ],
+      "uncached_setup_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 1,
+          "uncached_prompt_tokens_per_second": 23.239344947291844,
+          "prompt_eval_seconds": 17.384311,
+          "load_seconds": 14.087127338,
+          "wall_seconds": 31.499078
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 1,
+          "uncached_prompt_tokens_per_second": 22.917562238483104,
+          "prompt_eval_seconds": 17.628402,
+          "load_seconds": 15.489299189,
+          "wall_seconds": 33.143642
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 5,
+          "uncached_prompt_tokens_per_second": 21.617940150625675,
+          "prompt_eval_seconds": 18.688182,
+          "load_seconds": 14.357159284,
+          "wall_seconds": 33.076549
+        }
+      ]
+    },
+    {
+      "num_thread": 16,
+      "warm_sample_count": 1,
+      "warm_generation_tps_median": 1.0658457522682696,
+      "warm_generation_tps_min": 1.0658457522682696,
+      "warm_generation_tps_max": 1.0658457522682696,
+      "warm_generation_tps_total_tokens_over_total_eval_seconds": 1.0658457522682696,
+      "warm_wall_seconds_median": 31.151433,
+      "warm_load_seconds_median": 0.001644725,
+      "uncached_setup_sample_count": 1,
+      "uncached_setup_prefill_tps_median": 53.18339477507373,
+      "warm_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 4,
+          "generation_tokens_per_second": 1.0658457522682696,
+          "eval_count": 32,
+          "eval_seconds": 30.023106,
+          "wall_seconds": 31.151433,
+          "load_seconds": 0.001644725,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "5422380700bad1b09b2976b17f98b18b0820a53b242885e1d957373b37cc52a4"
+        }
+      ],
+      "uncached_setup_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 3,
+          "uncached_prompt_tokens_per_second": 53.18339477507373,
+          "prompt_eval_seconds": 7.596356,
+          "load_seconds": 17.376302159,
+          "wall_seconds": 25.006291
+        }
+      ]
+    },
+    {
+      "num_thread": 24,
+      "warm_sample_count": 3,
+      "warm_generation_tps_median": 0.28134056281282815,
+      "warm_generation_tps_min": 0.250922620913436,
+      "warm_generation_tps_max": 0.3565107230459706,
+      "warm_generation_tps_total_tokens_over_total_eval_seconds": 0.29000447117414313,
+      "warm_wall_seconds_median": 117.696709,
+      "warm_load_seconds_median": 0.001444218,
+      "uncached_setup_sample_count": 3,
+      "uncached_setup_prefill_tps_median": 42.4945835183706,
+      "warm_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 6,
+          "generation_tokens_per_second": 0.3565107230459706,
+          "eval_count": 32,
+          "eval_seconds": 89.758871,
+          "wall_seconds": 93.628883,
+          "load_seconds": 0.001444218,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 4,
+          "generation_tokens_per_second": 0.28134056281282815,
+          "eval_count": 32,
+          "eval_seconds": 113.741153,
+          "wall_seconds": 117.696709,
+          "load_seconds": 0.001153793,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 8,
+          "generation_tokens_per_second": 0.250922620913436,
+          "eval_count": 32,
+          "eval_seconds": 127.529355,
+          "wall_seconds": 132.349844,
+          "load_seconds": 0.002340523,
+          "prompt_eval_count": 404,
+          "prompt_eval_cached_count": 403,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        }
+      ],
+      "uncached_setup_samples": [
+        {
+          "source_file": "ollama-speed-screen.json",
+          "sample_id": 5,
+          "uncached_prompt_tokens_per_second": 42.4945835183706,
+          "prompt_eval_seconds": 9.507094,
+          "load_seconds": 21.578510661,
+          "wall_seconds": 31.121508
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 3,
+          "uncached_prompt_tokens_per_second": 48.426922156239876,
+          "prompt_eval_seconds": 8.342467,
+          "load_seconds": 20.536782612,
+          "wall_seconds": 28.93223
+        },
+        {
+          "source_file": "ollama-speed-repeat.json",
+          "sample_id": 7,
+          "uncached_prompt_tokens_per_second": 36.82991099286238,
+          "prompt_eval_seconds": 10.969345,
+          "load_seconds": 21.329924281,
+          "wall_seconds": 32.333946
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "median_decode_speed_ratio_4_over_24": 19.728828150015282,
+    "median_wall_time_ratio_24_over_4": 19.61111406406132,
+    "median_uncached_setup_prefill_ratio_24_over_4": 1.8542366363475524
+  },
+  "interpretation": [
+    "Native 24-thread decode was slower on this VM for this fixed 32-token test; this is not a measured full-agent result.",
+    "One-token setup generations are excluded from decode statistics because their eval duration is not a meaningful throughput measurement.",
+    "Uncached prefill uses setup requests with zero cached prompt tokens; warm reported prompt-count rates include403cachedtokens and must not be reported as uncached prefill throughput.",
+    "Samples are a screen plus two further alternating4/24measurements, not three independent long-form agent runs.",
+    "Host contention is not fully controlled and hardware is a virtual CPU topology; no universal optimal thread count is established.",
+    "Fixed seed does not guarantee identical text across thread profiles; output-length-controlled throughput is compared, not answer quality.",
+    "No new saved alias was used for these native measurements; num_thread was supplied per request against the preserved original alias."
+  ],
+  "real_agent_comparison": {
+    "status": "pending",
+    "control_issue": "JAR-17",
+    "control_issue_id": "4125a6d4-133a-4767-a137-d09d2f62ffb4",
+    "candidate_alias": "jarvis-hermes-aigoat24:3b",
+    "default_agents_promoted": false
+  },
+  "post_tuning_ai_goat_pentagi_preservation_comparison": "pending_final_candidate_completion",
+  "post_measurement_review": {
+    "status": "superseded_for_performance_decisions",
+    "reason": "The user reported competing work, and an active AIgoat inference runner was subsequently observed. These measurements did not establish an uncontended host.",
+    "raw_measurements_preserved": true,
+    "accepted_replacements": [
+      "ollama-speed-clean.json",
+      "ollama-speed-clean-summary.json",
+      "agent-speed-clean-control4.json",
+      "agent-speed-clean-candidate24.json"
+    ],
+    "resource_gate": "ollama-clean-gate.json",
+    "source_hash_note": "Source hashes updated for added review metadata; pre-review file hashes retained separately. Timing/sample fields are unchanged."
+  }
+}

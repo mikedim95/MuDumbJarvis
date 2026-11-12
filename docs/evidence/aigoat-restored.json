@@ -1,0 +1,22 @@
+{
+  "restored_at": "2026-11-12T11:47:44.873153+00:00",
+  "container": "aigoat-ollama-1",
+  "container_id": "e20fe477386f275539e466fc48ad609da25be91bb987d932a4fa794adee7eb17",
+  "same_container_id": true,
+  "same_started_at": true,
+  "running": true,
+  "paused": false,
+  "pause_marker_removed": true,
+  "paused_at": "2026-11-12T10:15:29.260326+00:00",
+  "temporary_pause_seconds": 5535.613,
+  "runtime_interruption_authorized": true,
+  "interruption_note": "User approved interrupting the current generation for clean comparison; the container was temporarily paused after its caller resubmitted work.",
+  "configuration_or_source_changes": false,
+  "model_or_weights_replaced": false,
+  "ollama_version_probe_exit_code": 0,
+  "ollama_versions_observed": [
+    "0.40.11"
+  ],
+  "benchmark_measurements_ended_before_restore": true,
+  "external_job_success_not_claimed": true
+}

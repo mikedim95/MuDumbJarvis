@@ -1,0 +1,191 @@
+{
+  "checked_at": "2026-11-12T11:48:04.758244+00:00",
+  "status": "bounded_resource_observation_recorded",
+  "cutoff_utc": "2026-11-12T11:47:37+00:00",
+  "source": ".runtime/ollama-clean-cgroup-monitor.jsonl",
+  "bounded_evidence": "docs/evidence/ollama-clean-resource-monitor.jsonl",
+  "bounded_sha256": "2aa34b18227292a1c06f5de493cff733310879f6d0c1e2b9a540b87b9f07cecc",
+  "sample_count": 335,
+  "first_sample": "2026-11-12T10:21:32.134185+00:00",
+  "last_sample": "2026-11-12T11:47:32.044399+00:00",
+  "cgroup_segment_headers": [
+    {
+      "pid": 1870357,
+      "checked_at": "2026-11-12T10:21:16.715876+00:00",
+      "continuation_after_sample_index": null,
+      "interval_seconds": 15,
+      "maximum_additional_samples": null
+    },
+    {
+      "pid": 1910025,
+      "checked_at": "2026-11-12T10:47:15.811948+00:00",
+      "continuation_after_sample_index": 100,
+      "interval_seconds": 15,
+      "maximum_additional_samples": 120
+    },
+    {
+      "pid": 1955480,
+      "checked_at": "2026-11-12T11:15:46.372180+00:00",
+      "continuation_after_sample_index": 212,
+      "interval_seconds": 15,
+      "maximum_additional_samples": 120
+    },
+    {
+      "pid": 2006253,
+      "checked_at": "2026-11-12T11:46:45.118336+00:00",
+      "continuation_after_sample_index": 332,
+      "interval_seconds": 15,
+      "maximum_additional_samples": 60
+    }
+  ],
+  "observations": {
+    "other_inference_max_cpu_percent_one_core": 0.0,
+    "all_samples_ai_goat_paused": true,
+    "steal_max_percent": 0.542,
+    "iowait_max_percent": 0.439,
+    "memory_available_min_bytes": 17633533952,
+    "review_required_samples": [
+      {
+        "sample_index": 46,
+        "checked_at": "2026-11-12T10:32:59.168421+00:00",
+        "main_ollama_cpu_percent_one_core": 0.007,
+        "non_main_cpu_percent_all_cores": 22.721,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.364,
+        "iowait_percent": 0.035
+      },
+      {
+        "sample_index": 54,
+        "checked_at": "2026-11-12T10:35:01.437316+00:00",
+        "main_ollama_cpu_percent_one_core": 822.675,
+        "non_main_cpu_percent_all_cores": 18.059,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.269,
+        "iowait_percent": 0.025
+      },
+      {
+        "sample_index": 113,
+        "checked_at": "2026-11-12T10:50:34.636273+00:00",
+        "main_ollama_cpu_percent_one_core": 0.008,
+        "non_main_cpu_percent_all_cores": 18.601,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.356,
+        "iowait_percent": 0.077
+      },
+      {
+        "sample_index": 160,
+        "checked_at": "2026-11-12T11:02:30.251164+00:00",
+        "main_ollama_cpu_percent_one_core": 0.008,
+        "non_main_cpu_percent_all_cores": 21.062,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.356,
+        "iowait_percent": 0.017
+      },
+      {
+        "sample_index": 161,
+        "checked_at": "2026-11-12T11:02:45.557742+00:00",
+        "main_ollama_cpu_percent_one_core": 0.008,
+        "non_main_cpu_percent_all_cores": 18.378,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.333,
+        "iowait_percent": 0.029
+      },
+      {
+        "sample_index": 166,
+        "checked_at": "2026-11-12T11:04:02.007950+00:00",
+        "main_ollama_cpu_percent_one_core": 2.69,
+        "non_main_cpu_percent_all_cores": 20.75,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.397,
+        "iowait_percent": 0.035
+      },
+      {
+        "sample_index": 211,
+        "checked_at": "2026-11-12T11:15:28.239894+00:00",
+        "main_ollama_cpu_percent_one_core": 409.511,
+        "non_main_cpu_percent_all_cores": 19.163,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.307,
+        "iowait_percent": 0.033
+      },
+      {
+        "sample_index": 259,
+        "checked_at": "2026-11-12T11:27:43.532827+00:00",
+        "main_ollama_cpu_percent_one_core": 0.0,
+        "non_main_cpu_percent_all_cores": 20.702,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.398,
+        "iowait_percent": 0.06
+      },
+      {
+        "sample_index": 260,
+        "checked_at": "2026-11-12T11:27:58.839457+00:00",
+        "main_ollama_cpu_percent_one_core": 0.0,
+        "non_main_cpu_percent_all_cores": 21.735,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.397,
+        "iowait_percent": 0.074
+      },
+      {
+        "sample_index": 261,
+        "checked_at": "2026-11-12T11:28:14.070777+00:00",
+        "main_ollama_cpu_percent_one_core": 32.992,
+        "non_main_cpu_percent_all_cores": 18.616,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.363,
+        "iowait_percent": 0.029
+      },
+      {
+        "sample_index": 301,
+        "checked_at": "2026-11-12T11:38:22.965505+00:00",
+        "main_ollama_cpu_percent_one_core": 0.014,
+        "non_main_cpu_percent_all_cores": 22.469,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.479,
+        "iowait_percent": 0.439
+      },
+      {
+        "sample_index": 302,
+        "checked_at": "2026-11-12T11:38:38.254124+00:00",
+        "main_ollama_cpu_percent_one_core": 0.007,
+        "non_main_cpu_percent_all_cores": 23.455,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.388,
+        "iowait_percent": 0.07
+      },
+      {
+        "sample_index": 305,
+        "checked_at": "2026-11-12T11:39:24.158630+00:00",
+        "main_ollama_cpu_percent_one_core": 0.292,
+        "non_main_cpu_percent_all_cores": 18.025,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.343,
+        "iowait_percent": 0.068
+      },
+      {
+        "sample_index": 306,
+        "checked_at": "2026-11-12T11:39:39.483836+00:00",
+        "main_ollama_cpu_percent_one_core": 33.483,
+        "non_main_cpu_percent_all_cores": 18.513,
+        "other_inference_cpu_percent_one_core": 0.0,
+        "steal_percent": 0.334,
+        "iowait_percent": 0.016
+      }
+    ]
+  },
+  "interpretation": {
+    "competing_model_inference": "No sampled competing inference CPU while AIgoat paused; main Ollama activity is measured separately.",
+    "startup_and_browser_activity": "Review flags retain non-main host activity, including browser/restart periods; they are not silently removed or claimed as uniformly idle.",
+    "measurement_scope": "Cgroup monitor starts after the beginning of the clean native experiment; initial quiet gate and prior process-based monitor cover that earlier interval. This is sampled evidence with explicit segment rollovers, not proof of exclusive host/server access.",
+    "rollover_gaps": "Readers were bounded and restarted; header timestamps and sample intervals expose the gaps. Main/AIgoat cumulative cgroup counters retain exited-runner CPU within sampled intervals.",
+    "post_cutoff": "AIgoat restoration and any resumed inference occur outside this bounded clean-test observation.",
+    "no_secrets": "Only process names/CPU/container labels are retained; no argv, prompts or environment values."
+  },
+  "monitor_shutdown": {
+    "pid": 2006253,
+    "scope": "Only the verified owned read-only Python monitor received SIGINT; no workload or guard signal was sent.",
+    "command_identity_checked": true,
+    "start_time_checked": true
+  },
+  "timing_artifacts_unchanged": true
+}

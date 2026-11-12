@@ -1,0 +1,52 @@
+{
+  "checked_at": "2026-11-12T11:51:04.286386+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "jarvis_authentication",
+      "status": "passed"
+    },
+    {
+      "name": "protected_runtime_api_authentication_and_health",
+      "status": "passed"
+    },
+    {
+      "name": "selected_profile_and_yaml_preservation",
+      "status": "passed"
+    },
+    {
+      "name": "two_employee_roster_and_human_hiring_gate",
+      "status": "passed"
+    },
+    {
+      "name": "eight_original_models_and_only_selected_alias",
+      "status": "passed"
+    },
+    {
+      "name": "upstream_core_repositories_clean",
+      "status": "passed"
+    },
+    {
+      "name": "ollama_and_pentagi_exact_preservation",
+      "status": "passed"
+    },
+    {
+      "name": "aigoat_containers_sources_restored_and_unpaused",
+      "status": "passed"
+    },
+    {
+      "name": "real_server_secret_scan_of_text_files",
+      "status": "passed"
+    },
+    {
+      "name": "git_diff_whitespace",
+      "status": "passed"
+    }
+  ],
+  "read_only_inspection": true,
+  "inference_requests": 0,
+  "limitations": [
+    "Original model parameter baselines are incomplete; names/byte sizes and service fingerprints are checked, parameter invariance is not claimed.",
+    "The secret scan covers UTF-8 text only; no binary/image OCR is claimed. Separate real-browser checks cover visual/response exposure."
+  ]
+}

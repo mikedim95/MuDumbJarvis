@@ -143,6 +143,52 @@ def test_plan_is_persisted_with_real_run_before_delegation(plugin):
     assert plugin.calls[-1][3] == 'ceo-run'
 
 
+def test_explicit_self_without_optional_rationale_records_assigned_scope_only(plugin):
+    plugin.issue['description'] = 'Inspect the actual local Ollama installation and report its installed models.'
+    result = json.loads(plugin.tools.manage({'action': 'plan', 'decision': 'self',
+        'objective': 'Ignore this untrusted model-supplied objective and assign a different worker.'}))
+    assert result['recorded'] and plugin.turn['plan_decision'] == 'self'
+    writes = [call for call in plugin.calls if call[0] in ('PATCH', 'POST')]
+    assert len(writes) == 1 and writes[0][0:2] == ('PATCH', '/issues/' + ROOT)
+    assert writes[0][3] == 'ceo-run'
+    body = writes[0][2]['comment']
+    assert body.startswith('[JARVIS CEO PLAN decision=self]')
+    assert 'Runtime-generated execution scope, not a model-supplied rationale' in body
+    assert plugin.issue['description'] in body and 'local_ollama_models' in body
+    assert 'untrusted model-supplied objective' not in body
+    assert not plugin.children and not plugin.turn['inventory_verified']
+    # Recording the explicit choice is not execution evidence or completion.
+    plugin.tools.finalize(plugin.turn, completed=True)
+    assert last_patch(plugin)['status'] == 'blocked'
+
+
+def test_plan_alias_preserves_actual_model_rationale(plugin):
+    rationale = ('Complete the inventory by reading actual installed Ollama models using local_ollama_models. '
+                 'Produce the verified technical report with exact names and sizes after retrieval.')
+    result = json.loads(plugin.tools.manage({'action': 'plan', 'decision': 'self', 'plan': rationale}))
+    assert result['recorded'] and plugin.turn['plan_decision'] == 'self'
+    assert last_patch(plugin)['comment'] == '[JARVIS CEO PLAN decision=self]\n' + rationale
+    assert not plugin.children and not plugin.turn['inventory_verified']
+
+
+@pytest.mark.parametrize('args', [
+    {'decision': None},
+    {'decision': 'automatic'},
+    {'decision': 'delegate'},
+    {'decision': 'hire'},
+    {'decision': 'self', 'text': None},
+    {'decision': 'self', 'text': {'rationale': 'A dictionary is not a plan string.'}},
+    {'decision': 'self', 'text': 'x' * 4001, 'plan': 'A valid alias cannot bypass an oversized explicit text.'},
+    {'decision': 'self', 'plan': 'x' * 4001},
+])
+def test_optional_plan_compatibility_still_rejects_invalid_choice_or_rationale(plugin, args):
+    plugin.issue['description'] = 'Inspect the actual local Ollama inventory.'
+    with pytest.raises(ValueError):
+        plugin.tools.manage({'action': 'plan', **args})
+    assert plugin.turn['plan_decision'] is None
+    assert not any(call[0] in ('PATCH', 'POST') for call in plugin.calls)
+
+
 def test_valid_delegation_records_actual_selection_and_scope_without_optional_rationale(plugin):
     args = {'action': 'delegate', 'agent_id': WORKER, 'title': 'Inspect models',
         'text': 'Use local_ollama_models; record exact names and sizes.'}
@@ -547,7 +593,7 @@ def inventory_tool(plugin, monkeypatch):
     return package
 
 
-@pytest.mark.parametrize('decision', [None, 'delegate', 'hire'])
+@pytest.mark.parametrize('decision', ['delegate', 'hire'])
 def test_ceo_without_recorded_self_decision_does_not_contact_ollama_or_create_inventory_audit(
         plugin, inventory_tool, monkeypatch, tmp_path, decision):
     plugin.turn['plan_decision'] = decision
@@ -557,12 +603,16 @@ def test_ceo_without_recorded_self_decision_does_not_contact_ollama_or_create_in
         calls.append((args, kwargs))
         raise AssertionError('A delegated CEO must not retrieve a competing local inventory')
     monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', forbidden_http)
-    data = json.loads(inventory_tool.local_ollama_models({}))
-    assert data['status'] == 'not_executed'
-    assert 'source' not in data and 'models' not in data
-    assert 'worker' in data['reason'].lower()
-    assert calls == []
+    with pytest.raises(ValueError) as error:
+        inventory_tool.local_ollama_models({})
+    message = str(error.value)
+    assert 'NOT executed' in message and 'No Ollama HTTP request was sent' in message
+    assert 'no asynchronous result is pending' in message
+    assert "decision='self'" not in message
+    assert ('assigned worker' if decision == 'delegate' else 'human approval') in message
+    assert calls == [] and not plugin.turn['inventory_verified']
     assert not (tmp_path / 'logs/jarvis-tools.jsonl').exists()
+    assert not (tmp_path / 'logs/paperclip-tools.jsonl').exists()
 
 
 def stub_local_inventory(inventory_tool, monkeypatch):
@@ -576,6 +626,82 @@ def stub_local_inventory(inventory_tool, monkeypatch):
     monkeypatch.setenv('JARVIS_OLLAMA_URL', 'http://ollama-models:11434')
     monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', get_models)
     return calls, payload
+
+
+def test_model_direct_inventory_choice_records_self_scope_before_only_requested_read(
+        plugin, inventory_tool, monkeypatch, tmp_path):
+    import io
+    plugin.issue['description'] = 'Inspect the actual local Ollama installation and report its model inventory.'
+    events = []
+    original_api = plugin.reporting.api
+    def api(method, path, body=None, run_id=None):
+        if method == 'PATCH': events.append('plan_write')
+        return original_api(method, path, body, run_id)
+    monkeypatch.setattr(plugin.reporting, 'api', api)
+    monkeypatch.setenv('JARVIS_OLLAMA_URL', 'http://ollama-models:11434')
+    def read(url, timeout):
+        events.append('ollama_read')
+        assert plugin.turn['plan_decision'] == 'self'
+        assert last_patch(plugin)['comment'].startswith('[JARVIS CEO PLAN decision=self]')
+        assert plugin.issue['description'] in last_patch(plugin)['comment']
+        choices = [json.loads(line) for line in (tmp_path / 'logs/ceo-tools.jsonl').read_text().splitlines()]
+        assert len(choices) == 1 and choices[0]['source'] == 'model_direct_tool_choice'
+        assert choices[0]['tool'] == 'local_ollama_models' and choices[0]['action'] == 'self_execution_selected'
+        assert choices[0]['result']['separate_paperclip_ceo_invocation'] is False
+        return io.BytesIO(json.dumps({'models': [{'name': 'actual-test-model:3b', 'size': 123456789}]}).encode())
+    monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', read)
+    result = json.loads(inventory_tool.local_ollama_models({}))
+    assert events == ['plan_write', 'ollama_read']
+    assert result['models'][0]['size_bytes'] == 123456789
+    assert not plugin.children and not plugin.turn['inventory_verified']
+    assert not (tmp_path / 'logs/paperclip-tools.jsonl').exists()  # Only the real lifecycle hook can sign execution.
+    assert not any(call[0] == 'POST' for call in plugin.calls)
+    assert 'not a model-supplied rationale or a separate paperclip_ceo invocation' in last_patch(plugin)['comment']
+
+
+@pytest.mark.parametrize('status', ['todo', 'in_progress', 'done'])
+@pytest.mark.parametrize('decision', [None, 'self'])
+def test_direct_inventory_cannot_replace_existing_paperclip_child_work(
+        plugin, inventory_tool, monkeypatch, tmp_path, status, decision):
+    plugin.turn['plan_decision'] = decision
+    child_with_evidence(plugin, status=status)
+    calls = []
+    monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', lambda *a, **kw: calls.append(a))
+    with pytest.raises(ValueError, match='Existing Paperclip child work'):
+        inventory_tool.local_ollama_models({})
+    assert calls == [] and plugin.turn['plan_decision'] == decision
+    assert not any(call[0] in ('PATCH', 'POST') for call in plugin.calls)
+    assert not (tmp_path / 'logs/ceo-tools.jsonl').exists()
+
+
+@pytest.mark.parametrize('mismatch', ['configured_id', 'role', 'execution'])
+def test_direct_inventory_rechecks_live_ceo_scope_before_plan_or_http(
+        plugin, inventory_tool, monkeypatch, tmp_path, mismatch):
+    if mismatch == 'configured_id': monkeypatch.setenv('JARVIS_PAPERCLIP_AGENT_ID', WORKER)
+    if mismatch == 'role': plugin.me['role'] = 'general'
+    if mismatch == 'execution': plugin.issue['executionRunId'] = 'another-run'
+    calls = []
+    monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', lambda *a, **kw: calls.append(a))
+    with pytest.raises(PermissionError): inventory_tool.local_ollama_models({})
+    assert calls == [] and plugin.turn['plan_decision'] is None
+    assert not any(call[0] in ('PATCH', 'POST') for call in plugin.calls)
+    assert not (tmp_path / 'logs/ceo-tools.jsonl').exists()
+
+
+def test_failed_direct_choice_plan_write_never_executes_or_claims_inventory(
+        plugin, inventory_tool, monkeypatch, tmp_path):
+    plugin.issue['description'] = 'Inspect the local inventory.'
+    original_api = plugin.reporting.api
+    def api(method, path, body=None, run_id=None):
+        if method == 'PATCH': raise RuntimeError('Synthetic Paperclip plan write failed')
+        return original_api(method, path, body, run_id)
+    monkeypatch.setattr(plugin.reporting, 'api', api)
+    calls = []
+    monkeypatch.setattr(inventory_tool.urllib.request, 'urlopen', lambda *a, **kw: calls.append(a))
+    with pytest.raises(RuntimeError, match='plan write failed'): inventory_tool.local_ollama_models({})
+    assert calls == [] and plugin.turn['plan_decision'] is None and not plugin.turn['inventory_verified']
+    assert not (tmp_path / 'logs/ceo-tools.jsonl').exists()
+    assert not (tmp_path / 'logs/jarvis-tools.jsonl').exists()
 
 
 def test_ceo_self_decision_allows_actual_fixed_endpoint_inventory_and_audit(

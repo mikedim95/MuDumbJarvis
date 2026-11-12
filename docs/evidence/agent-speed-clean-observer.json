@@ -1,0 +1,1815 @@
+{
+  "started_at": "2026-11-12T10:25:07.064828+00:00",
+  "measurement_series": "fresh clean profiles only; original contended records unchanged",
+  "observations": [
+    {
+      "observed_at": "2026-11-12T10:25:10.712741+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [],
+          "actual_tool_audits": [],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 12.37
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 2.62
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 1.87
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 95.96
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.13
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.04
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.68
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 2.13
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.22
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.3
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 405.3
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 118.33,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:25:44.241093+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [],
+          "actual_tool_audits": [],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 13.42
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 5.12
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 7.39
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 13.2
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.12
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.03
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.65
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.91
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.24
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.23
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 405.58
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 43.32,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:26:17.771012+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 19.1
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.79
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 0.81
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 76.47
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.08
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.02
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.65
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.81
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.22
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.22
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 405.84
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 102.18,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:26:51.344201+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 20.4
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.92
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 30.48
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 138.57
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.08
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.03
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.63
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.89
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.26
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 58.28
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 406.42
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 253.55,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:27:25.008993+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 13.95
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 2.74
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 0.63
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 63.57
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.1
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.03
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.46
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 1.58
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 12.25
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.22
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 408.3
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 97.54,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:27:58.666572+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 4.76
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 2.41
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 0.79
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 52.53
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.08
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 93.65
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.45
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 1.03
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.19
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.24
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 407.11
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 158.15,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:28:32.322633+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1872919,
+              "num_thread": 4,
+              "context_size": 65536,
+              "batch_size": 2048,
+              "micro_batch_size": 2048,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 0.35
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 2.09
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 0.61
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 17.7
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.09
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.02
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.64
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 18.48
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.92
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.23
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.26
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 407.29
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 43.4,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:29:05.711160+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": "2026-11-12T10:28:43.266Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            },
+            {
+              "timestamp": "2026-11-12 10:28:42,079",
+              "call_index": 2,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 3610,
+              "output_tokens": 181,
+              "provider_wall_seconds": 173.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 0.84
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.66
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 1.36
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 19.35
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.02
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.52
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 14.13
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 2.37
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.3
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.23
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 406.38
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 42.79,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:29:39.140777+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": "2026-11-12T10:28:43.266Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            },
+            {
+              "timestamp": "2026-11-12 10:28:42,079",
+              "call_index": 2,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 3610,
+              "output_tokens": 181,
+              "provider_wall_seconds": 173.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 1.39
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 35.88
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 1.09
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 24.01
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.28
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.56
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.81
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.27
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.26
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 0.0
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 66.57,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:30:13.116687+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": "2026-11-12T10:28:43.266Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            },
+            {
+              "timestamp": "2026-11-12 10:28:42,079",
+              "call_index": 2,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 3610,
+              "output_tokens": 181,
+              "provider_wall_seconds": 173.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        },
+        {
+          "profile": "clean-candidate24",
+          "issue_id": "945af4e0-eb2c-4383-8cd3-d51f3b66279f",
+          "identifier": "JAR-20",
+          "expected_model": "jarvis-hermes-aigoat24:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:29:44.259Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:29:46,791",
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1883237,
+              "num_thread": 24,
+              "context_size": 65536,
+              "batch_size": 1024,
+              "micro_batch_size": 1024,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [],
+          "actual_tool_audits": [],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 6.52
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.7
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 0.66
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 47.24
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.07
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.02
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.32
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.74
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.23
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.2
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 2398.08
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 59.7,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:30:46.981519+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": "2026-11-12T10:28:43.266Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            },
+            {
+              "timestamp": "2026-11-12 10:28:42,079",
+              "call_index": 2,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 3610,
+              "output_tokens": 181,
+              "provider_wall_seconds": 173.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        },
+        {
+          "profile": "clean-candidate24",
+          "issue_id": "945af4e0-eb2c-4383-8cd3-d51f3b66279f",
+          "identifier": "JAR-20",
+          "expected_model": "jarvis-hermes-aigoat24:3b",
+          "canonical_status": "in_progress",
+          "worker_run": {
+            "runId": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "running",
+            "startedAt": "2026-11-12T10:29:44.259Z",
+            "finishedAt": null,
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:29:46,791",
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [
+            {
+              "pid": 1883237,
+              "num_thread": 24,
+              "context_size": 65536,
+              "batch_size": 1024,
+              "micro_batch_size": 1024,
+              "parallel": 1
+            }
+          ],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:30:31,385",
+              "call_index": 1,
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "input_tokens": 2344,
+              "output_tokens": 9,
+              "provider_wall_seconds": 44.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": null,
+          "harness_status": "running"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 9.03
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.42
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 2.28
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 31.12
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.05
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 1.95
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 0.66
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.17
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 1.39
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 2414.58
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 48.08,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    },
+    {
+      "observed_at": "2026-11-12T10:31:21.099074+00:00",
+      "cases": [
+        {
+          "profile": "clean-control4",
+          "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+          "identifier": "JAR-19",
+          "expected_model": "jarvis-hermes:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:22:50.547Z",
+            "finishedAt": "2026-11-12T10:28:43.266Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:22:56,518",
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:25:48,451",
+              "call_index": 1,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 2331,
+              "output_tokens": 9,
+              "provider_wall_seconds": 171.1
+            },
+            {
+              "timestamp": "2026-11-12 10:28:42,079",
+              "call_index": 2,
+              "model": "jarvis-hermes:3b",
+              "provider": "custom",
+              "input_tokens": 3610,
+              "output_tokens": 181,
+              "provider_wall_seconds": 173.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        },
+        {
+          "profile": "clean-candidate24",
+          "issue_id": "945af4e0-eb2c-4383-8cd3-d51f3b66279f",
+          "identifier": "JAR-20",
+          "expected_model": "jarvis-hermes-aigoat24:3b",
+          "canonical_status": "done",
+          "worker_run": {
+            "runId": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+            "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+            "status": "succeeded",
+            "startedAt": "2026-11-12T10:29:44.259Z",
+            "finishedAt": "2026-11-12T10:31:04.348Z",
+            "errorCode": null
+          },
+          "actual_model_turns": [
+            {
+              "timestamp": "2026-11-12 10:29:46,791",
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "history": 0
+            }
+          ],
+          "active_numeric_target_runners": [],
+          "completed_provider_calls": [
+            {
+              "timestamp": "2026-11-12 10:30:31,385",
+              "call_index": 1,
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "input_tokens": 2344,
+              "output_tokens": 9,
+              "provider_wall_seconds": 44.2
+            },
+            {
+              "timestamp": "2026-11-12 10:31:03,639",
+              "call_index": 2,
+              "model": "jarvis-hermes-aigoat24:3b",
+              "provider": "custom",
+              "input_tokens": 3623,
+              "output_tokens": 135,
+              "provider_wall_seconds": 32.2
+            }
+          ],
+          "actual_tool_audits": [
+            {
+              "tool": "local_ollama_models",
+              "run_id": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+              "source": "Ollama /api/tags",
+              "models": 9
+            }
+          ],
+          "signed_proof": {
+            "hmac_and_exact_session_valid": true,
+            "proof_run_matches_latest_worker": true,
+            "latest_worker_status": "succeeded",
+            "models": 9
+          },
+          "harness_status": "verified_execution_with_output_limitations"
+        }
+      ],
+      "resources": {
+        "aigoat_ollama_paused": true,
+        "container_cpu": [
+          {
+            "name": "jarvis-hud",
+            "cpu_percent_one_core": 11.69
+          },
+          {
+            "name": "jarvis-hermes",
+            "cpu_percent_one_core": 1.38
+          },
+          {
+            "name": "jarvis-hermes-ceo",
+            "cpu_percent_one_core": 1.74
+          },
+          {
+            "name": "jarvis-paperclip",
+            "cpu_percent_one_core": 53.34
+          },
+          {
+            "name": "jarvis-hermes-tls",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "pentagi-terminal-4",
+            "cpu_percent_one_core": 0.01
+          },
+          {
+            "name": "nine-labs-app-1",
+            "cpu_percent_one_core": 0.03
+          },
+          {
+            "name": "pgexporter",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "scraper",
+            "cpu_percent_one_core": 2.92
+          },
+          {
+            "name": "pgvector",
+            "cpu_percent_one_core": 18.51
+          },
+          {
+            "name": "juice-shop",
+            "cpu_percent_one_core": 1.1
+          },
+          {
+            "name": "nine-labs-killchain-1",
+            "cpu_percent_one_core": 0.28
+          },
+          {
+            "name": "aigoat-backend-1",
+            "cpu_percent_one_core": 0.27
+          },
+          {
+            "name": "aigoat-ollama-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "aigoat-frontend-1",
+            "cpu_percent_one_core": 0.0
+          },
+          {
+            "name": "ollama",
+            "cpu_percent_one_core": 0.01
+          }
+        ],
+        "non_main_ollama_cpu_percent_one_core": 91.27,
+        "source": "Read-only Docker stats snapshot; 100 percent equals one CPU core, not host-normalized percent"
+      }
+    }
+  ],
+  "limitations": [
+    "Docker CPU samples are periodic observations, not proof that every non-container host process is idle.",
+    "Runner assignment uses the active issue window plus exact shared weight reference and actual full-session model log.",
+    "No tasks/services/configuration changed by observer.",
+    "Resource sampling follows authenticated read requests; short service CPU bursts may include observer/read overhead."
+  ],
+  "updated_at": "2026-11-12T10:31:21.099074+00:00",
+  "finished_at": "2026-11-12T10:31:55.206768+00:00",
+  "status": "completed_read_only_observation",
+  "resource_summary": {
+    "samples": 12,
+    "aigoat_paused_at_every_sample": true,
+    "non_main_container_cpu_percent_one_core_min": 42.79,
+    "non_main_container_cpu_percent_one_core_mean": 93.74,
+    "non_main_container_cpu_percent_one_core_max": 253.55,
+    "scope": "Periodic Docker samples; normal service/read overhead is included, and other host processes are not exhaustively observed."
+  },
+  "terminal_cases": [
+    {
+      "profile": "clean-control4",
+      "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "status": "done",
+      "worker_run": {
+        "runId": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+        "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "succeeded",
+        "startedAt": "2026-11-12T10:22:50.547Z",
+        "finishedAt": "2026-11-12T10:28:43.266Z",
+        "errorCode": null
+      },
+      "signed_proof": {
+        "hmac_and_exact_session_valid": true,
+        "proof_run_matches_latest_worker": true,
+        "latest_worker_status": "succeeded",
+        "models": 9
+      },
+      "harness_status": "verified_execution_with_output_limitations"
+    },
+    {
+      "profile": "clean-candidate24",
+      "issue_id": "945af4e0-eb2c-4383-8cd3-d51f3b66279f",
+      "status": "done",
+      "worker_run": {
+        "runId": "4707b1b0-d724-4357-b3b4-1e3a00550cc4",
+        "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "succeeded",
+        "startedAt": "2026-11-12T10:29:44.259Z",
+        "finishedAt": "2026-11-12T10:31:04.348Z",
+        "errorCode": null
+      },
+      "signed_proof": {
+        "hmac_and_exact_session_valid": true,
+        "proof_run_matches_latest_worker": true,
+        "latest_worker_status": "succeeded",
+        "models": 9
+      },
+      "harness_status": "verified_execution_with_output_limitations"
+    }
+  ],
+  "comparison_note": "Both fresh profiles executed real local tools with successful signed evidence. Candidate and control generated different token counts and used different runner batch sizes; whole-task latency improvement is a profile observation, not a pure thread-only estimate. Prose-contract limitations remain recorded by each benchmark harness."
+}

@@ -331,3 +331,89 @@ facts. CPU-only inference is slow (the final CEO review took about 18.5 minutes)
 Historical cancelled debugging jobs remain inspectable, including Paperclip's
 legacy-execution quarantine; they are not accepted results or reused objectives.
 The user's requested AIgoat performance comparison follows this separate commit.
+
+## Local performance profile and tool contract — verified
+
+The original CEO milestone above remains the verified four-thread baseline
+(`a0f7fc7`). The follow-up inspected AIgoat's actual inference configuration:
+saved/application settings specify 16 threads, while the observed loaded runner
+used 24 threads, batch 1024 and one request slot. The new separately named
+`jarvis-hermes-aigoat24:3b` alias reuses existing weights and retains JARVIS's
+65,536 context and 0.1 temperature; it adds the copied thread/batch/output
+profile without replacing the original eight models or changing the shared
+Ollama server's settings.
+CEO and worker retain separate sessions while sharing the selected model's
+single observed inference slot (`-np 1`); calls can queue. Twenty-four CPU
+threads do not mean 24 concurrent agents, and shared concurrency was not raised.
+
+Earlier timings were contended by another active model and are superseded.
+Under a recorded quiet-host gate, three alternating native samples per profile
+measured median decode throughput of 5.0524 tokens/s at four threads and
+12.3117 at 24 (2.44×). Real Paperclip/Hermes worker executions JAR-19/JAR-20
+took 352.719/80.089 seconds respectively (one observed 4.4041× whole-profile
+wall-time improvement). Both retrieved the same nine models with valid signed
+evidence. Different output lengths and batch defaults limit causal comparison;
+both prose outputs missed the requested exact-byte presentation contract.
+See [the raw evidence and limits](OLLAMA_TUNING.md).
+
+The operator selected the copied alias in both existing runtime files through
+`deploy/select_ollama_profile.py`, with backups and rollback to the original
+alias available. Source installation defaults still use the original model.
+Compatibility attempts JAR-21/22, 25/26, 29/30 and 32/33 are retained as rejected
+paired cycles, including successful individual delegation graphs; none counts
+as final acceptance.
+
+The corrected plugin accepts optional plan text/its alias, reports denied reads
+as errors rather than pending work, and atomically records a validated CEO's
+actual self-tool selection as labeled runtime-derived scope before HTTP.
+Explicit delegation/hiring/child boundaries remain enforced. No hook chooses
+or executes a tool on the model's behalf, no rationale or planning-tool call is
+invented, and Paperclip remains the sole task orchestrator. The complete source
+suite passed **131 tests**, with three existing warnings. Deployment and both
+runtime restarts completed. **Fresh actual-HUD JAR-35 passed**: canonical
+objective `44a371b4-603a-4f13-9952-4940ec4e54d1` is done, its actual direct-tool
+selection recorded self scope, no child was created, and the substantive
+verified inventory was visible. **JAR-36 delegation acceptance also passed**:
+objective `0ea710dd-98ac-456f-93ea-41e03be73d7d` delegated JAR-37
+`ac83a32e-e476-4648-b615-dbe2cdbe7665`, whose real worker run
+`d95e85c8-68dc-4e6f-bf4d-2bccb82bf18e` succeeded with signed evidence.
+Paperclip natively woke CEO continuation `d3599b2f-2ec4-4779-ba08-9df1a8fdef33`,
+which received verified child results and produced the visible substantive
+final report. Browser refresh retained both canonical objectives; the roster
+stayed at two. Exact model names and byte sizes are preserved in the canonical
+appendices; model prose still contains transcription/metadata errors. The
+five-service restart preserved the same JAR-35/36/37 statuses, comment hashes,
+runs and complete company task-ID set, with zero new objectives; the actual
+browser `--resume` passed again. Earlier graphs are not substituted for this
+proof. See `docs/evidence/ceo-tuning-restart.json`.
+
+Direct chat first retained its original four-thread session model despite the
+new default. The operator used Hermes's supported session-model endpoint to
+select the copied local alias without resetting the session: all 11 projected
+messages/count and their SHA-256 remained unchanged. The next actual HUD turn
+verified the selected model and a visible READY response; authentication,
+WebSocket, existing timeout UI, task/session isolation and response/DOM secret
+checks passed. The model added prose before READY; strict one-word compliance
+is not claimed. See `direct-chat-model-migration.json` and
+`direct-chat-regression.json`; the earlier sticky-model diagnostic is retained.
+
+AIgoat's generation interruption was explicitly approved. Its subsequent
+temporary pause was guarded and then explicitly restored at 11:47:44.873 UTC:
+same container ID/start time, running and unpaused, marker removed and guard
+stopped. Configuration preservation is distinct from uninterrupted runtime;
+no claim is made that its external interrupted job succeeded. The bounded
+335-sample resource log ends before restoration, retains all 14 review flags,
+and records no sampled competing model inference.
+
+Final read-only delivery inspection passed all 10 checks: authentication and
+health, two selected runtime defaults with only `model.default` changed,
+two employees/human hiring gate, original eight models plus the one new alias,
+clean upstream core repositories, exact main Ollama/PentAGI fingerprints,
+restored AIgoat container/source fingerprints, real-secret text scan and
+whitespace. Seven individual model-parameter baselines remain unavailable and
+are not claimed. No cloud provider or upstream core changes were introduced.
+Evidence is in `final-delivery-check.json`, `aigoat-restored.json` and
+`ollama-tuning-preservation-final.json` under `docs/evidence`.
+
+All acceptance and operational checks for this follow-up are verified. The
+source, docs and evidence belong to this delivery commit (see `git log`).

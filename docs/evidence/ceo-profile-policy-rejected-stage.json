@@ -1,0 +1,410 @@
+{
+  "status": "failed",
+  "started_at": "2026-11-12T10:34:40.339Z",
+  "submitted": [
+    {
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "identifier": "JAR-21",
+      "prompt": "Inspect the local Ollama installation, identify installed models, and produce a technical inventory report."
+    },
+    {
+      "id": "2ad6c6b6-5938-4ec8-8c03-d25d3a490c02",
+      "identifier": "JAR-22",
+      "prompt": "Use two distinct roles for this objective: delegate read-only local Ollama data collection to the existing JARVIS-01 operator, then act as the CEO to independently review the completed worker execution evidence and consolidate a technical inventory report. Record a clear scoped Paperclip child task with acceptance criteria, reuse the existing employee, and do not request or create any hires. The worker must use local_ollama_models to retrieve actual model names and sizes. Wait for Paperclip to wake you after the child completes, review the succeeded run and signed tool evidence, then report verified findings and unresolved limits."
+    }
+  ],
+  "progress": [
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "running"
+        }
+      ],
+      "children": [],
+      "observed_at": "2026-11-12T10:34:46.224Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "running"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "todo",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "running"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "running"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:36:39.017Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "running"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "in_progress",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "running"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "running"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:36:42.608Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "running"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "in_progress",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "running"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "running"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:36:49.825Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "in_progress",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "running"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:36:53.381Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "queued"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 0,
+      "observed_at": "2026-11-12T10:39:58.759Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "queued"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 3571,
+      "observed_at": "2026-11-12T10:40:02.331Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "queued"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 7085,
+      "observed_at": "2026-11-12T10:40:05.844Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "blocked",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "queued"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "child_completion_grace_ms": 10748,
+      "observed_at": "2026-11-12T10:40:09.507Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "in_progress",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "running"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:40:13.226Z"
+    },
+    {
+      "identifier": "JAR-21",
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "status": "done",
+      "runs": [
+        {
+          "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "succeeded"
+        },
+        {
+          "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded"
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+          "runs": [
+            {
+              "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded"
+            },
+            {
+              "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded"
+            }
+          ]
+        }
+      ],
+      "observed_at": "2026-11-12T10:43:41.400Z"
+    }
+  ],
+  "browser_errors": [],
+  "updated_at": "2026-11-12T10:43:43.175Z",
+  "roster_before": [
+    {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS-CEO",
+      "role": "ceo",
+      "reportsTo": null
+    },
+    {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS-01",
+      "role": "general",
+      "reportsTo": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+    }
+  ],
+  "error": "The expression evaluated to a falsy value:\n\n  assert(plans.some(comment => comment.body.startsWith('[JARVIS CEO PLAN decision=self]')))\n",
+  "current_task": "e1505445-214e-4427-9521-4f9aa346cad9",
+  "current_progress": {
+    "identifier": "JAR-21",
+    "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+    "status": "done",
+    "runs": [
+      {
+        "id": "e88a7f00-48fc-4682-97df-1cef5748b653",
+        "status": "succeeded"
+      },
+      {
+        "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+        "status": "succeeded"
+      }
+    ],
+    "children": [
+      {
+        "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+        "identifier": "JAR-23",
+        "status": "done",
+        "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "runs": [
+          {
+            "id": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+            "status": "succeeded"
+          },
+          {
+            "id": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+            "status": "succeeded"
+          }
+        ]
+      }
+    ]
+  }
+}

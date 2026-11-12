@@ -1,0 +1,10 @@
+# Experimental AIgoat-derived profile; not the production default.
+# The live AIgoat runner used 24 threads and 1024-token batches.
+# Keep the verified JARVIS context/template/weights/temperature by inheritance.
+# Reference: ollama.aigoat.reference.json and docs/OLLAMA_TUNING.md.
+FROM jarvis-hermes:3b
+PARAMETER num_thread 24
+PARAMETER num_batch 1024
+PARAMETER num_predict 768
+PARAMETER top_k 40
+PARAMETER top_p 0.9

@@ -2,6 +2,7 @@
    Only the HUD token enters the browser; other credentials stay in Node. */
 const { chromium } = require('playwright');
 const fs = require('node:fs');
+const expectedModel = process.env.JARVIS_TEST_MODEL || 'jarvis-hermes:3b';
 const assert = require('node:assert/strict');
 const root = '/workspace', out = root + '/docs/evidence';
 const origin = 'http://localhost:8765';
@@ -236,7 +237,7 @@ async function socketProbe(page) {
       'Direct chat reused a Paperclip issue session');
     const freshTurns = lines(workerFile).slice(workerLineCount).filter(line =>
       line.includes('conversation turn:') && line.includes('session=' + session + ' '));
-    assert(freshTurns.some(line => line.includes('model=jarvis-hermes:3b provider=custom')),
+    assert(freshTurns.some(line => line.includes('model=' + expectedModel + ' provider=custom')),
       'No fresh direct-session worker turn using local Ollama was recorded');
     const ceoAfter = ceoTurns();
     assert.equal(ceoAfter, ceoBefore, 'Direct chat started an unintended CEO conversation turn');

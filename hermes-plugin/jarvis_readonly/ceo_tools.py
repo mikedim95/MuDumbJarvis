@@ -76,7 +76,7 @@ def context_snapshot(turn, issue=None, comments=None):
                             'body': update_body(c)} for c in updates[-3:]],
         'children': [{k: i.get(k) for k in ('id', 'identifier', 'title', 'status', 'assigneeAgentId')}
                      for i in items],
-        'policy': 'Use the minimum employees. Simple inventory: plan self, then use local_ollama_models and write the final technical report. '
+        'policy': 'Use the minimum employees. Simple inventory must use self execution: call local_ollama_models directly and the runtime records its scope before reading, or optionally record an explicit self plan for rationale. Then write the final technical report. '
                   'With no children, do not wait for child completion. For separate operator and CEO review roles, use paperclip_ceo '
                   'action=delegate with the existing employee ID, title and scoped text; plan rationale is optional. '
                   'A pending child is handled by Paperclip: end with a waiting update. When verified child results are delivered '
@@ -127,9 +127,12 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                 'Report the actual pending/blocked child state. Paperclip owns continuation.')
         else:
             snapshot['current_action'] = (
-                'Read the actual objective above and select the minimum team. A simple inventory can be done directly '
-                'after a self plan. An objective explicitly requiring operator collection and CEO review needs one scoped '
-                'child for the existing employee; call the delegate tool with the exact selected employee ID and scope.')
+                'Read the actual objective above and use the minimum team. For an inventory-only objective without an '
+                'explicit requirement for independent operator and reviewer roles, you MUST call local_ollama_models yourself. '
+                'Your direct tool selection records bounded self scope before the read; a separate explicit self plan is optional for rationale. '
+                'Do not delegate this simple inventory merely because a worker is available. '
+                'An objective explicitly requiring independent operator collection and CEO review needs one scoped child '
+                'for the existing employee; call the delegate tool with the exact selected employee ID and scope.')
         text = 'Authenticated current Paperclip state (runtime preflight, not a model tool call):\n' + json.dumps(snapshot, indent=2)
         if len(text) > 32000:
             raise ValueError('Verified CEO context exceeds its bounded payload limit')
@@ -223,9 +226,27 @@ def manage(args, **kwargs):
     action = args.get('action')
     if action == 'plan':
         decision = args.get('decision')
-        plan = str(args.get('text', '')).strip()
-        if decision not in ('self', 'delegate', 'hire') or not 10 <= len(plan) <= 4000:
-            raise ValueError('A self/delegate/hire decision and a clear scoped plan are required')
+        if decision not in ('self', 'delegate', 'hire'):
+            raise ValueError('An explicit self/delegate/hire decision is required')
+        if 'text' in args or 'plan' in args:
+            plan = args['text'] if 'text' in args else args['plan']
+            if not isinstance(plan, str) or not 10 <= len(plan.strip()) <= 4000:
+                raise ValueError('Plan text or plan rationale must be a string between 10 and 4000 characters')
+            plan = plan.strip()
+        elif decision == 'self':
+            objective = issue.get('description') or issue.get('title')
+            if not isinstance(objective, str) or not objective.strip():
+                raise ValueError('The actual assigned objective is required for a runtime-generated self scope')
+            objective = objective.strip()
+            excerpt = objective[:3000]
+            if len(objective) > 3000:
+                excerpt += '\n[Objective truncated for this plan record; full text remains on the assigned Paperclip issue.]'
+            plan = ('Runtime-generated execution scope, not a model-supplied rationale. '
+                    'The CEO explicitly selected self.\nAssigned Paperclip objective: ' + excerpt +
+                    '\nUse the existing authorized local_ollama_models read-only inventory tool and report verified facts or actual blockers. '
+                    'This plan grants no new permissions and assigns no worker.')
+        else:
+            raise ValueError('A clear scoped plan is required for delegate or hire decisions')
         reporting.api('PATCH', '/issues/' + turn['issue'],
                       {'comment': f'[JARVIS CEO PLAN decision={decision}]\n' + plan}, turn['run'])
         turn['plan_decision'] = decision
@@ -362,7 +383,7 @@ def register(ctx):
         schema={'name': 'paperclip_context', 'description': 'Read your actual assigned Paperclip objective, company goals, existing employees and child task states. Authenticated current context is automatically supplied; call for additional reads.',
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}}, handler=context)
     ctx.register_tool(name='paperclip_ceo', toolset='jarvis_ceo',
-        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Simple work: plan with decision=self and text, then use local_ollama_models and report. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records this selected scope as the plan BEFORE creating one child. Optional plan adds rationale. End turn after delegation. When verified completed-child results are delivered, write the final consolidated report; review optionally rereads the evidence. request_hire only for essential missing capability with human approval.',
+        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Simple work uses your own local_ollama_models call, which records a bounded self scope before reading; an explicit plan with decision=self and text or plan rationale is optional. If an explicit self rationale is omitted, the runtime records scope from the assigned objective. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records this selected scope as the plan BEFORE creating one child. Optional plan adds rationale. End turn after delegation. When verified completed-child results are delivered, write the final consolidated report; review optionally rereads the evidence. request_hire only for essential missing capability with human approval.',
                 'parameters': {'type': 'object', 'properties': {
                     'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire']},
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},

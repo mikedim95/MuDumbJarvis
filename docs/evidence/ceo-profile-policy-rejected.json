@@ -1,0 +1,103 @@
+{
+  "checked_at": "2026-11-12T10:45:08.820201+00:00",
+  "accepted": false,
+  "reason": "Simple inventory objective delegated despite CEO having the authorized tool; real execution completion does not satisfy the minimum-team self-execution check. Policy text will be clarified and both objectives retested.",
+  "tasks": [
+    {
+      "id": "e1505445-214e-4427-9521-4f9aa346cad9",
+      "identifier": "JAR-21",
+      "status": "done",
+      "runs": [
+        {
+          "runId": "e88a7f00-48fc-4682-97df-1cef5748b653",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T10:40:10.912Z",
+          "finishedAt": "2026-11-12T10:43:41.127Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T10:34:44.249Z",
+          "finishedAt": "2026-11-12T10:36:49.805Z",
+          "errorCode": null,
+          "error": null
+        }
+      ],
+      "children": [
+        {
+          "id": "deb70416-367a-4e7e-a1e0-445825a508f1",
+          "identifier": "JAR-23",
+          "status": "done",
+          "runs": [
+            {
+              "runId": "40abd93b-35ca-432d-a0bb-f9dd0c79afd2",
+              "status": "succeeded",
+              "startedAt": "2026-11-12T10:36:38.260Z",
+              "finishedAt": "2026-11-12T10:39:56.011Z",
+              "errorCode": null,
+              "error": null
+            },
+            {
+              "runId": "a02d524d-0365-4133-95fa-fd2695cb97e0",
+              "status": "succeeded",
+              "startedAt": "2026-11-12T10:34:44.249Z",
+              "finishedAt": "2026-11-12T10:36:49.805Z",
+              "errorCode": null,
+              "error": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2ad6c6b6-5938-4ec8-8c03-d25d3a490c02",
+      "identifier": "JAR-22",
+      "status": "in_progress",
+      "runs": [
+        {
+          "runId": "eb0ec4d7-db45-4fbb-9beb-dc7dc92f580f",
+          "status": "running",
+          "startedAt": "2026-11-12T10:44:30.031Z",
+          "finishedAt": null,
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "222b2836-85b0-428b-a2cd-928e3440f50f",
+          "status": "succeeded",
+          "startedAt": "2026-11-12T10:36:50.593Z",
+          "finishedAt": "2026-11-12T10:40:10.221Z",
+          "errorCode": null,
+          "error": null
+        }
+      ],
+      "children": [
+        {
+          "id": "d9b73a18-5170-42f2-84d2-5804b857ad8a",
+          "identifier": "JAR-24",
+          "status": "done",
+          "runs": [
+            {
+              "runId": "15c98d81-b586-4780-a87f-1233427dfd32",
+              "status": "succeeded",
+              "startedAt": "2026-11-12T10:39:56.673Z",
+              "finishedAt": "2026-11-12T10:44:29.724Z",
+              "errorCode": null,
+              "error": null
+            },
+            {
+              "runId": "222b2836-85b0-428b-a2cd-928e3440f50f",
+              "status": "succeeded",
+              "startedAt": "2026-11-12T10:36:50.593Z",
+              "finishedAt": "2026-11-12T10:40:10.221Z",
+              "errorCode": null,
+              "error": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

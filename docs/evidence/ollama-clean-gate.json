@@ -1,0 +1,576 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-11-12T10:17:10.762013+00:00",
+  "checked_at": "2026-11-12T10:17:35.175237+00:00",
+  "status": "passed",
+  "sample_window_seconds": 20.698999999999998,
+  "thresholds": {
+    "minimum_idle_percent": 85,
+    "maximum_steal_percent": 1,
+    "maximum_iowait_percent": 1,
+    "maximum_unrelated_process_one_core_cpu_percent": 100,
+    "maximum_active_inference_one_core_cpu_percent": 5,
+    "minimum_available_memory_GiB": 12
+  },
+  "criteria": {
+    "every_sample_idle_at_least_85_percent": true,
+    "every_sample_steal_at_most_1_percent": true,
+    "every_sample_iowait_at_most_1_percent": true,
+    "no_process_over_one_core": true,
+    "no_active_inference_process_over_5_percent_one_core": true,
+    "available_memory_at_least_12_GiB": true,
+    "both_hermes_runtimes_idle": true,
+    "paperclip_no_active_or_queued_runs": true,
+    "approved_ai_goat_pause_still_active": true
+  },
+  "samples": [
+    {
+      "at": "2026-11-12T10:17:15.660629+00:00",
+      "seconds": 4.157,
+      "idle_percent": 88.389,
+      "busy_percent_excluding_iowait_and_steal": 11.354,
+      "iowait_percent": 0.0,
+      "steal_percent": 0.258,
+      "load_average": [
+        7.24,
+        24.85,
+        32.2
+      ],
+      "process_names_only": [
+        {
+          "pid": 5325,
+          "name": "Xorg",
+          "container": null,
+          "one_core_cpu_percent": 93.34,
+          "state": "R"
+        },
+        {
+          "pid": 1761122,
+          "name": "xrdp",
+          "container": null,
+          "one_core_cpu_percent": 56.05,
+          "state": "S"
+        },
+        {
+          "pid": 1849752,
+          "name": "xfce4-taskmanag",
+          "container": null,
+          "one_core_cpu_percent": 33.2,
+          "state": "S"
+        },
+        {
+          "pid": 5602,
+          "name": "xfce4-panel",
+          "container": null,
+          "one_core_cpu_percent": 24.78,
+          "state": "S"
+        },
+        {
+          "pid": 5507,
+          "name": "xfwm4",
+          "container": null,
+          "one_core_cpu_percent": 16.6,
+          "state": "R"
+        },
+        {
+          "pid": 2740341,
+          "name": "exe",
+          "container": null,
+          "one_core_cpu_percent": 14.67,
+          "state": "S"
+        },
+        {
+          "pid": 1772658,
+          "name": "MainThread",
+          "container": null,
+          "one_core_cpu_percent": 11.31,
+          "state": "R"
+        },
+        {
+          "pid": 5352,
+          "name": "xfce4-session",
+          "container": null,
+          "one_core_cpu_percent": 9.86,
+          "state": "S"
+        },
+        {
+          "pid": 6933,
+          "name": "xfce4-screensav",
+          "container": null,
+          "one_core_cpu_percent": 9.14,
+          "state": "S"
+        },
+        {
+          "pid": 5616,
+          "name": "xfdesktop",
+          "container": null,
+          "one_core_cpu_percent": 8.42,
+          "state": "S"
+        },
+        {
+          "pid": 1772626,
+          "name": "python",
+          "container": null,
+          "one_core_cpu_percent": 5.77,
+          "state": "S"
+        },
+        {
+          "pid": 1774580,
+          "name": "postgres",
+          "container": null,
+          "one_core_cpu_percent": 5.53,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-12T10:17:19.797617+00:00",
+      "seconds": 4.136,
+      "idle_percent": 87.582,
+      "busy_percent_excluding_iowait_and_steal": 12.167,
+      "iowait_percent": 0.015,
+      "steal_percent": 0.235,
+      "load_average": [
+        7.24,
+        24.85,
+        32.2
+      ],
+      "process_names_only": [
+        {
+          "pid": 5325,
+          "name": "Xorg",
+          "container": null,
+          "one_core_cpu_percent": 93.33,
+          "state": "R"
+        },
+        {
+          "pid": 1761122,
+          "name": "xrdp",
+          "container": null,
+          "one_core_cpu_percent": 56.34,
+          "state": "S"
+        },
+        {
+          "pid": 1849752,
+          "name": "xfce4-taskmanag",
+          "container": null,
+          "one_core_cpu_percent": 28.05,
+          "state": "S"
+        },
+        {
+          "pid": 5602,
+          "name": "xfce4-panel",
+          "container": null,
+          "one_core_cpu_percent": 26.6,
+          "state": "S"
+        },
+        {
+          "pid": 1772658,
+          "name": "MainThread",
+          "container": null,
+          "one_core_cpu_percent": 19.83,
+          "state": "S"
+        },
+        {
+          "pid": 5507,
+          "name": "xfwm4",
+          "container": null,
+          "one_core_cpu_percent": 17.41,
+          "state": "S"
+        },
+        {
+          "pid": 2740341,
+          "name": "exe",
+          "container": null,
+          "one_core_cpu_percent": 14.75,
+          "state": "R"
+        },
+        {
+          "pid": 5352,
+          "name": "xfce4-session",
+          "container": null,
+          "one_core_cpu_percent": 9.91,
+          "state": "S"
+        },
+        {
+          "pid": 5616,
+          "name": "xfdesktop",
+          "container": null,
+          "one_core_cpu_percent": 9.19,
+          "state": "S"
+        },
+        {
+          "pid": 6933,
+          "name": "xfce4-screensav",
+          "container": null,
+          "one_core_cpu_percent": 8.95,
+          "state": "S"
+        },
+        {
+          "pid": 1772626,
+          "name": "python",
+          "container": null,
+          "one_core_cpu_percent": 6.53,
+          "state": "S"
+        },
+        {
+          "pid": 1858898,
+          "name": "postgres",
+          "container": null,
+          "one_core_cpu_percent": 6.29,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-12T10:17:23.942497+00:00",
+      "seconds": 4.144,
+      "idle_percent": 89.325,
+      "busy_percent_excluding_iowait_and_steal": 10.461,
+      "iowait_percent": 0.008,
+      "steal_percent": 0.206,
+      "load_average": [
+        6.9,
+        24.49,
+        32.04
+      ],
+      "process_names_only": [
+        {
+          "pid": 5325,
+          "name": "Xorg",
+          "container": null,
+          "one_core_cpu_percent": 93.16,
+          "state": "R"
+        },
+        {
+          "pid": 1761122,
+          "name": "xrdp",
+          "container": null,
+          "one_core_cpu_percent": 55.27,
+          "state": "S"
+        },
+        {
+          "pid": 1849752,
+          "name": "xfce4-taskmanag",
+          "container": null,
+          "one_core_cpu_percent": 31.86,
+          "state": "S"
+        },
+        {
+          "pid": 5602,
+          "name": "xfce4-panel",
+          "container": null,
+          "one_core_cpu_percent": 25.1,
+          "state": "S"
+        },
+        {
+          "pid": 5507,
+          "name": "xfwm4",
+          "container": null,
+          "one_core_cpu_percent": 16.65,
+          "state": "R"
+        },
+        {
+          "pid": 2740341,
+          "name": "exe",
+          "container": null,
+          "one_core_cpu_percent": 14.96,
+          "state": "S"
+        },
+        {
+          "pid": 1772658,
+          "name": "MainThread",
+          "container": null,
+          "one_core_cpu_percent": 10.38,
+          "state": "S"
+        },
+        {
+          "pid": 5352,
+          "name": "xfce4-session",
+          "container": null,
+          "one_core_cpu_percent": 9.17,
+          "state": "S"
+        },
+        {
+          "pid": 6933,
+          "name": "xfce4-screensav",
+          "container": null,
+          "one_core_cpu_percent": 8.69,
+          "state": "S"
+        },
+        {
+          "pid": 5616,
+          "name": "xfdesktop",
+          "container": null,
+          "one_core_cpu_percent": 8.21,
+          "state": "R"
+        },
+        {
+          "pid": 1307,
+          "name": "tailscaled",
+          "container": null,
+          "one_core_cpu_percent": 6.27,
+          "state": "S"
+        },
+        {
+          "pid": 1852857,
+          "name": "postgres",
+          "container": null,
+          "one_core_cpu_percent": 5.07,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-12T10:17:28.076504+00:00",
+      "seconds": 4.132,
+      "idle_percent": 88.013,
+      "busy_percent_excluding_iowait_and_steal": 11.697,
+      "iowait_percent": 0.008,
+      "steal_percent": 0.282,
+      "load_average": [
+        6.83,
+        24.18,
+        31.9
+      ],
+      "process_names_only": [
+        {
+          "pid": 5325,
+          "name": "Xorg",
+          "container": null,
+          "one_core_cpu_percent": 92.44,
+          "state": "R"
+        },
+        {
+          "pid": 1761122,
+          "name": "xrdp",
+          "container": null,
+          "one_core_cpu_percent": 54.69,
+          "state": "R"
+        },
+        {
+          "pid": 1849752,
+          "name": "xfce4-taskmanag",
+          "container": null,
+          "one_core_cpu_percent": 28.31,
+          "state": "S"
+        },
+        {
+          "pid": 5602,
+          "name": "xfce4-panel",
+          "container": null,
+          "one_core_cpu_percent": 24.68,
+          "state": "S"
+        },
+        {
+          "pid": 5507,
+          "name": "xfwm4",
+          "container": null,
+          "one_core_cpu_percent": 16.7,
+          "state": "S"
+        },
+        {
+          "pid": 1772658,
+          "name": "MainThread",
+          "container": null,
+          "one_core_cpu_percent": 16.46,
+          "state": "S"
+        },
+        {
+          "pid": 2740341,
+          "name": "exe",
+          "container": null,
+          "one_core_cpu_percent": 14.04,
+          "state": "S"
+        },
+        {
+          "pid": 5352,
+          "name": "xfce4-session",
+          "container": null,
+          "one_core_cpu_percent": 9.44,
+          "state": "S"
+        },
+        {
+          "pid": 6933,
+          "name": "xfce4-screensav",
+          "container": null,
+          "one_core_cpu_percent": 8.71,
+          "state": "S"
+        },
+        {
+          "pid": 5616,
+          "name": "xfdesktop",
+          "container": null,
+          "one_core_cpu_percent": 8.47,
+          "state": "S"
+        },
+        {
+          "pid": 1772626,
+          "name": "python",
+          "container": null,
+          "one_core_cpu_percent": 7.99,
+          "state": "S"
+        },
+        {
+          "pid": 1307,
+          "name": "tailscaled",
+          "container": null,
+          "one_core_cpu_percent": 5.08,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-12T10:17:32.208637+00:00",
+      "seconds": 4.13,
+      "idle_percent": 88.148,
+      "busy_percent_excluding_iowait_and_steal": 11.631,
+      "iowait_percent": 0.0,
+      "steal_percent": 0.221,
+      "load_average": [
+        6.44,
+        23.82,
+        31.74
+      ],
+      "process_names_only": [
+        {
+          "pid": 5325,
+          "name": "Xorg",
+          "container": null,
+          "one_core_cpu_percent": 92.25,
+          "state": "R"
+        },
+        {
+          "pid": 1761122,
+          "name": "xrdp",
+          "container": null,
+          "one_core_cpu_percent": 55.44,
+          "state": "S"
+        },
+        {
+          "pid": 1849752,
+          "name": "xfce4-taskmanag",
+          "container": null,
+          "one_core_cpu_percent": 31.47,
+          "state": "S"
+        },
+        {
+          "pid": 5602,
+          "name": "xfce4-panel",
+          "container": null,
+          "one_core_cpu_percent": 26.39,
+          "state": "S"
+        },
+        {
+          "pid": 5507,
+          "name": "xfwm4",
+          "container": null,
+          "one_core_cpu_percent": 17.43,
+          "state": "S"
+        },
+        {
+          "pid": 2740341,
+          "name": "exe",
+          "container": null,
+          "one_core_cpu_percent": 15.98,
+          "state": "S"
+        },
+        {
+          "pid": 5352,
+          "name": "xfce4-session",
+          "container": null,
+          "one_core_cpu_percent": 9.93,
+          "state": "S"
+        },
+        {
+          "pid": 1772658,
+          "name": "MainThread",
+          "container": null,
+          "one_core_cpu_percent": 9.44,
+          "state": "S"
+        },
+        {
+          "pid": 6933,
+          "name": "xfce4-screensav",
+          "container": null,
+          "one_core_cpu_percent": 8.96,
+          "state": "R"
+        },
+        {
+          "pid": 5616,
+          "name": "xfdesktop",
+          "container": null,
+          "one_core_cpu_percent": 8.72,
+          "state": "R"
+        },
+        {
+          "pid": 1307,
+          "name": "tailscaled",
+          "container": null,
+          "one_core_cpu_percent": 5.33,
+          "state": "S"
+        },
+        {
+          "pid": 1844432,
+          "name": "postgres",
+          "container": null,
+          "one_core_cpu_percent": 5.33,
+          "state": "S"
+        }
+      ]
+    }
+  ],
+  "memory_bytes": {
+    "MemTotal": 42045747200,
+    "MemAvailable": 30849937408,
+    "SwapTotal": 0,
+    "SwapFree": 0
+  },
+  "hermes": {
+    "jarvis-hermes": {
+      "active_runs": 0,
+      "gateway_busy": false,
+      "status": "ok"
+    },
+    "jarvis-hermes-ceo": {
+      "active_runs": 0,
+      "gateway_busy": false,
+      "status": "ok"
+    }
+  },
+  "paperclip_active_runs": [],
+  "container_resources": [
+    {
+      "Name": "ollama",
+      "CPUPerc": "0.00%",
+      "MemUsage": "68.25MiB / 39.16GiB",
+      "PIDs": "51"
+    },
+    {
+      "Name": "aigoat-ollama-1",
+      "CPUPerc": "0.00%",
+      "MemUsage": "4.071GiB / 39.16GiB",
+      "PIDs": "84"
+    },
+    {
+      "Name": "jarvis-hermes",
+      "CPUPerc": "12.04%",
+      "MemUsage": "206.8MiB / 39.16GiB",
+      "PIDs": "34"
+    },
+    {
+      "Name": "jarvis-hermes-ceo",
+      "CPUPerc": "1.02%",
+      "MemUsage": "216.3MiB / 39.16GiB",
+      "PIDs": "35"
+    }
+  ],
+  "runtime_control": {
+    "ai_goat_paused": true,
+    "ai_goat_id": "e20fe477386f275539e466fc48ad609da25be91bb987d932a4fa794adee7eb17",
+    "ai_goat_started_at": "2026-11-04T12:30:24.113201001Z",
+    "authorization": "User explicitly approved interruption of AIgoat current generation; root then applied temporary pause with automatic resume guard after it resubmitted. This read-only sampling did not pause/resume/stop anything.",
+    "configuration_versus_runtime": "Configuration preservation does not mean uninterrupted runtime. Approved runner termination and temporary pause are deliberate runtime actions."
+  },
+  "timing_scope": "Fresh preflight only; must continue checking unrelated CPU during each rerun. Prior contended trials remain superseded."
+}

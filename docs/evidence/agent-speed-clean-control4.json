@@ -1,0 +1,468 @@
+{
+  "started_at": "2026-11-12T10:22:49.901313+00:00",
+  "status": "verified_execution_with_output_limitations",
+  "profile": "clean-control4",
+  "model": "jarvis-hermes:3b",
+  "prompt": "Use local_ollama_models to retrieve installed Ollama models. Report the total count and exact name and byte size of the first three models returned. Keep prose under 60 words.",
+  "submission_provenance": "Operator-created Paperclip API issue; authenticated JARVIS result reads, not a HUD-submission test",
+  "assigneeAdapterOverrides": {
+    "adapterConfig": {
+      "payloadTemplate": {
+        "model": "jarvis-hermes:3b"
+      }
+    }
+  },
+  "inventory_before": [
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size_bytes": 2953840525
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size_bytes": 2953840466
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size_bytes": 4683075812
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size_bytes": 4505856135
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size_bytes": 4505855004
+    },
+    {
+      "name": "ministral-3:3b",
+      "size_bytes": 2953840808
+    },
+    {
+      "name": "granite-code:3b",
+      "size_bytes": 1997354777
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size_bytes": 274302450
+    },
+    {
+      "name": "llama3.2:3b",
+      "size_bytes": 2019393189
+    }
+  ],
+  "model_before": {
+    "name": "jarvis-hermes:3b",
+    "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+    "size": 2953840466,
+    "details": {
+      "parent_model": "ministral-3:3b",
+      "format": "gguf",
+      "family": "mistral3",
+      "families": [
+        "mistral3"
+      ],
+      "parameter_size": "3.8B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 262144,
+      "embedding_length": 3072,
+      "runner": "ggml"
+    },
+    "weight_blob_sha256": "910e4bf4e2338f181e99796d7452404e85c1b6bbbf8cd0bb094672cf9b6f2f22",
+    "parameters": "num_ctx                        65536\nnum_thread                     4\ntemperature                    0.1",
+    "template_sha256": "00f34c7aae2f0bb051d77b7d9ab69159145384f0f7936e61aeb2af3acbd3174a",
+    "system_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+  },
+  "request_id": "a97406ff-1835-4395-aefb-4df96bbdc81a",
+  "submission_started_at": "2026-11-12T10:22:49.983183+00:00",
+  "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+  "identifier": "JAR-19",
+  "idempotency_replay_same_id": true,
+  "last_observed_at": "2026-11-12T10:28:46.172847+00:00",
+  "last_observed_status": "done",
+  "verification": {
+    "execution_verified": true,
+    "canonical_hud_id_status_match": true,
+    "canonical_issue": {
+      "id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "identifier": "JAR-19",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "projectId": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+      "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "status": "done",
+      "createdAt": "2026-11-12T10:22:50.029Z",
+      "completedAt": "2026-11-12T10:28:42.637Z"
+    },
+    "canonical_run": {
+      "id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "status": "succeeded",
+      "startedAt": "2026-11-12T10:22:50.547Z",
+      "finishedAt": "2026-11-12T10:28:43.266Z"
+    },
+    "canonical_usage": {
+      "inputTokens": 5941,
+      "outputTokens": 190,
+      "rawInputTokens": 5941,
+      "rawOutputTokens": 190,
+      "cachedInputTokens": 0,
+      "usageSource": "per_run",
+      "model": "unknown"
+    },
+    "canonical_run_wall_seconds": 352.719,
+    "hermes_run": {
+      "run_id": "run_37686ea50a89408bbf6842fdec972f0f",
+      "status": "completed",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "usage": {
+        "input_tokens": 5941,
+        "output_tokens": 190,
+        "total_tokens": 6131
+      }
+    },
+    "model_metrics": {
+      "runtime_log": [
+        "2026-11-12 10:22:56,518 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec] agent.turn_context: conversation turn: session=paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec model=jarvis-hermes:3b provider=custom platform=api_server history=0 msg='You are JARVIS-01, an AI agent employee in a Paperclip-managed company.  Papercl...'",
+        "2026-11-12 10:25:48,854 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec] agent.tool_executor: tool local_ollama_models completed (0.12s, 2936 chars)"
+      ],
+      "completed_model_calls": [
+        {
+          "timestamp": "2026-11-12T10:25:48.451000+00:00",
+          "call_index": 1,
+          "model": "jarvis-hermes:3b",
+          "provider": "custom",
+          "input_tokens": 2331,
+          "output_tokens": 9,
+          "total_tokens": 2340,
+          "provider_call_wall_seconds": 171.1,
+          "cache_read_tokens": null,
+          "cache_prompt_tokens": null
+        },
+        {
+          "timestamp": "2026-11-12T10:28:42.079000+00:00",
+          "call_index": 2,
+          "model": "jarvis-hermes:3b",
+          "provider": "custom",
+          "input_tokens": 3610,
+          "output_tokens": 181,
+          "total_tokens": 3791,
+          "provider_call_wall_seconds": 173.2,
+          "cache_read_tokens": 2330,
+          "cache_prompt_tokens": 3610
+        }
+      ],
+      "model_call_count": 2,
+      "input_tokens": 5941,
+      "output_tokens": 190,
+      "cache_read_tokens": null,
+      "cache_note": "Input totals include cached prompt tokens. Missing cache counters mean unknown; canonical cachedInputTokens=0 is not proof of no cache.",
+      "provider_call_wall_seconds": 344.3,
+      "latency_scope": "Provider-call wall time includes queue/prefill/decode; not native decode-only throughput",
+      "native_prompt_eval_duration": null,
+      "native_eval_duration": null,
+      "native_duration_note": "Canonical runs and Hermes call logs do not expose reliable native per-call prompt/decode eval durations",
+      "auxiliary_call_scope": "Only this canonical run window and exact issue session; separately attributed post-run title generation is excluded"
+    },
+    "signed_worker_evidence": {
+      "version": 2,
+      "agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "paperclip_run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "tool": "local_ollama_models",
+      "models": [
+        {
+          "name": "jarvis-hermes-aigoat24:3b",
+          "size_bytes": 2953840525,
+          "size_gib": 2.75
+        },
+        {
+          "name": "jarvis-hermes:3b",
+          "size_bytes": 2953840466,
+          "size_gib": 2.75
+        },
+        {
+          "name": "pentagi-basilisk:7b",
+          "size_bytes": 4683075812,
+          "size_gib": 4.36
+        },
+        {
+          "name": "pentagi-whiterabbitneo:7b",
+          "size_bytes": 4505856135,
+          "size_gib": 4.2
+        },
+        {
+          "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+          "size_bytes": 4505855004,
+          "size_gib": 4.2
+        },
+        {
+          "name": "ministral-3:3b",
+          "size_bytes": 2953840808,
+          "size_gib": 2.75
+        },
+        {
+          "name": "granite-code:3b",
+          "size_bytes": 1997354777,
+          "size_gib": 1.86
+        },
+        {
+          "name": "nomic-embed-text:latest",
+          "size_bytes": 274302450,
+          "size_gib": 0.26
+        },
+        {
+          "name": "llama3.2:3b",
+          "size_bytes": 2019393189,
+          "size_gib": 1.88
+        }
+      ],
+      "signature": "9563c8ca53f43990b5d73c7ded37686a370a948a655cecc9196c841f72319ef4"
+    },
+    "actual_tool_audit": {
+      "timestamp": 1794479148.8528252,
+      "issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "paperclip_run_id": "c88d6e57-e04d-4417-98e2-f3052ea00bf9",
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+      "tool": "local_ollama_models",
+      "result": {
+        "source": "Ollama /api/tags",
+        "models": [
+          {
+            "name": "jarvis-hermes-aigoat24:3b",
+            "size_bytes": 2953840525,
+            "size_gib": 2.75,
+            "details": {
+              "parent_model": "jarvis-hermes:3b",
+              "format": "gguf",
+              "family": "mistral3",
+              "families": [
+                "mistral3"
+              ],
+              "parameter_size": "3.8B",
+              "quantization_level": "Q4_K_M",
+              "context_length": 262144,
+              "embedding_length": 3072,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "jarvis-hermes:3b",
+            "size_bytes": 2953840466,
+            "size_gib": 2.75,
+            "details": {
+              "parent_model": "ministral-3:3b",
+              "format": "gguf",
+              "family": "mistral3",
+              "families": [
+                "mistral3"
+              ],
+              "parameter_size": "3.8B",
+              "quantization_level": "Q4_K_M",
+              "context_length": 262144,
+              "embedding_length": 3072,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "pentagi-basilisk:7b",
+            "size_bytes": 4683075812,
+            "size_gib": 4.36,
+            "details": {
+              "parent_model": "sha256-6e54b085a27343e3c5a664a81792297d2450d0fda18cd24d6369f7e8467b1c2a",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "7.6B",
+              "quantization_level": "Q4_K_M",
+              "context_length": 32768,
+              "embedding_length": 3584,
+              "runner": "llamacpp"
+            }
+          },
+          {
+            "name": "pentagi-whiterabbitneo:7b",
+            "size_bytes": 4505856135,
+            "size_gib": 4.2,
+            "details": {
+              "parent_model": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "7.6B",
+              "quantization_level": "Q4_0",
+              "context_length": 32768,
+              "embedding_length": 3584,
+              "runner": "llamacpp"
+            }
+          },
+          {
+            "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+            "size_bytes": 4505855004,
+            "size_gib": 4.2,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "7.6B",
+              "quantization_level": "Q4_0",
+              "context_length": 32768,
+              "embedding_length": 3584,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "ministral-3:3b",
+            "size_bytes": 2953840808,
+            "size_gib": 2.75,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "mistral3",
+              "families": [
+                "mistral3"
+              ],
+              "parameter_size": "3.8B",
+              "quantization_level": "Q4_K_M",
+              "context_length": 262144,
+              "embedding_length": 3072,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "granite-code:3b",
+            "size_bytes": 1997354777,
+            "size_gib": 1.86,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "llama",
+              "families": [
+                "llama"
+              ],
+              "parameter_size": "3.5B",
+              "quantization_level": "Q4_0",
+              "context_length": 128000,
+              "embedding_length": 2560,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "nomic-embed-text:latest",
+            "size_bytes": 274302450,
+            "size_gib": 0.26,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "nomic-bert",
+              "families": [
+                "nomic-bert"
+              ],
+              "parameter_size": "137M",
+              "quantization_level": "F16",
+              "context_length": 2048,
+              "embedding_length": 768,
+              "runner": "ggml"
+            }
+          },
+          {
+            "name": "llama3.2:3b",
+            "size_bytes": 2019393189,
+            "size_gib": 1.88,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "llama",
+              "families": [
+                "llama"
+              ],
+              "parameter_size": "3.2B",
+              "quantization_level": "Q4_K_M",
+              "context_length": 131072,
+              "embedding_length": 3072,
+              "runner": "ggml"
+            }
+          }
+        ]
+      }
+    },
+    "inventory_after": [
+      {
+        "name": "jarvis-hermes-aigoat24:3b",
+        "size_bytes": 2953840525
+      },
+      {
+        "name": "jarvis-hermes:3b",
+        "size_bytes": 2953840466
+      },
+      {
+        "name": "pentagi-basilisk:7b",
+        "size_bytes": 4683075812
+      },
+      {
+        "name": "pentagi-whiterabbitneo:7b",
+        "size_bytes": 4505856135
+      },
+      {
+        "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+        "size_bytes": 4505855004
+      },
+      {
+        "name": "ministral-3:3b",
+        "size_bytes": 2953840808
+      },
+      {
+        "name": "granite-code:3b",
+        "size_bytes": 1997354777
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "size_bytes": 274302450
+      },
+      {
+        "name": "llama3.2:3b",
+        "size_bytes": 2019393189
+      }
+    ],
+    "inventory_sha256": "be5378a7dac74e4bc9dc69877c99ecb6153e2326de90b65eeed340f9f0438147",
+    "model_after": {
+      "name": "jarvis-hermes:3b",
+      "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+      "size": 2953840466,
+      "details": {
+        "parent_model": "ministral-3:3b",
+        "format": "gguf",
+        "family": "mistral3",
+        "families": [
+          "mistral3"
+        ],
+        "parameter_size": "3.8B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 3072,
+        "runner": "ggml"
+      },
+      "weight_blob_sha256": "910e4bf4e2338f181e99796d7452404e85c1b6bbbf8cd0bb094672cf9b6f2f22",
+      "parameters": "num_ctx                        65536\nnum_thread                     4\ntemperature                    0.1",
+      "template_sha256": "00f34c7aae2f0bb051d77b7d9ab69159145384f0f7936e61aeb2af3acbd3174a",
+      "system_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    "result_prose": "- **Total models**: 9\n- **First three models**:\n  1. `jarvis-hermes-aigoat24:3b` \u2013 2.75 GB\n  2. `jarvis-hermes:3b`   \u2013 2.75 GB   (same architecture as jarvis-hermes-aigoat24)\n  3. `pentagi-basilisk:7b` \u2013 4.36 GB\n\n**Recommendations**:\n- Consider quantized versions of these models for optimized memory/processing trade-offs, as many are dual-tuned (e.g., LLama-v2-style).\n- Explore `WhiteRabbitNeo-7B` for a lighter Qwen2-based Q4-optimized alternative (~4.2 GB with higher context) if the largest family member suffices.",
+    "result_prose_words": 65,
+    "output_contract": {
+      "first_three_exact_names_and_bytes": false,
+      "numeric_total_count_present": true,
+      "under_60_words": false
+    },
+    "canonical_result_author_worker": true,
+    "next_sample_note": "Wait for unrelated/auxiliary inference to become idle before another sample; post-run title calls can occur after this canonical task window."
+  },
+  "finished_at": "2026-11-12T10:28:47.027610+00:00",
+  "submission_to_observation_seconds": 357.044427
+}

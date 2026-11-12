@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "source": "Read-only live candidate monitor; sanitized target-runner numeric flags only",
+  "candidate": {
+    "issue_id": "c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+    "profile": "candidate24",
+    "expected_model": "jarvis-hermes-aigoat24:3b",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+    "hermes_run_id": "run_74b152d283994e018e889a1437521009",
+    "hermes_linkage_source": "Exact run ID from canonical Paperclip heartbeat-run log; independently verified authenticated Hermes GET and unique full-session persisted registry row"
+  },
+  "control": {
+    "issue_id": "4125a6d4-133a-4767-a137-d09d2f62ffb4",
+    "profile": "control4",
+    "expected_model": "jarvis-hermes:3b",
+    "historical_actual_runner_initialization": {
+      "source": "Ollama runner initialization inside JAR-17 canonical worker run window; raw command/model path omitted",
+      "observations": [
+        {
+          "timestamp": "2026-11-12T09:54:16.834971709Z",
+          "n_threads": 4,
+          "n_threads_batch": 4
+        },
+        {
+          "timestamp": "2026-11-12T09:54:24.683138732Z",
+          "n_threads": 4
+        }
+      ],
+      "limitation": "Historical CLI launch argument/PID unavailable; numeric runner initialization is observed directly."
+    }
+  },
+  "observations": [
+    {
+      "observed_at": "2026-11-12T10:02:00.492144+00:00",
+      "issue_id": "c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+      "canonical_status": "in_progress",
+      "worker_run": {
+        "runId": "6cb3549e-6f0e-427e-a048-26da2f92ff09",
+        "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "running",
+        "startedAt": "2026-11-12T10:00:41.895Z",
+        "finishedAt": null,
+        "errorCode": null
+      },
+      "actual_model_turns": [
+        {
+          "timestamp": "2026-11-12 10:00:44,445",
+          "model": "jarvis-hermes-aigoat24:3b",
+          "provider": "custom",
+          "history": 0
+        }
+      ],
+      "numeric_target_runners": [
+        {
+          "pid": 1836859,
+          "num_thread": 24,
+          "context_size": 65536,
+          "batch_size": 1024,
+          "micro_batch_size": 1024,
+          "parallel": 1
+        }
+      ],
+      "completed_provider_calls": [],
+      "actual_tool_audits": []
+    },
+    {
+      "observed_at": "2026-11-12T10:02:30.806001+00:00",
+      "issue_id": "c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+      "canonical_status": "in_progress",
+      "worker_run": {
+        "runId": "6cb3549e-6f0e-427e-a048-26da2f92ff09",
+        "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "running",
+        "startedAt": "2026-11-12T10:00:41.895Z",
+        "finishedAt": null,
+        "errorCode": null
+      },
+      "actual_model_turns": [
+        {
+          "timestamp": "2026-11-12 10:00:44,445",
+          "model": "jarvis-hermes-aigoat24:3b",
+          "provider": "custom",
+          "history": 0
+        }
+      ],
+      "numeric_target_runners": [
+        {
+          "pid": 1836859,
+          "num_thread": 24,
+          "context_size": 65536,
+          "batch_size": 1024,
+          "micro_batch_size": 1024,
+          "parallel": 1
+        }
+      ],
+      "completed_provider_calls": [
+        {
+          "timestamp": "2026-11-12 10:02:25,845",
+          "call_index": 1,
+          "model": "jarvis-hermes-aigoat24:3b",
+          "provider": "custom",
+          "input_tokens": 2335,
+          "output_tokens": 9,
+          "total_tokens": 2344,
+          "provider_wall_seconds": 100.9
+        }
+      ],
+      "actual_tool_audits": [
+        {
+          "paperclip_run_id": "6cb3549e-6f0e-427e-a048-26da2f92ff09",
+          "tool": "local_ollama_models",
+          "source": "Ollama /api/tags",
+          "model_count": 9
+        }
+      ]
+    },
+    {
+      "observed_at": "2026-11-12T10:10:36.073703+00:00",
+      "issue_id": "c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+      "canonical_status": "blocked",
+      "worker_run": {
+        "runId": "6cb3549e-6f0e-427e-a048-26da2f92ff09",
+        "agentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+        "status": "cancelled",
+        "startedAt": "2026-11-12T10:00:41.895Z",
+        "finishedAt": "2026-11-12T10:10:22.683Z",
+        "errorCode": "cancelled"
+      },
+      "actual_model_turns": [
+        {
+          "timestamp": "2026-11-12 10:00:44,445",
+          "model": "jarvis-hermes-aigoat24:3b",
+          "provider": "custom",
+          "history": 0
+        }
+      ],
+      "numeric_target_runners": [
+        {
+          "pid": 1836859,
+          "num_thread": 24,
+          "context_size": 65536,
+          "batch_size": 1024,
+          "micro_batch_size": 1024,
+          "parallel": 1
+        }
+      ],
+      "completed_provider_calls": [
+        {
+          "timestamp": "2026-11-12 10:02:25,845",
+          "call_index": 1,
+          "model": "jarvis-hermes-aigoat24:3b",
+          "provider": "custom",
+          "input_tokens": 2335,
+          "output_tokens": 9,
+          "total_tokens": 2344,
+          "provider_wall_seconds": 100.9
+        }
+      ],
+      "actual_tool_audits": [
+        {
+          "paperclip_run_id": "6cb3549e-6f0e-427e-a048-26da2f92ff09",
+          "tool": "local_ollama_models",
+          "source": "Ollama /api/tags",
+          "model_count": 9
+        }
+      ]
+    }
+  ],
+  "control_historical_runner_launches": [],
+  "limitations": [
+    "Main Ollama model aliases use identical weights; runner association uses exact target weight plus exclusive execution time window and actual issue-correlated Hermes model turn.",
+    "No raw command/model path, environment, headers, or credential is retained.",
+    "Historical launch logs expose numeric flags but no reliable process PID."
+  ],
+  "updated_at": "2026-11-12T10:10:36.073703+00:00",
+  "measurement_status": "contended_inconclusive",
+  "measurement_note": "User reported another process using agent/resources. Prior timings are not a conclusive profile comparison. Candidate was stopped by the root operator through its exact supported Hermes run endpoint; this monitor made no task/service/inference mutations.",
+  "terminal_observation": {
+    "candidate_issue_status": "blocked",
+    "canonical_worker_run_status": "cancelled",
+    "canonical_worker_run_error_code": "cancelled",
+    "canonical_worker_run_finished_at": "2026-11-12T10:10:22.683Z",
+    "observation_at": "2026-11-12T10:10:36.073703+00:00"
+  },
+  "monitor_finished_at": "2026-11-12T10:10:53.840006+00:00",
+  "terminal_hermes_observation": {
+    "checked_at": "2026-11-12T10:11:11.284322+00:00",
+    "run_id": "run_74b152d283994e018e889a1437521009",
+    "status": "cancelled",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:09f66b7a-d435-4332-be9a-9223055d0bef:issue:c7dd6cc0-741d-463c-aa8c-ce46de14a185",
+    "usage": {
+      "input_tokens": 2335,
+      "output_tokens": 9,
+      "total_tokens": 2344
+    },
+    "source": "Authenticated read-only GET /v1/runs/{exact_linked_id}"
+  }
+}

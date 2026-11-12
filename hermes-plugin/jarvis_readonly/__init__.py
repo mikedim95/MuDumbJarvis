@@ -9,11 +9,45 @@ from hermes_constants import get_hermes_home
 
 def local_ollama_models(args: dict, **kwargs) -> str:
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
-        from . import paperclip_reporting
-        if paperclip_reporting.current_turn().get('plan_decision') != 'self':
-            return json.dumps({'status': 'not_executed',
-                'reason': 'Direct CEO inventory requires a recorded self decision. Delegated objectives use the existing worker.',
-                'next': 'Use paperclip_ceo to assign the scoped child, then end with a short waiting update. When the child is done, review its signed evidence. Do not produce an inventory report before that review.'})
+        from . import ceo_tools, paperclip_reporting
+        turn, _, issue = ceo_tools.scope()
+        if issue.get('projectId') != turn['project']:
+            raise PermissionError('Direct inventory objective project mismatch')
+        decision = turn.get('plan_decision')
+        message = ('Local inventory was NOT executed. No Ollama HTTP request was sent; '
+                   'no asynchronous result is pending. ')
+        if decision == 'delegate':
+            raise ValueError(message + 'Continue the scoped assigned worker task and review verified completed-worker results; do not retrieve a competing CEO inventory.')
+        if decision == 'hire':
+            raise ValueError(message + 'Follow the human approval process and review only authorized worker results; direct inventory is outside that recorded plan.')
+        if decision not in (None, 'self'):
+            raise ValueError(message + 'The recorded plan does not authorize direct inventory; read the actual Paperclip state.')
+        if ceo_tools.children(turn):
+            raise ValueError(message + 'Existing Paperclip child work is the execution path. Use pending worker state or review verified completed-child results instead.')
+        if decision is None:
+            objective = issue.get('description') or issue.get('title')
+            if not isinstance(objective, str) or not objective.strip():
+                raise ValueError(message + 'The actual assigned objective is required to record the requested read scope.')
+            objective = objective.strip()
+            excerpt = objective[:3000]
+            if len(objective) > 3000:
+                excerpt += '\n[Objective truncated for this record; full text remains on the assigned Paperclip issue.]'
+            comment = ("[JARVIS CEO PLAN decision=self]\nRuntime-recorded scope from the model's direct local_ollama_models selection. "
+                       'This is not a model-supplied rationale or a separate paperclip_ceo invocation.\nAssigned objective: ' + excerpt +
+                       '\nAuthorized requested action: read local Ollama model names and sizes with local_ollama_models, then report verified facts or actual blockers. '
+                       'No employee assignment or new permission is created.')
+            paperclip_reporting.api('PATCH', '/issues/' + turn['issue'], {'comment': comment}, turn['run'])
+            choice = {'timestamp': time.time(), 'source': 'model_direct_tool_choice',
+                'tool': 'local_ollama_models', 'action': 'self_execution_selected',
+                'issue_id': turn['issue'], 'paperclip_run_id': turn['run'], 'session_id': turn['session'],
+                'result': {'recorded': True, 'decision': 'self',
+                    'basis': 'The model directly invoked this read-only tool; the runtime recorded its assigned-objective scope before the read.',
+                    'separate_paperclip_ceo_invocation': False}}
+            choice_log = get_hermes_home() / 'logs' / 'ceo-tools.jsonl'
+            choice_log.parent.mkdir(parents=True, exist_ok=True)
+            with choice_log.open('a') as stream:
+                stream.write(json.dumps(choice) + '\n')
+            turn['plan_decision'] = 'self'
     base = os.environ['JARVIS_OLLAMA_URL'].rstrip('/')
     with urllib.request.urlopen(base + '/api/tags', timeout=15) as response:
         data = json.load(response)
@@ -37,8 +71,13 @@ def register(ctx):
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
         from . import ceo_tools
         ceo_tools.register(ctx)
+    description = 'Retrieve the ACTUAL installed local Ollama models, their exact names, sizes in bytes and GiB, and architecture details. Always call this tool before answering questions about installed models. Never guess the inventory.'
+    if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
+        description = ('Retrieve actual local Ollama model names and sizes. For inventory-only work, your direct call is an explicit self-execution choice: '
+                       'the runtime records bounded objective/tool scope before the requested read. A separate paperclip_ceo self plan is optional for rationale. '
+                       'Do not call this tool for delegated work or to replace verified worker results; review and consolidate those results instead.')
     ctx.register_tool(name='local_ollama_models', toolset='jarvis_readonly',
         schema={'name': 'local_ollama_models',
-                'description': 'Retrieve the ACTUAL installed local Ollama models, their exact names, sizes in bytes and GiB, and architecture details. Always call this tool before answering questions about installed models. Never guess the inventory.',
+                'description': description,
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}},
         handler=local_ollama_models)

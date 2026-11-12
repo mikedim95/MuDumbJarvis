@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "computed_at": "2026-11-12T10:24:04.323689+00:00",
+  "status": "verified_native_clean_rerun_real_worker_comparison_pending",
+  "source": {
+    "path": "docs/evidence/ollama-speed-clean.json",
+    "sha256": "2b205ec297b775c965c41177ac5638cd4ac2b5cf02ebde0c50b64a6762fc1711",
+    "started_at": "2026-11-12T10:18:05.955709+00:00",
+    "finished_at": "2026-11-12T10:21:59.370039+00:00"
+  },
+  "strict_checks": {
+    "prompt_and_system_hashes_verified": true,
+    "same_model_digest_all_samples": true,
+    "same_original_saved_model_configuration_as_prior_snapshot": true,
+    "same_ctx_seed_temperature_batch": true,
+    "actual_runner_flags_match_every_sample": true,
+    "six_warm_samples_each_32_generated_tokens": true,
+    "three_alternating_warm_samples_per_profile": true,
+    "cpu_only_single_request_slot": true
+  },
+  "shared_parameters": {
+    "model": "jarvis-hermes:3b",
+    "num_ctx": 65536,
+    "num_predict": 32,
+    "seed": 42,
+    "temperature": 0.1,
+    "num_batch": 1024,
+    "prompt_sha256": "11fa9f34b82fa81901f10c9ec70ec594344dc48722b00cbc2961d320864d896a",
+    "system_sha256": "a8bdab3c31350eb53a6a13030be9a5d8ddc5bb98e8624746f0b5e8249c46b715",
+    "warm_order": [
+      4,
+      24,
+      4,
+      24,
+      4,
+      24
+    ]
+  },
+  "model_digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e",
+  "ollama_version": "0.40.11",
+  "prompt_token_count": 404,
+  "cached_prompt_count_each_warm": 403,
+  "groups": [
+    {
+      "num_thread": 4,
+      "warm_sample_count": 3,
+      "generation_tps_median": 5.052444372587458,
+      "generation_tps_min": 4.675174022395544,
+      "generation_tps_max": 5.72053744449291,
+      "generation_tps_total_tokens_over_total_eval_seconds": 5.113968789768099,
+      "warm_wall_seconds_median": 6.603442,
+      "uncached_setup_prefill_tps_median": 14.99967717278956,
+      "warm_samples": [
+        {
+          "sample_id": 2,
+          "started_at": "2026-11-12T10:18:55.523193+00:00",
+          "finished_at": "2026-11-12T10:19:02.662021+00:00",
+          "eval_count": 32,
+          "eval_seconds": 6.844665,
+          "generation_tokens_per_second": 4.675174022395544,
+          "wall_seconds": 7.138559,
+          "load_seconds": 0.005034145,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        },
+        {
+          "sample_id": 6,
+          "started_at": "2026-11-12T10:20:16.537145+00:00",
+          "finished_at": "2026-11-12T10:20:23.144053+00:00",
+          "eval_count": 32,
+          "eval_seconds": 6.333568,
+          "generation_tokens_per_second": 5.052444372587458,
+          "wall_seconds": 6.603442,
+          "load_seconds": 0.002400139,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        },
+        {
+          "sample_id": 10,
+          "started_at": "2026-11-12T10:21:30.365276+00:00",
+          "finished_at": "2026-11-12T10:21:36.237023+00:00",
+          "eval_count": 32,
+          "eval_seconds": 5.59388,
+          "generation_tokens_per_second": 5.72053744449291,
+          "wall_seconds": 5.871504,
+          "load_seconds": 0.002628338,
+          "response_sha256": "e4a0a3e302c54f51924346ba380a3a723fd2afdb0040473dc448129ea6bb0556"
+        }
+      ],
+      "uncached_setup_samples": [
+        {
+          "sample_id": 1,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 29.819238,
+          "uncached_prompt_tokens_per_second": 13.548300597084339,
+          "load_seconds": 19.427272494,
+          "wall_seconds": 49.287994
+        },
+        {
+          "sample_id": 5,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 26.933913,
+          "uncached_prompt_tokens_per_second": 14.99967717278956,
+          "load_seconds": 19.253641664,
+          "wall_seconds": 46.223805
+        },
+        {
+          "sample_id": 9,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 24.118958,
+          "uncached_prompt_tokens_per_second": 16.75030903076327,
+          "load_seconds": 17.738228515,
+          "wall_seconds": 41.898242
+        }
+      ]
+    },
+    {
+      "num_thread": 24,
+      "warm_sample_count": 3,
+      "generation_tps_median": 12.311674660919167,
+      "generation_tps_min": 11.793369841183848,
+      "generation_tps_max": 13.654096506300725,
+      "generation_tps_total_tokens_over_total_eval_seconds": 12.53891144223996,
+      "warm_wall_seconds_median": 2.721963,
+      "uncached_setup_prefill_tps_median": 100.66240346438133,
+      "warm_samples": [
+        {
+          "sample_id": 4,
+          "started_at": "2026-11-12T10:19:27.112985+00:00",
+          "finished_at": "2026-11-12T10:19:29.972611+00:00",
+          "eval_count": 32,
+          "eval_seconds": 2.713389,
+          "generation_tokens_per_second": 11.793369841183848,
+          "wall_seconds": 2.859466,
+          "load_seconds": 0.002795854,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        },
+        {
+          "sample_id": 8,
+          "started_at": "2026-11-12T10:20:45.445007+00:00",
+          "finished_at": "2026-11-12T10:20:48.167200+00:00",
+          "eval_count": 32,
+          "eval_seconds": 2.599159,
+          "generation_tokens_per_second": 12.311674660919167,
+          "wall_seconds": 2.721963,
+          "load_seconds": 0.001986135,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        },
+        {
+          "sample_id": 12,
+          "started_at": "2026-11-12T10:21:56.712432+00:00",
+          "finished_at": "2026-11-12T10:21:59.244159+00:00",
+          "eval_count": 32,
+          "eval_seconds": 2.343619,
+          "generation_tokens_per_second": 13.654096506300725,
+          "wall_seconds": 2.531545,
+          "load_seconds": 0.0019661,
+          "response_sha256": "931c36226597293cb80c5e9fad93d8891f9488a3aafa05d23fc1413f8e372bf9"
+        }
+      ],
+      "uncached_setup_samples": [
+        {
+          "sample_id": 3,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 4.504484,
+          "uncached_prompt_tokens_per_second": 89.68840826163441,
+          "load_seconds": 19.572171888,
+          "wall_seconds": 24.122018
+        },
+        {
+          "sample_id": 7,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 4.013415,
+          "uncached_prompt_tokens_per_second": 100.66240346438133,
+          "load_seconds": 17.958769269,
+          "wall_seconds": 22.005947
+        },
+        {
+          "sample_id": 11,
+          "uncached_prompt_tokens": 404,
+          "uncached_prompt_eval_seconds": 3.669029,
+          "uncached_prompt_tokens_per_second": 110.11087674695403,
+          "load_seconds": 16.453130987,
+          "wall_seconds": 20.157008
+        }
+      ]
+    }
+  ],
+  "ratios": {
+    "median_decode_tps_24_over_4": 2.4367758955877648,
+    "median_warm_wall_time_4_over_24": 2.4259852172862013,
+    "median_uncached_setup_prefill_tps_24_over_4": 6.71097132990234
+  },
+  "resource_control": {
+    "preflight": "docs/evidence/ollama-clean-gate.json",
+    "ai_goat_runtime": "Generation interruption explicitly approved; after resubmission its existing container was temporarily paused with a 45-minute automatic resume guard. Configuration/model definitions were preserved. Final unpause verification is still required.",
+    "monitor_v1": ".runtime/ollama-clean-cpu-monitor.jsonl; PID-based external estimates around runner exits can be inflated, retained as ambiguous accounting.",
+    "monitor_v2": ".runtime/ollama-clean-cgroup-monitor.jsonl; cgroup usage includes exited runner CPU. Corrected samples show no competing inference; monitoring continues through worker tasks.",
+    "limit": "Low contention is operationally sampled, not proof of exclusive physical-host resources or absence of another client sharing main Ollama."
+  },
+  "supersedes_for_performance_decision": [
+    "docs/evidence/ollama-speed-screen.json",
+    "docs/evidence/ollama-speed-repeat.json",
+    "docs/evidence/ollama-speed-summary.json"
+  ],
+  "prior_raw_files_changed": false,
+  "interpretation": [
+    "Under the new resource-controlled window, 24 threads have higher median native decode throughput than four for this fixed 32-token workload.",
+    "Earlier contended ratios are superseded and are not pooled with this clean rerun.",
+    "One-token setup generations are excluded from decode statistics; only zero-cached setup prompts are used for uncached prefill rates.",
+    "The fixed 32-token length cap controls work quantity, not report correctness or tool use.",
+    "This is native inference evidence; no real-agent speedup is claimed before the matched worker results."
+  ],
+  "real_worker_comparison": {
+    "status": "pending",
+    "control_issue": "JAR-19",
+    "control_issue_id": "f8e8dae4-c661-4f7a-bd2e-29e9b8d3dfec",
+    "candidate_alias": "jarvis-hermes-aigoat24:3b",
+    "default_agent_models_promoted": false
+  }
+}

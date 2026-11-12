@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-11-12T11:49:10.824980+00:00",
+  "status": "passed",
+  "kind": "Consolidated preservation receipt referencing actual prior and final read-only checks; no additional inference or runtime action.",
+  "source_artifacts": {
+    "ollama-tuning-preservation.json": {
+      "sha256": "34ed3eda0b9cac4fcdf9feff21d7a9a8a640f36b0cff42b66e10a7ff71a795d8",
+      "checked_at": "2026-11-12T10:03:36.293412+00:00"
+    },
+    "aigoat-restored.json": {
+      "sha256": "ca8b9fc561bee1145ce5db3ab21ad9409ca327601c2050421897a38e387f0557",
+      "checked_at": "2026-11-12T11:47:44.873153+00:00"
+    },
+    "final-delivery-check.json": {
+      "sha256": "12221a890b7aafbc8c71a95cff1c0360a70bc8c4899982a3bc4cec5ca65cb258",
+      "checked_at": "2026-11-12T11:47:57.801954+00:00"
+    },
+    "ollama-clean-resource-summary.json": {
+      "sha256": "efb5adaf1e08ed9c80f0d630cde8a689f949dba762513d6b32206475f1ae29d8",
+      "checked_at": "2026-11-12T11:48:04.758244+00:00"
+    }
+  },
+  "configuration_checks": {
+    "initial_scoped_preservation": true,
+    "final_original_eight_names_and_bytes_plus_only_allowed_alias": true,
+    "final_ollama_and_pentagi_exact_id_start_configuration_fingerprints": true,
+    "final_ai_goat_three_containers_and_source_fingerprints": true,
+    "only_selected_runtime_yaml_model_default_changed": true,
+    "upstream_core_repositories_clean": true
+  },
+  "ai_goat_restoration": {
+    "restored_at": "2026-11-12T11:47:44.873153+00:00",
+    "same_container_id": true,
+    "same_started_at": true,
+    "running": true,
+    "paused": false,
+    "pause_marker_removed": true,
+    "configuration_or_source_changes": false,
+    "model_or_weights_replaced": false,
+    "runtime_interrupted_with_authorization": true,
+    "external_job_success_not_claimed": true
+  },
+  "clean_resource_cutoff": "2026-11-12T11:47:37+00:00",
+  "limitations": [
+    "AIgoat runtime was deliberately interrupted/paused and restored; unchanged configuration does not mean uninterrupted execution.",
+    "Other seven original models have no retained individual pre-tuning parameter hashes; names/byte sizes and service fingerprints are checked without inventing parameter equality.",
+    "Resource observation is sampled, includes documented segment gaps and retains review flags; post-restoration inference is outside the clean-test window."
+  ]
+}
