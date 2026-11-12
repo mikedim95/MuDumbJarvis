@@ -89,6 +89,7 @@ services:
     image: nousresearch/hermes-agent:v0.23.1@sha256:1a355ebc8981a4b72a28f4e47e347ba4f0f172b43dc876e5768d175a07c67b22
     container_name: jarvis-hermes
     restart: unless-stopped
+    stop_grace_period: 90s
     command: [gateway, run]
     environment:
       API_SERVER_KEY: ${API_SERVER_KEY}
@@ -102,8 +103,6 @@ services:
       OPENAI_API_KEY: ollama-local-only
       JARVIS_OLLAMA_URL: http://ollama-models:11434
       HERMES_DASHBOARD: 'false'
-    ports:
-      - '127.0.0.1:8642:8642'
     volumes:
       - ../.runtime/hermes:/opt/data
       - ../hermes-plugin/jarvis_readonly:/opt/data/plugins/jarvis_readonly:ro

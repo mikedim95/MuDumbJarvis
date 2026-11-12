@@ -13,9 +13,9 @@ issue = '33333333-3333-4333-8333-333333333333'
 session = f'paperclip:company:{company}:agent:{agent}:issue:{issue}'
 
 
-def start(monkeypatch, assignee=agent):
+def start(monkeypatch, assignee=agent, description=''):
     api = Mock(side_effect=[{'id': agent, 'companyId': company},
-        {'companyId': company, 'assigneeAgentId': assignee, 'executionRunId': 'real-run'}, {}])
+        {'companyId': company, 'assigneeAgentId': assignee, 'executionRunId': 'real-run', 'description': description}, {}])
     monkeypatch.setattr(reporting, 'api', api)
     result = reporting.begin(session_id=session)
     return api, result
@@ -63,3 +63,29 @@ def test_callbacks_on_separate_workers_keep_turn_identity(monkeypatch):
     with ThreadPoolExecutor(1) as worker:
         worker.submit(reporting.finish, session_id=session, completed=True).result()
     assert api.call_args.args[2] == {'status': 'done', 'comment': 'Retrieved result'}
+
+
+def test_inventory_reply_without_actual_tool_is_blocked(monkeypatch):
+    api, _ = start(monkeypatch, description='List installed Ollama models')
+    api.side_effect = None
+    reporting.response(session_id=session, assistant_response='An invented inventory')
+    reporting.finish(session_id=session, completed=True)
+    payload = api.call_args.args[2]
+    assert payload['status'] == 'blocked'
+    assert 'no successful local_ollama_models call' in payload['comment']
+    assert payload['unblockDescriptor']['owner'] == 'board'
+
+
+def test_actual_inventory_tool_unlocks_completion_and_writes_correlated_audit(monkeypatch, tmp_path):
+    import sys
+    from types import SimpleNamespace
+    (tmp_path / 'logs').mkdir()
+    monkeypatch.setitem(sys.modules, 'hermes_constants', SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    api, _ = start(monkeypatch, description='List installed Ollama models')
+    api.side_effect = None
+    reporting.tool_result(tool_name='local_ollama_models', task_id=session,
+        result='{"source":"Ollama /api/tags","models":[{"name":"real-model","size_bytes":100}]}')
+    reporting.response(session_id=session, assistant_response='Retrieved inventory')
+    reporting.finish(session_id=session, completed=True)
+    assert api.call_args.args[2]['status'] == 'done'
+    assert issue in (tmp_path / 'logs/paperclip-tools.jsonl').read_text()

@@ -97,3 +97,64 @@ cached context and took about 20 seconds each. Existing PentAGI was untouched.
 Restart verification: recreated Hermes, JARVIS and Paperclip services; the live
 test replayed the identical idempotency key, recovered the same JAR-1 UUID and
 its final comment, and retrieved a persisted succeeded Paperclip run.
+
+## Phase 4 — complete (2026-11-12)
+
+Added server/task_api.py to the existing FastAPI application, with authenticated
+POST /api/tasks, GET /api/tasks, GET /api/tasks/{id}, and GET /api/agents.
+Paperclip remains authoritative; no local task database or scheduler exists.
+Native issue idempotency protects retries, including uncertain POST responses.
+Agent/project boundaries, mandatory HUD authentication and POST Origin checks
+are enforced. Credentials remain server-side and are omitted from responses.
+
+The existing HUD design/input now supports Direct chat and Persistent task
+modes. Agent discovery is dynamic; history, comments, run errors and statuses
+come from Paperclip. Polling runs every three seconds in task mode. Browser
+storage holds only view preferences and an unacknowledged submission nonce;
+refresh/reconnect reloads history. Direct chat retains separate Hermes sessions.
+
+Modified files: server/server.py, server/task_api.py, server/hud/index.html,
+server/hud/tasks.js, deploy/Dockerfile.jarvis, deploy/start.sh, deploy/compose.yaml,
+deploy/hermes.config.example.yaml, .dockerignore, the reporting plugin,
+README.md, COMMAND_CENTER.md, tests and evidence snapshots.
+
+Observed verification:
+- 20 automated tests pass, including tests packaged in the final HUD image.
+- Live unauthenticated history returns 401; authenticated history and saved
+  results return 200. HUD JavaScript is served successfully; JS syntax checked.
+- Three real API trials of the requested inventory/recommendation prompt:
+  JAR-3 / 886fde66-3bb3-4f9e-8ec8-cd65cd757d58,
+  JAR-5 / 8ea14a70-8f37-4c8b-81f4-7636aecd9706,
+  JAR-6 / ccd51df4-2119-45cf-a889-41e6ff2f9db2.
+  All reached done with succeeded runs and persisted result comments. Each has
+  an issue/run-correlated local_ollama_models audit containing eight models.
+  Each submission was replayed and returned the same UUID without another issue.
+- JAR-4 / 2d33efc6-446e-48b7-b4ff-fbb76032833e uses a one-second timeout
+  override scoped to that issue only. Its actual run is timed_out/errorCode
+  timeout and the issue is blocked; JARVIS exposes that error, never done.
+- These three trials are API trials, distinct from browser acceptance.
+- The user submitted JAR-7 / b5c84f82-095c-4235-ac40-0b963b301c7f through
+  the HUD. Chromium/Playwright then verified its done state, visible exact
+  retrieved model names/sizes, successful runtime, canonical Paperclip ID and
+  persisted comments. Browser refresh restored the same task and result.
+  Evidence: phase4-hud.json and hud-jar-7.png. No browser page errors occurred.
+
+Blockers/fixes: the small model failed to discover the single deferred tool in
+an initial attempt (JAR-2), which was rejected and corrected to blocked. Disabled
+Hermes tool search through supported configuration to expose the inventory tool
+directly. Completion now requires an actual successful inventory call for model
+inventory tasks. Verified raw model names/sizes are appended to future result
+comments separately from model-generated recommendations. This avoids treating
+model-inferred context windows or performance claims as retrieved facts.
+Paperclip also requires an unblockDescriptor for blocked writes; added it.
+The expected-timeout case can happen before a Hermes turn starts, so its
+canonical Paperclip run error may exist without a runtime comment.
+
+Browser control originally had no connected browser. The user explicitly
+authorized Playwright for the remaining browser verification. Used an isolated
+Chromium test container with its package/image versions pinned together.
+The screenshot also exposed misleading upstream static cloud/voice labels;
+they now reflect the actual configuration, and the server machine label is
+platform-neutral. The intentional timeout left the agent in error; cleared it
+through Paperclip's supported clear-error route before the real user task.
+Phase 5 still requires the remaining two HUD submissions and restart checks.

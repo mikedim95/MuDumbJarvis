@@ -12,6 +12,9 @@ agent:
 platform_toolsets:
   cli: [jarvis_readonly]
   api_server: [jarvis_readonly]
+tools:
+  tool_search:
+    enabled: 'off'
 plugins:
   enabled: [jarvis_readonly]
 compression:

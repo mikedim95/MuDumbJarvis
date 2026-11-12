@@ -1,0 +1,31 @@
+{
+  "id": "886fde66-3bb3-4f9e-8ec8-cd65cd757d58",
+  "identifier": "JAR-3",
+  "title": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which ar",
+  "description": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which are suitable for research and coding.",
+  "status": "done",
+  "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+  "createdAt": "2026-11-11T13:52:20.894Z",
+  "updatedAt": "2026-11-11T13:59:44.828Z",
+  "completedAt": "2026-11-11T13:59:44.654Z",
+  "executionRunId": null,
+  "comments": [
+    {
+      "id": "56c611b3-78b6-4219-a365-a847c39eac2c",
+      "body": "Installed Ollama models and their details:\n\n| **Name**                              | **Size**       | **Architecture**            | **Key Suiteness for Research/Coding**                          |\n|---------------------------------------|----------------|----------------------------|---------------------------------------------------------------|\n| `jarvis-hermes:3b` (`ministral-3:3b`)  | 2.75 GiB       | Mistral3 (`gguf`)          | High context length (262k), strong coding capabilities (parent model). **Recommended for research** if domain is specialized (e.g., multi-turn prompts). |\n| `pentagi-basilisk:7b` (`qwen2`)       | 4.36 GiB       | Qwen2 (`llamacpp`)         | **Strong in coding**, broad general-purpose use. Ideal for large tasks needing accuracy (e.g., code generation, technical writing). Avoid if quantized load is a concern. |\n| `pentagi-whiterabbitneo:7b`           | 4.20 GiB       | Qwen2 (`llamacpp`)         | Similar to above; specialized Qwen2 codigenerative tuning. **Excellent for coding research tasks with heavy technical requirements.** |\n| `WhiteRabbitNeo/WhiteRabbitNeo...*   | 4.20 GiB       | Qwen2 (`ggml`)             | Direct Qwen2 variant; optimized low-latency codigenerative tasks. **Top recommendation for coding** due to context length (32k). |\n| `granite-code:3b`                     | 1.86 GiB       | Llama (`gguf`)            | Compact (3.5B), low-resource codigeneration use cases. Less ideal for large contexts compared to others. |\n| `nomic-embed-text`                    | 0.26 GiB       | NOMIC-BERT (`ggml`)        | **Embedding only**\u2014use for semantic analysis; not suitable for generated text or coding. |\n| `llama3.2:3b`                         | 1.88 GiB       | Llama (`gguf`)            | Generalist 3B LLama; adequate for basic coding/scraping but weaker than 7B alternatives. |\n\n### Recommendations:\n1. **Default for Research/Coding**: Use `jarvis-hermes:3b` (`ministral-3:3b`) for its context depth but verify prompts match domain needs (specialized research context).\n   - Back it with `pentagi-basilisk:7b`/`WhiteRabbitNeo/Neo-*` for scale if task is heavy.\n2. **Priority for Coding**: `WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B` or `pentagi-whiterabbitneo:7b`\u2014no further validation needed beyond model size checks.\n3. **Embeddings Only**: Retain `nomic-embed-text` for semantic tasks (not generative coding research).\n\nThe smallest suitable for low-power setups: `nomic-embed-text` (unless you need code generation). Full report above.",
+      "createdAt": "2026-11-11T13:59:44.822Z",
+      "authorAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "authorUserId": null
+    }
+  ],
+  "runs": [
+    {
+      "runId": "dd64ca4c-6727-4a26-a9ce-925d3365d41e",
+      "status": "succeeded",
+      "startedAt": "2026-11-11T13:52:21.319Z",
+      "finishedAt": "2026-11-11T13:59:45.238Z",
+      "errorCode": null,
+      "error": null
+    }
+  ]
+}

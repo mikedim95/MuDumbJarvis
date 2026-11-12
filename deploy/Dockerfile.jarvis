@@ -6,6 +6,7 @@ COPY server/requirements-text.txt tests/requirements.txt /tmp/requirements/
 RUN pip install --no-cache-dir -r /tmp/requirements/requirements-text.txt -r /tmp/requirements/requirements.txt
 COPY --chown=1000:1000 server /app/server
 COPY --chown=1000:1000 tests /app/tests
+COPY --chown=1000:1000 hermes-plugin /app/hermes-plugin
 USER 1000:1000
 EXPOSE 8765
 CMD ["python", "/app/server/server.py"]

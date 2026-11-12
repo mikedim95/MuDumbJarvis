@@ -1,0 +1,31 @@
+{
+  "id": "ccd51df4-2119-45cf-a889-41e6ff2f9db2",
+  "identifier": "JAR-6",
+  "title": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which ar",
+  "description": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which are suitable for research and coding.",
+  "status": "done",
+  "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+  "createdAt": "2026-11-11T13:55:59.034Z",
+  "updatedAt": "2026-11-11T14:13:05.224Z",
+  "completedAt": "2026-11-11T14:13:05.095Z",
+  "executionRunId": null,
+  "comments": [
+    {
+      "id": "f64e4f67-1a05-4e24-b64f-bdba58287012",
+      "body": "The installed Ollama models and their sizes are:\n\n- **jarvis-hermes:3b** (`ministral-3:3b`)\n  - Size: **2.75 GiB**\n  - Family: Mistral-3 (3.8B parameters, quantized at Q4_K_M)\n\n- **pentagi-basilisk:7b (Qwen2)**\n  - Size: **4.36 GiB**\n  - Family: Qwen-2 (7.6B parameters, quantized at Q4_K_M).\n\n- **pentagi-whiterabbitneo:7b**\n  - Size: **4.20 GiB**\n  - Family: Qwen-2 (7.6B parameters, quantized at Q4_0).\n\n- **WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B**\n  - Size: **4.20 GiB**\n  - Family: Qwen-2 (matching Whiterabbit, Q4_0).\n\n- **granite-code:3b**\n  - Size: **1.86 GiB**\n  - Family: Llama (3.5B parameters, Q4_0).\n\n- **ministral-3:3b** (reused by `jarvis-hermes:3b`)\n  - Size: **2.75 GiB**.\n\n- **nomic-embed-text:latest**\n  - Size: **0.26 GiB**.\n  - Family: Nomic-BERT (137M parameters, lightweight).\n\n- **llama3.2:3b**\n  - Size: **1.88 GiB** (similar parameter scale to granular, but Q4_K_M).\n\n---\n\n**Recommendation for Research & Coding:**\n- Prioritize **lightweight but powerful** models:\n\n  - **Granite-code/llama3.2:3b** (1.86\u20131.88 GiB): Strong coding capabilities with modest size.\n  - **Nomic-embed-text:latest** (0.26 GiB): Ideal when only embeddings are required.\n  - Jar misral/3b\u2019s base variant (2.75 GiB): If language understanding (e.g., research generation) is desired.\n\n- Avoid large models (4+ GiB) unless fine-tuned for *highly specific* tasks (e.g., Qwen2\u2019s domain-specific tuning for programming).\n\n*Next?* Does this meet your priority needs or require adjustments?",
+      "createdAt": "2026-11-11T14:13:05.221Z",
+      "authorAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "authorUserId": null
+    }
+  ],
+  "runs": [
+    {
+      "runId": "38c985a2-5b77-419f-b901-5faa83ca9dcf",
+      "status": "succeeded",
+      "startedAt": "2026-11-11T14:06:35.261Z",
+      "finishedAt": "2026-11-11T14:13:05.557Z",
+      "errorCode": null,
+      "error": null
+    }
+  ]
+}

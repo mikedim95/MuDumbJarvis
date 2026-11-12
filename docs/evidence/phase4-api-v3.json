@@ -1,0 +1,31 @@
+{
+  "id": "8ea14a70-8f37-4c8b-81f4-7636aecd9706",
+  "identifier": "JAR-5",
+  "title": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which ar",
+  "description": "Use the available local tools to list my installed Ollama models, identify their names and sizes, and recommend which are suitable for research and coding.",
+  "status": "done",
+  "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+  "createdAt": "2026-11-11T13:55:57.729Z",
+  "updatedAt": "2026-11-11T14:06:33.827Z",
+  "completedAt": "2026-11-11T14:06:33.562Z",
+  "executionRunId": null,
+  "comments": [
+    {
+      "id": "607f589c-df7b-4ae0-bc72-fcc197bb6af9",
+      "body": "Installed Ollama models and their sizes:\n\n- **jarvis-hermes:3b**: 2.75 GiB (3.8B parameters)\n- **pentagi-basilisk:7b**: 4.36 GiB\n- **pentagi-whiterabbitneo:7b**: 4.20 GiB\n- **WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B**: 4.20 GiB (slightly refined tag for same model)\n- **ministral-3:3b**: 2.75 GiB (mirrors the \"jarvis-hermes\" parent)\n- **granite-code:3b**: 1.86 GiB\n- **nomic-embed-text:latest**: 0.26 GiB (lightweight for embeddings)\n- **llama3.2:3b**: 1.88 GiB\n\n### **Recommendations for Research and Coding:**\n1. **jarvis-hermes:3b** / **ministral-3:3b**\n   - 3B parameters, balanced for research tasks with decent context length (262 KB). Ideal for lightweight coding/analysis.\n   - **Recommended for:** Text-generation workloads, summarization, or rapid prototyping.\n\n2. **granite-code:3b** (7B \u2192 3.5B variant)\n   - Larger context window (128 KB) with strong coding focus. Best if you need extensive memory for code-heavy tasks.\n\n3. **llama3.2:3b**\n   - Mixed use cases\u2014similar context size to others but optimized for dialogue + short texts.\n\n4. **High-Context/Large-Model (Economy):**\n   - Skip **pentagi-basilisk/whiterabbitneo** if the task avoids creative or open-response output (they\u2019re 7B-class). These exceed 4GB but have specialized tweaks (e.g., coding tools).\n\n5. **Embeddings (Specialized):**\n   - **nomic-embed-text** (137M) for metadata-driven work (e.g., semantic search, LLM embeddings) **only**\u2014unlikely to replace larger models.\n\n---\n**Key Insight:** No model matches your 7B+ scale\u2014but among the 3B/4GB options, **jarvis-hermes** is the most versatile for research/coding balance, given its context window and Mistral efficiency. For coding-focused workloads, consider **granite-code:3b**.",
+      "createdAt": "2026-11-11T14:06:33.822Z",
+      "authorAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "authorUserId": null
+    }
+  ],
+  "runs": [
+    {
+      "runId": "3482cf94-3763-4826-b27c-45123775de1f",
+      "status": "succeeded",
+      "startedAt": "2026-11-11T13:59:46.081Z",
+      "finishedAt": "2026-11-11T14:06:34.196Z",
+      "errorCode": null,
+      "error": null
+    }
+  ]
+}

@@ -34,7 +34,7 @@ from typing import AsyncIterator, Iterator
 import requests
 import uvicorn
 import yaml
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -692,6 +692,18 @@ def _request_authed(request: Request) -> bool:
     return supplied == token
 
 
+def require_task_auth(request: Request):
+    if not hud_token() or not _request_authed(request):
+        raise HTTPException(401, 'JARVIS authentication required')
+    origin = request.headers.get('origin')
+    if request.method == 'POST' and origin and origin.rstrip('/') != str(request.base_url).rstrip('/'):
+        raise HTTPException(403, 'Cross-origin task submission is not allowed')
+
+
+from task_api import build_router
+app.include_router(build_router(require_task_auth))
+
+
 @app.middleware("http")
 async def api_auth_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/") and not _request_authed(request):
@@ -825,6 +837,13 @@ async def usage() -> JSONResponse:
             "today_cost": est(u["today"]), "total_cost": est(u["total"]),
         },
         "elevenlabs": None,
+        "runtime": {
+            "provider": (CFG.get("llm") or {}).get("provider", "unknown"),
+            "voice_enabled": (CFG.get("voice") or {}).get("enabled", True),
+            "stt_model": (CFG.get("stt") or {}).get("model"),
+            "tts_model": (CFG.get("voice") or {}).get("model"),
+            "fallback_provider": (CFG.get("hermes") or {}).get("fallback_provider"),
+        },
     }
     # ElevenLabs subscription — NEVER blocks the response: serve the cache and
     # refresh it in the background when stale.
@@ -899,13 +918,13 @@ _WORKER_CACHE: dict = {"ts": 0.0, "data": [], "refreshing": False}
 
 @app.get("/api/machines")
 async def machines() -> JSONResponse:
-    """Local (Mac) stats + configured remote workers.
+    """Local server stats + configured remote workers.
 
     Worker polls can take seconds when a worker is offline, so they run in a
     background refresh; the endpoint always answers instantly from cache.
     """
     result: list[dict] = []
-    mac: dict = {"name": "MAC MINI · HERMES", "online": True}
+    mac: dict = {"name": (CFG.get("server") or {}).get("machine_name", "JARVIS SERVER"), "online": True}
     if psutil:
         mac.update({
             "cpu": psutil.cpu_percent(interval=0.1),

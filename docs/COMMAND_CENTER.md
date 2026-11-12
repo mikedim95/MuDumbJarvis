@@ -10,8 +10,10 @@ See PHASES.md for verified acceptance evidence and changes.
 ## Install and start
 
 1. Install Docker with Docker Compose.
-2. Run `python3 deploy/init.py` to create local configuration and secrets.
-3. Run `docker compose -f deploy/compose.yaml up --build -d`.
+2. Keep the existing `ollama` container running, with `ministral-3:3b` installed.
+3. Run `./deploy/start.sh`. It creates missing configuration/secrets, builds,
+   attaches Ollama to the private network, creates the separate model alias if
+   absent, starts services and bootstraps Paperclip once.
 4. Open http://localhost:8765/hud/ and enter JARVIS_HUD_TOKEN from deploy/.env.
    This is a local secret; do not commit or share it.
 
@@ -78,3 +80,52 @@ docker run --rm --user 1000:1000 --env-file deploy/.env \
   --entrypoint /opt/venv/bin/python jarvis-command-center:hud \
   /workspace/tests/live_phase3.py
 ```
+
+## HUD tasks and API
+
+Choose **Persistent task** next to the existing typed input. The agent list is
+retrieved dynamically from Paperclip. Submitted tasks are assigned to the
+selected agent (JARVIS-01 by default). Select a history entry to see its exact
+Paperclip UUID, status, run errors and result comments. Active tasks refresh
+every three seconds. Browser refresh/reconnect reloads authoritative history.
+An uncertain submission retains its nonce and text so a retry uses the same
+Paperclip idempotency key. Distinct intentional submissions get new keys.
+
+**Direct chat** continues to use JARVIS's original Hermes Sessions integration,
+with no Paperclip task creation or task session reuse. Both modes share one
+bounded local runtime, so an occupied runtime may report a busy error.
+
+Task endpoints require the existing HUD token/cookie, even if authentication
+has accidentally been unconfigured. Cross-origin task creation is rejected.
+API keys are never returned to the browser. No second task store was added.
+
+| Endpoint | Behavior |
+| --- | --- |
+| POST /api/tasks | JSON input, request_id (UUID), optional agent_id; creates assigned task |
+| GET /api/tasks | General Operations history from Paperclip |
+| GET /api/tasks/{id} | Canonical issue state, comments and execution errors |
+| GET /api/agents | Agent identity/status/capabilities, with no adapter secrets |
+
+Read requests have a bounded retry; uncertain POSTs are retried only with the
+original submission nonce. Upstream errors are shown without inventing a done
+state. A failed execution and the issue's actual status are displayed separately.
+
+API-only live test (does **not** establish browser acceptance):
+
+```sh
+docker run --rm --user 1000:1000 --env-file deploy/.env \
+  --network jarvis-command-center_default -v "$PWD:/workspace" \
+  --entrypoint /opt/venv/bin/python jarvis-command-center:hud \
+  /workspace/tests/live_task_api.py
+```
+
+## Adding agents later
+
+Register additional supported adapters/agents in Paperclip and grant their
+runtime only the tools it needs. The HUD discovers them through GET /api/agents;
+it does not hardcode model names, agent IDs or adapter types. New Hermes agents
+need their own API/reporting credentials and runtime/session configuration.
+OpenCode can use Paperclip's supported adapter; a future PentAGI adapter can
+follow the same task/result contract. No PentAGI integration is installed now.
+Filesystem modifications or external actions need explicit operator permission
+and a deliberately provisioned, restricted tool/approval path first.

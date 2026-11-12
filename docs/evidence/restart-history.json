@@ -1,0 +1,37 @@
+{
+  "before": {
+    "886fde66-3bb3-4f9e-8ec8-cd65cd757d58": {
+      "identifier": "JAR-3",
+      "status": "done",
+      "comments_sha256": "ce10666d8f180e5f238044b94093a011c5711a2be78bb5279df08c42638765e0",
+      "runs": [
+        [
+          "dd64ca4c-6727-4a26-a9ce-925d3365d41e",
+          "succeeded"
+        ]
+      ]
+    },
+    "8ea14a70-8f37-4c8b-81f4-7636aecd9706": {
+      "identifier": "JAR-5",
+      "status": "done",
+      "comments_sha256": "7b4c5fa804b7c284452bf6015e5d1527425f34836f283ff576bd7b9226d3c439",
+      "runs": [
+        [
+          "3482cf94-3763-4826-b27c-45123775de1f",
+          "succeeded"
+        ]
+      ]
+    },
+    "ccd51df4-2119-45cf-a889-41e6ff2f9db2": {
+      "identifier": "JAR-6",
+      "status": "done",
+      "comments_sha256": "339b7c25feb25966289d61deeaa5db265fcf7eb9d8ba6fcb1b4e4ec04a3e8977",
+      "runs": [
+        [
+          "38c985a2-5b77-419f-b901-5faa83ca9dcf",
+          "succeeded"
+        ]
+      ]
+    }
+  }
+}

@@ -1,5 +1,48 @@
 # J.A.R.V.I.S — Voice + HUD for Hermes Agent
 
+## Local command-center deployment
+
+This workspace adds a text-only Linux deployment using the existing FastAPI
+backend. Persistent tasks follow this path:
+
+`HUD → JARVIS FastAPI → Paperclip → Hermes → local Ollama`
+
+Paperclip is the only task orchestrator and task database. Direct Hermes chat
+uses separate sessions. Agent tools are limited to read-only local model
+inventory; host files, shell execution and external actions are unavailable.
+No cloud LLM or voice subscription is configured for this deployment.
+
+With Docker/Compose installed and the existing `ollama` container running with
+`ministral-3:3b`, start from this directory:
+
+```sh
+./deploy/start.sh
+```
+
+Open http://localhost:8765/hud/ and unlock with `JARVIS_HUD_TOKEN` from
+`deploy/.env`. Choose **Persistent task**, select **JARVIS-01**, and type your
+command. Choose **Direct chat** for ordinary conversation. Task history and
+results come from Paperclip and survive browser refresh and service restart.
+Paperclip's operator UI is http://localhost:3100; its generated login is in
+`.runtime/operator.json`.
+
+Configuration: `server/config/server.yaml`, `.runtime/hermes/config.yaml`,
+and server-side `deploy/.env`. Secret-free templates are in `deploy/` and
+`server/config/`. Generated secrets and runtime data are excluded from Git.
+
+```sh
+docker compose -f deploy/compose.yaml restart
+docker compose -f deploy/compose.yaml logs --tail=100 -f
+docker exec jarvis-hud /opt/venv/bin/python -m pytest -q -p no:cacheprovider /app/tests
+```
+
+See [deployment and live test commands](docs/COMMAND_CENTER.md) and
+[phase evidence, changes and fixes](docs/PHASES.md). The upstream voice/HUD
+documentation continues below; its optional capabilities are disabled in this
+local MVP configuration.
+
+---
+
 A self-hosted, Iron-Man-style voice assistant and command center built on top of
 [Hermes Agent](https://github.com/NousResearch/hermes-agent) (NousResearch's
 open-source autonomous agent). Talk to a *real* agent — one with persistent

@@ -75,6 +75,16 @@ header .sub{font-size:12px; letter-spacing:3px; color:var(--txt-dim)}
   font-family:'Rajdhani'; font-size:15px; outline:none;
 }
 #chatInput:focus{border-color:var(--cyan-dim); box-shadow:0 0 8px #00e5ff33}
+#commandModes{display:flex;gap:10px;align-items:center;width:100%;max-width:680px;padding:5px 10px;font-size:13px}
+#commandModes select{background:#06101c;color:var(--cyan);border:1px solid var(--line);padding:5px;font-family:inherit}
+#taskPanel{width:100%;max-width:680px;flex:1;min-height:130px;overflow:auto;padding:8px 10px;border:1px solid var(--line);background:#08152399}
+#taskHistory{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow:auto;margin:8px 0}
+#taskHistory button{text-align:left;background:#0a2435;color:#cfeefb;border:1px solid var(--line);padding:5px;cursor:pointer;font:inherit}
+#taskHistory button[aria-current=true]{border-color:var(--cyan)}
+#taskDetail{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+#taskError{color:var(--red);white-space:pre-wrap}
+#taskConnection{font-size:12px;color:var(--txt-dim)}
+[hidden]{display:none!important}
 button.btn{
   background:#0a2435; color:var(--cyan); border:1px solid var(--cyan-dim); padding:9px 16px;
   font-family:'Orbitron'; font-size:11px; letter-spacing:2px; cursor:pointer;
@@ -297,6 +307,17 @@ footer{
       <div id="coreState"><div class="st" id="stateLabel">STANDBY</div><div class="hint" id="stateHint">CLICK RING OR SPACE TO TALK</div></div>
     </div>
     <div id="feed"></div>
+    <div id="commandModes">
+      <label>MODE <select id="commandMode"><option value="chat">Direct chat</option><option value="task">Persistent task</option></select></label>
+      <label id="taskAgentLabel" hidden>AGENT <select id="taskAgent" aria-label="Task agent"></select></label>
+      <button class="btn" id="taskRefresh" hidden>REFRESH</button>
+    </div>
+    <section id="taskPanel" aria-label="Persistent Paperclip tasks" hidden>
+      <div id="taskConnection" role="status">Connecting to Paperclip…</div>
+      <div id="taskError" role="alert"></div>
+      <div id="taskHistory" aria-label="Task history"></div>
+      <article id="taskDetail" aria-live="polite">Select a task or submit a new command.</article>
+    </section>
     <div id="chatRow">
       <input id="chatInput" placeholder="Type to Hermes… (/new resets · voice: click the ring)" autocomplete="off">
       <button class="btn" id="sendBtn">SEND</button>
@@ -307,10 +328,10 @@ footer{
   <!-- RIGHT COLUMN -->
   <div class="col">
     <div class="panel"><h2><span>MODELS LOADOUT</span><span class="num">06</span></h2>
-      <div class="kv"><span>Brain</span><b>hermes-agent</b></div>
-      <div class="kv"><span>STT</span><b>whisper base.en</b></div>
-      <div class="kv"><span>TTS</span><b>ElevenLabs Flash v2.5</b></div>
-      <div class="kv"><span>Fallback</span><b>claude-haiku-4-5</b></div>
+      <div class="kv"><span>Brain</span><b id="loadoutBrain">—</b></div>
+      <div class="kv"><span>STT</span><b id="loadoutStt">—</b></div>
+      <div class="kv"><span>TTS</span><b id="loadoutTts">—</b></div>
+      <div class="kv"><span>Fallback</span><b id="loadoutFallback">—</b></div>
       <div style="border-top:1px solid var(--line); margin:6px 0 4px"></div>
       <div class="kv"><span>Tokens today</span><b id="uTok">—</b></div>
       <div class="kv" id="uCostRow" style="display:none"><span>Est. cost today</span><b id="uCost">—</b></div>
@@ -482,7 +503,7 @@ function showApproval(e){
 function wsUrl(){return (location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws"}
 function connect(){
   ws=new WebSocket(wsUrl()); ws.binaryType="arraybuffer";
-  ws.onopen=()=>{wsReady=true;$("wsDot").className="dot on";$("wsState").textContent="online";$("connState").textContent="LINK ACTIVE";$("footMsg").textContent="VOICE SERVER CONNECTED"};
+  ws.onopen=()=>{wsReady=true;$("wsDot").className="dot on";$("wsState").textContent="online";$("connState").textContent="LINK ACTIVE";$("footMsg").textContent="VOICE SERVER CONNECTED";window.dispatchEvent(new Event("jarvis-reconnected"))};
   ws.onclose=()=>{wsReady=false;$("wsDot").className="dot off";$("wsState").textContent="offline";$("connState").textContent="LINK DOWN";setState("standby","STANDBY");setTimeout(connect,3000)};
   ws.onerror=()=>{};
   ws.onmessage=ev=>{
@@ -634,12 +655,13 @@ addEventListener("keydown",e=>{
   else stopRun();
 });
 addEventListener("keydown",e=>{
-  if(e.code==="Space"&&document.activeElement!==$("chatInput")){e.preventDefault();toggleTalk()}
+  if(e.code==="Space"&&!document.activeElement.matches("input,textarea,select,button")){e.preventDefault();toggleTalk()}
 });
 
 /* ============================== typed chat ========================= */
 async function sendChat(){
   const inp=$("chatInput"); const text=inp.value.trim(); if(!text)return;
+  if($("commandMode").value==="task")return window.JarvisTasks.submit(text);
   inp.value=""; addMsg("you",text); setState("thinking","PROCESSING");
   try{
     const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -706,6 +728,13 @@ const fmtK=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":String
 async function refreshUsage(){
   try{
     const r=await fetch("/api/usage"); const j=await r.json();
+    const runtime=j.runtime;
+    if(runtime){
+      $("loadoutBrain").textContent=runtime.provider||"unknown";
+      $("loadoutStt").textContent=runtime.voice_enabled?(runtime.stt_model||"—"):"disabled";
+      $("loadoutTts").textContent=runtime.voice_enabled?(runtime.tts_model||"—"):"disabled";
+      $("loadoutFallback").textContent=runtime.fallback_provider||"disabled";
+    }
     const t=j.llm?.today||{};
     $("uTok").textContent=`${fmtK(t.llm_in||0)} in / ${fmtK(t.llm_out||0)} out`;
     $("uTurns").textContent=t.turns||0;
@@ -881,5 +910,6 @@ bootSequence(new URLSearchParams(location.search).get("boot")==="full");
 
 addMsg("sys","Jarvis HUD online. Click the ring or press Space to talk.");
 </script>
+<script src="tasks.js"></script>
 </body>
 </html>

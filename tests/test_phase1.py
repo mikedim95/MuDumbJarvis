@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'server'))
 os.environ.setdefault('JARVIS_HUD_TOKEN', 'phase1-test-token')
 spec = importlib.util.spec_from_file_location('jarvis_server', ROOT / 'server/server.py')
 server = importlib.util.module_from_spec(spec)
