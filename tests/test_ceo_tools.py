@@ -98,20 +98,26 @@ def plugin(monkeypatch, tmp_path):
     employee = {'id': WORKER, 'name': 'JARVIS-01', 'companyId': COMPANY, 'reportsTo': CEO,
         'role': 'general', 'status': 'idle', 'lifecycleState': 'ready'}
     state = SimpleNamespace(turn=turn, me=me, issue=issue, employees=[employee], children=[],
-        comments=[], child_comments={}, child_runs={}, calls=[], idempotent={}, approval_required=True,
+        comments=[], child_comments={}, child_runs={}, attachments={}, calls=[], idempotent={}, approvals=[], approval_required=True,
         reporting=reporting, tools=tools, real_api=real_api)
 
     def api(method, path, body=None, run_id=None):
         state.calls.append((method, path, body, run_id))
         if method == 'GET':
             if path == '/agents/me': return state.me
+            if path == '/agents/' + WORKER: return state.employees[0]
             if path == '/issues/' + ROOT: return state.issue
+            if path.startswith('/issues/') and path.count('/') == 2:
+                found = next((child for child in state.children if child['id'] == path.split('/')[2]), None)
+                if found is not None: return found
             if path == '/companies/' + COMPANY + '/agents': return state.employees
             if path == '/companies/' + COMPANY + '/issues': return state.children
             if path == '/companies/' + COMPANY + '/goals': return [{'id': 'goal', 'title': 'Local operations'}]
+            if path == '/issues/' + ROOT + '/approvals': return state.approvals
             if path == '/companies/' + COMPANY: return {'requireBoardApprovalForNewAgents': state.approval_required}
             if path == '/issues/' + ROOT + '/comments': return state.comments
             if path.endswith('/comments'): return state.child_comments[path.split('/')[2]]
+            if path.endswith('/attachments'): return state.attachments.get(path.split('/')[2], [])
             if path.endswith('/runs'):
                 value = state.child_runs[path.split('/')[2]]
                 return value() if callable(value) else value
@@ -119,6 +125,11 @@ def plugin(monkeypatch, tmp_path):
             if body.get('comment'):
                 state.comments.append({'authorAgentId': CEO, 'body': body['comment']})
             return {**state.issue, **body}
+        if method == 'PATCH' and path.startswith('/issues/') and path.count('/') == 2:
+            found = next((child for child in state.children if child['id'] == path.split('/')[2]), None)
+            if found is not None:
+                found.update(body)
+                return found
         if method == 'POST' and path == '/issues/' + ROOT + '/checkout':
             return {**state.issue, 'status': 'in_progress'}
         if method == 'POST' and path == '/companies/' + COMPANY + '/issues':
@@ -147,6 +158,94 @@ def child_with_evidence(state, *, status='done', evidence=None, author=WORKER, r
     state.child_comments[CHILD] = [{'authorAgentId': author, 'body': 'JARVIS_EXECUTION_EVIDENCE=' + json.dumps(proof)}]
     state.child_runs[CHILD] = runs or [{'agentId': WORKER, 'runId': 'worker-run', 'status': 'succeeded'}]
     return child, proof
+
+
+def modern_child(state, monkeypatch):
+    import hashlib
+    from ceo_under_test import employee_work
+    profile = state.tools.profile_registry.profile('research')
+    raw = b'{"source":"actual fixture data"}'
+    artifact = {'id': '77777777-7777-4777-8777-777777777777', 'issueId': CHILD, 'originalFilename': 'source.json',
+        'byteSize': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(),
+        'createdByAgentId': WORKER, 'originatingRunId': 'worker-run'}
+    proof = {'version': 3, 'kind': 'execution', 'task_status': 'done', 'company_id': COMPANY, 'issue_id': CHILD,
+        'agent_id': WORKER, 'paperclip_run_id': 'worker-run', 'session_id': WORKER_SESSION,
+        'profile': 'research', 'profile_sha256': profile['sha256'], 'model': profile['model'],
+        'tool_calls': [{'tool': 'local_ollama_models', 'success': True, 'result': {'source': 'Ollama /api/tags'}}],
+        'artifacts': [artifact], 'inventory': []}
+    child, signed = child_with_evidence(state, evidence=proof)
+    state.employees[0]['metadata'] = {'jarvis': {'profile': 'research', 'profile_sha256': profile['sha256']}}
+    state.child_comments[CHILD][0]['createdByRunId'] = 'worker-run'
+    state.attachments[CHILD] = [artifact.copy()]
+    monkeypatch.setattr(employee_work, 'attachment_bytes', lambda value: raw)
+    return child, signed
+
+
+def test_modern_worker_receipt_requires_native_artifact_and_current_run(plugin, monkeypatch):
+    child, proof = modern_child(plugin, monkeypatch)
+    verified = plugin.tools.verified_children(plugin.turn, [child])
+    assert verified[0]['evidence']['signature'] == proof['signature']
+    plugin.attachments[CHILD][0]['originatingRunId'] = 'another-run'
+    with pytest.raises(ValueError, match='authorship/run mismatch'):
+        plugin.tools.verified_children(plugin.turn, [child])
+
+
+def test_modern_worker_receipt_rejects_tampered_deliverable(plugin, monkeypatch):
+    child, proof = modern_child(plugin, monkeypatch)
+    plugin.attachments[CHILD][0]['sha256'] = 'tampered'
+    with pytest.raises(ValueError, match='differs from the native'):
+        plugin.tools.verified_children(plugin.turn, [child])
+
+
+def test_native_dependency_is_atomic_and_cannot_reference_another_objective(plugin):
+    dependency = '88888888-8888-4888-8888-888888888888'
+    plugin.children = [{'id': dependency, 'companyId': COMPANY, 'projectId': PROJECT,
+        'parentId': ROOT, 'assigneeAgentId': 'another-worker', 'status': 'todo'}]
+    result = json.loads(plugin.tools.manage({'action': 'delegate', 'agent_id': WORKER,
+        'title': 'Dependent implementation', 'text': 'Implement and test after the required research completes.',
+        'depends_on': [dependency]}))
+    assert result['depends_on'] == [dependency]
+    create = next(c for c in plugin.calls if c[:2] == ('POST', '/companies/' + COMPANY + '/issues'))
+    assert create[2]['blockedByIssueIds'] == [dependency]
+    with pytest.raises(PermissionError):
+        plugin.tools.manage({'action': 'delegate', 'agent_id': WORKER, 'title': 'Forbidden dependency',
+            'text': 'A scoped responsibility with clear acceptance criteria.', 'depends_on': [PROJECT]})
+
+
+def test_rejected_hire_is_a_real_blocker_and_never_claimed_pending(plugin):
+    plugin.turn.update({'plan_decision': 'hire', 'hiring_approval': 'approval', 'hiring_approval_status': 'rejected',
+        'response': 'The human rejected the essential independent review hire; this objective remains blocked.'})
+    plugin.tools.finalize(plugin.turn, completed=True)
+    payload = last_patch(plugin)
+    assert payload['status'] == 'blocked' and 'is rejected' in payload['comment']
+    assert not any(c[1].endswith('/agent-hires') for c in plugin.calls)
+
+
+def test_ceo_correction_reuses_native_child_and_never_creates_another_task(plugin):
+    child, _ = child_with_evidence(plugin)
+    child['description'] = 'Compare actual primary-source facts and report verified findings.'
+    result = json.loads(plugin.tools.manage({'action': 'request_correction', 'child_id': CHILD,
+        'text': 'Correct the unsupported integration claim using the actual source component listing.'}))
+    assert result['child_id'] == CHILD and result['status'] == 'todo'
+    write = next(c for c in plugin.calls if c[:2] == ('PATCH', '/issues/' + CHILD))
+    assert write[3] == 'ceo-run'
+    assert 'CEO CORRECTION' in child['description']
+    assert not any(c[:2] == ('POST', '/companies/' + COMPANY + '/issues') for c in plugin.calls)
+
+
+def test_ceo_correction_cannot_bypass_execution_reconciliation(plugin):
+    child, _ = child_with_evidence(plugin, status='blocked')
+    child['executionBlocker'] = {'cause': 'legacy_execution_requires_reconciliation'}
+    with pytest.raises(ValueError, match='reconciliation hold'):
+        plugin.tools.manage({'action': 'request_correction', 'child_id': CHILD,
+            'text': 'Retry this worker even though its previous external execution outcome is unknown.'})
+    assert not any(c[0] == 'PATCH' and c[1] == '/issues/' + CHILD for c in plugin.calls)
+
+
+def test_ceo_correction_cannot_write_an_unrelated_issue(plugin):
+    with pytest.raises(PermissionError):
+        plugin.tools.manage({'action': 'request_correction', 'child_id': PROJECT,
+            'text': 'This unrelated project issue must never receive correction writes.'})
 
 
 def last_patch(state):
@@ -263,6 +362,7 @@ def test_delegation_creates_one_persistent_child_on_retry(plugin):
     assert len(plugin.children) == 1
     child = plugin.children[0]
     assert (child['parentId'], child['assigneeAgentId'], child['projectId']) == (ROOT, WORKER, PROJECT)
+    assert child['workspaceSelection'] == {'kind': 'task_directory'}
     assert not any('/agent-hires' in call[1] or '/approve' in call[1] for call in plugin.calls)
 
 

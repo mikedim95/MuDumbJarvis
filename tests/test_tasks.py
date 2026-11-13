@@ -37,6 +37,7 @@ def test_submission_nonce_reaches_authoritative_store_and_replays(monkeypatch):
             return httpx.Response(200, json=[{'id': AGENT, 'lifecycleState': 'ready'}])
         body = json.loads(request.content)
         assert body['allowDuplicate'] is True
+        assert body['workspaceSelection'] == {'kind': 'task_directory'}
         key = body['idempotencyKey']
         created.setdefault(key, {**body, 'id': ISSUE, 'identifier': 'JAR-99', 'companyId': 'company'})
         return httpx.Response(201, json=created[key])

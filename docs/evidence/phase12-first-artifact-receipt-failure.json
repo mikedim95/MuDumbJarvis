@@ -1,0 +1,24 @@
+{
+  "status": "rejected_as_incomplete",
+  "checked_at": "2026-11-13T06:40:06.906914+00:00",
+  "issue_id": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+  "identifier": "JAR-41",
+  "issue_status": "blocked",
+  "paperclip_run_id": "7204028c-1285-47b9-9950-88a514e83cfb",
+  "adapter_status": "succeeded",
+  "actual_error": "Native artifact receipt differs from uploaded bytes or execution identity",
+  "observed_native_artifacts": [
+    {
+      "id": "31bb24d2-7d60-42ab-89a5-f046800e30f5",
+      "issueId": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+      "originalFilename": "research-sources-636b2bda51f7.json",
+      "sha256": "636b2bda51f718ea7d704b2c2ec84088815e6a0e98321a6fccbccc9f3191e168",
+      "byteSize": 31600,
+      "createdByAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "originatingRunId": "7204028c-1285-47b9-9950-88a514e83cfb"
+    }
+  ],
+  "cause": "Installed REST projection uses originatingRunId; integration had expected createdByRunId. Full real source snapshot exists, but receipt validation failed closed.",
+  "fix": "Use originatingRunId with backward-compatible alias normalization and reject conflicting identities. Preserve first run and source artifact.",
+  "model_narrative_warning": "Its claim that GitHub access was restricted is unsupported; the actual error was native receipt validation."
+}

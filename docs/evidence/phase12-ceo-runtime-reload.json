@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T07:42:34.849740+00:00",
+  "agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "authenticated_health": true,
+  "native_adapter_status": "pass",
+  "no_live_ceo_run_at_reload": true,
+  "policy": "deploy/CEO_POLICY.md",
+  "worker_run_interrupted": false,
+  "execution_test_pending": "Phase14 live review and correction"
+}

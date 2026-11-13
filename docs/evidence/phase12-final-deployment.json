@@ -1,0 +1,152 @@
+{
+  "status": "passed",
+  "at": "2026-11-13T15:22:50.055303+00:00",
+  "ceo_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "no_live_runs_before_reload": true,
+  "authenticated_health": true,
+  "adapter_test": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-13T15:22:44.123Z"
+  },
+  "history_unchanged_across_hud_restart": true,
+  "history": {
+    "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2": {
+      "status": "done",
+      "comments_sha256": "831eb2f872cb6512f27957e1d4e1a04b591360d6ec97a9b2a57c5b2ce37cde72",
+      "runs": [
+        {
+          "runId": "c5b33e5a-3c4f-45f7-b6fe-869cd445a900",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T15:16:42.573Z",
+          "finishedAt": "2026-11-13T15:18:13.267Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "b5eab398-1f9a-4a9e-89e2-cd4cf6e47689",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T15:11:38.580Z",
+          "finishedAt": "2026-11-13T15:13:22.160Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "70b1bf03-6ee1-4ee5-9b81-a32602b86730",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T15:04:36.856Z",
+          "finishedAt": "2026-11-13T15:06:27.834Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "7b74cf1b-ceb2-4063-92ee-0607b079a585",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T14:56:17.165Z",
+          "finishedAt": "2026-11-13T14:58:54.414Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "2c2b26ee-78c9-4a28-b68e-daa4c4374593",
+          "status": "failed",
+          "startedAt": "2026-11-13T07:41:20.578Z",
+          "finishedAt": "2026-11-13T07:41:22.070Z",
+          "errorCode": "workspace_validation_failed",
+          "error": null
+        },
+        {
+          "runId": "e92cb897-27c3-4521-81cb-b10ce27f56d4",
+          "status": "failed",
+          "startedAt": "2026-11-13T07:41:18.732Z",
+          "finishedAt": "2026-11-13T07:41:19.969Z",
+          "errorCode": "workspace_validation_failed",
+          "error": null
+        },
+        {
+          "runId": "c1491c8c-def8-4f87-a438-bcde517620f2",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T07:04:31.493Z",
+          "finishedAt": "2026-11-13T07:10:45.972Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "2e16037c-1487-4020-8e20-3aca1c8e2c6e",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T06:42:53.569Z",
+          "finishedAt": "2026-11-13T06:51:03.085Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "7204028c-1285-47b9-9950-88a514e83cfb",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T06:35:09.264Z",
+          "finishedAt": "2026-11-13T06:36:33.882Z",
+          "errorCode": null,
+          "error": null
+        }
+      ]
+    },
+    "27b20fae-a51b-43ab-9f36-514199fab977": {
+      "status": "done",
+      "comments_sha256": "5c6e47136d18ab4cb9016c44b8dbddc5230b815ad9f4e11400042fde53c6b3cb",
+      "runs": [
+        {
+          "runId": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T14:49:37.876Z",
+          "finishedAt": "2026-11-13T14:51:14.237Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "d5b5df61-663a-4151-b649-11848c71f6c6",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T14:32:59.016Z",
+          "finishedAt": "2026-11-13T14:46:01.652Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "aec78bdb-e762-4635-a564-2442cc4798fc",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T14:19:37.098Z",
+          "finishedAt": "2026-11-13T14:30:08.454Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "0f94dbd2-6c95-488a-a57f-67d582875be6",
+          "status": "succeeded",
+          "startedAt": "2026-11-13T07:48:45.551Z",
+          "finishedAt": "2026-11-13T07:55:54.146Z",
+          "errorCode": null,
+          "error": null
+        },
+        {
+          "runId": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+          "status": "failed",
+          "startedAt": "2026-11-13T07:18:32.214Z",
+          "finishedAt": "2026-11-13T07:46:26.675Z",
+          "errorCode": "hermes_gateway_run_failed",
+          "error": null
+        }
+      ]
+    }
+  },
+  "services_reloaded": [
+    "jarvis-hermes-ceo",
+    "jarvis-hud"
+  ],
+  "other_services_restarted": false,
+  "operator_test_correction": "Initial adapter probe used config instead of adapterConfig; it failed without running a task. Correct native schema passed before resuming CEO."
+}

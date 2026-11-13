@@ -1,0 +1,23 @@
+{
+  "phase": 12,
+  "status": "passed",
+  "checked_at": "2026-11-13T15:22:55.449886+00:00",
+  "regression_tests": 213,
+  "warnings": "Three existing upstream deprecations",
+  "live_checks": [
+    "phase12-research-runtime.json",
+    "phase12-source-inventory-review.json",
+    "phase12-software_development-runtime.json",
+    "phase12-independent-rerun.json",
+    "phase12-sandbox-transport.json",
+    "phase12-preservation.json",
+    "phase12-final-deployment.json"
+  ],
+  "limitations": [
+    "Comparative framework analysis remains unaccepted and is Phase14 work",
+    "New CEO multi-role objective/correction acceptance belongs to Phase14",
+    "Not all legacy automatic repair paths verified"
+  ],
+  "secret_scan": "passed; 18 actual private values; changed public files only",
+  "git_diff_check": "passed"
+}

@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-11-13T06:36:06.014187+00:00",
+  "runtimes": [
+    {
+      "agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "profile": "research",
+      "status": "running",
+      "runtime_spec": "phase12-v1",
+      "individual_signing_key_present": true,
+      "master_signing_key_absent": true,
+      "profile_dotenv_master_absent": true,
+      "published_ports": false,
+      "networks": [
+        "jarvis-command-center_agent-private",
+        "jarvis-command-center_default"
+      ],
+      "cpu_limit": 2.0,
+      "memory_limit": 2147483648
+    },
+    {
+      "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "profile": "software_development",
+      "status": "idle",
+      "runtime_spec": "phase12-v1",
+      "individual_signing_key_present": true,
+      "master_signing_key_absent": true,
+      "profile_dotenv_master_absent": true,
+      "published_ports": false,
+      "networks": [
+        "jarvis-command-center_agent-private",
+        "jarvis-exec-eb7f0f48854a87e840613483"
+      ],
+      "cpu_limit": 2.0,
+      "memory_limit": 2147483648
+    }
+  ],
+  "note": "Configuration evidence; actual tool acceptance is recorded separately."
+}

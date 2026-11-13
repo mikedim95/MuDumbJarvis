@@ -1,0 +1,304 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T14:51:16.609090+00:00",
+  "role": "software_development",
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "identifier": "JAR-42",
+  "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+  "paperclip_run_id": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+  "hermes_run_id": "run_0cde65a3c0e24739a06dfd973e287cf5",
+  "proof": {
+    "version": 3,
+    "kind": "execution",
+    "task_status": "done",
+    "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+    "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+    "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "paperclip_run_id": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977",
+    "profile": "software_development",
+    "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe",
+    "model": "jarvis-hermes-aigoat24:3b",
+    "tool_calls": [
+      {
+        "tool": "agent_identity",
+        "tool_call_id": "call_diz9ua4o",
+        "success": true,
+        "args": {},
+        "content_sha256": null,
+        "result": {
+          "source": "Authenticated Paperclip employee and local capability policy",
+          "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+          "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+          "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+          "paperclip_run_id": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+          "profile": "software_development",
+          "model": "jarvis-hermes-aigoat24:3b",
+          "workspace": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+          "allowed_tools": [
+            "terminal",
+            "read_file",
+            "write_file",
+            "patch",
+            "publish_artifact",
+            "read_worker_artifacts"
+          ],
+          "authority": "Create and test code only in a private, network-isolated container workspace. No Kali files, Docker socket, external network, publishing, or hiring.",
+          "inference_slots": 1,
+          "next": "Identity retrieval is complete; assigned work is still unperformed. Call the actual work tools now. For coding, call write_file and then terminal; report the real execution output. A sentence saying you are creating or executing is not a tool call and will be blocked."
+        },
+        "result_sha256": "504d5120374af07d75148a4b44db99dd545597286042f9387ce988e3645109e1",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_p15k3efq",
+        "success": true,
+        "args": {
+          "command": "whoami && pwd"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "employee\n/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "8562f4cfb9f37f7fad9adedd5819a362dd1f20df361a2c529644c86f804c998d",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_41kosgux",
+        "success": true,
+        "args": {
+          "command": "python3 /usr/local/share/jarvis/isolation_checks.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "test_container_resource_caps (__main__.SandboxIsolation.test_container_resource_caps) ... ok\ntest_docker_socket_absent (__main__.SandboxIsolation.test_docker_socket_absent) ... ok\ntest_kali_files_absent (__main__.SandboxIsolation.test_kali_files_absent) ... ok\ntest_no_default_ipv4_route (__main__.SandboxIsolation.test_no_default_ipv4_route) ... ok\ntest_nonroot (__main__.SandboxIsolation.test_nonroot) ... ok\ntest_only_private_workspace_is_used (__main__.SandboxIsolation.test_only_private_workspace_is_used) ... ok\ntest_root_mount_readonly (__main__.SandboxIsolation.test_root_mount_readonly) ... ok\ntest_runtime_credentials_absent (__main__.SandboxIsolation.test_runtime_credentials_absent) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.004s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "96eb549229faca8a8ad4192514e7f7492365ac531cfff4ec6bc217dbc65897d7",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_ee22gvrj",
+        "success": true,
+        "args": {
+          "command": "python3 test_demo.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "5a9cd223653a9009e59313f2fd9a3699ca7fe670de603353e76dc8f941664fe8",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_w6pl9eck",
+        "success": true,
+        "args": {
+          "command": "promptfoo eval -c promptfoo.json --no-cache --no-write --max-concurrency 1 --output results.json --no-table",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "Cache is disabled.\nStarting evaluation eval-FqO-2026-11-13T14:50:38\nRunning 3 test cases (up to 1 at a time)...\n\u2713 Eval complete\n\n\nResults:\n  \u2713 3 passed (100%)\n  0 failed (0%)\n  0 errors (0%)\nDuration: 0s (concurrency: 1)\n\nWriting output to results.json",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "5da2655d4fec79bc2c2da2cf02cd516ffcb83f6ceeca49ade86f0eab52abd5a5",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "12383730-301a-4718-bdb9-7c7c9a7ad0b4",
+        "issueId": "27b20fae-a51b-43ab-9f36-514199fab977",
+        "originalFilename": "promptfoo.json",
+        "contentType": "text/plain",
+        "byteSize": 302,
+        "sha256": "628cdf0e36ea987efdc9397e1cb06e76b3aa1fd315c59822be5722ccd0d26e22",
+        "createdByAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+        "originatingRunId": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57"
+      },
+      {
+        "id": "12868685-10ce-448f-b67a-02b672f7eca0",
+        "issueId": "27b20fae-a51b-43ab-9f36-514199fab977",
+        "originalFilename": "results.json",
+        "contentType": "text/plain",
+        "byteSize": 14140,
+        "sha256": "1c3aa56f8fb69075c81f70ba4065b5a6829ff0569ed8c5a4cfb50c2533e325a8",
+        "createdByAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+        "originatingRunId": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57"
+      },
+      {
+        "id": "ee2e4a7e-3ddf-4e61-8a5a-55c466742953",
+        "issueId": "27b20fae-a51b-43ab-9f36-514199fab977",
+        "originalFilename": "test_demo.py",
+        "contentType": "text/plain",
+        "byteSize": 285,
+        "sha256": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61",
+        "createdByAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+        "originatingRunId": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57"
+      }
+    ],
+    "runtime_deliveries": [
+      {
+        "type": "existing_workspace_file",
+        "artifact_id": "12383730-301a-4718-bdb9-7c7c9a7ad0b4",
+        "source": "Runtime collection of actual generated file; no tool invocation is invented"
+      },
+      {
+        "type": "existing_workspace_file",
+        "artifact_id": "12868685-10ce-448f-b67a-02b672f7eca0",
+        "source": "Runtime collection of actual generated file; no tool invocation is invented"
+      },
+      {
+        "type": "existing_workspace_file",
+        "artifact_id": "ee2e4a7e-3ddf-4e61-8a5a-55c466742953",
+        "source": "Runtime collection of actual generated file; no tool invocation is invented"
+      }
+    ],
+    "source_refs": [],
+    "framework_evaluations": [
+      {
+        "framework": "promptfoo",
+        "output_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/results.json",
+        "sha256": "1c3aa56f8fb69075c81f70ba4065b5a6829ff0569ed8c5a4cfb50c2533e325a8",
+        "result_modified_at": 1794581439.0353003,
+        "successes": 3,
+        "failures": 0,
+        "errors": 0,
+        "tool_call_id": "call_w6pl9eck",
+        "source": "Actual current-workspace JSON after successful recorded CLI execution"
+      }
+    ],
+    "inventory": [],
+    "signature": "308219ee90f63931c195d84c911566cf5280ad2794fab979919ca50ba20ae372"
+  },
+  "verified_native_artifacts": [
+    {
+      "id": "12383730-301a-4718-bdb9-7c7c9a7ad0b4",
+      "name": "promptfoo.json",
+      "sha256": "628cdf0e36ea987efdc9397e1cb06e76b3aa1fd315c59822be5722ccd0d26e22",
+      "bytes": 302
+    },
+    {
+      "id": "12868685-10ce-448f-b67a-02b672f7eca0",
+      "name": "results.json",
+      "sha256": "1c3aa56f8fb69075c81f70ba4065b5a6829ff0569ed8c5a4cfb50c2533e325a8",
+      "bytes": 14140
+    },
+    {
+      "id": "ee2e4a7e-3ddf-4e61-8a5a-55c466742953",
+      "name": "test_demo.py",
+      "sha256": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61",
+      "bytes": 285
+    }
+  ],
+  "runtime_trace": [
+    "2026-11-13 14:49:45,197 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.turn_context: conversation turn: session=paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977 model=jarvis-hermes-aigoat24:3b provider=custom platform=api_server history=2 msg='Execute the current Paperclip assignment supplied by the authenticated preflight...'",
+    "2026-11-13 14:50:27,002 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.conversation_loop: API call #1: model=jarvis-hermes-aigoat24:3b provider=custom in=4521 out=210 total=4731 latency=40.8s cache=3688/4521 (82%) id=chatcmpl-119",
+    "2026-11-13 14:50:27,642 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.tool_executor: tool agent_identity completed (0.13s, 1015 chars)",
+    "2026-11-13 14:50:29,261 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.tool_executor: tool terminal completed (1.29s, 109 chars)",
+    "2026-11-13 14:50:30,705 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.tool_executor: tool terminal completed (1.01s, 856 chars)",
+    "2026-11-13 14:50:32,060 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.tool_executor: tool terminal completed (1.00s, 148 chars)",
+    "2026-11-13 14:50:39,623 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.tool_executor: tool terminal completed (7.22s, 309 chars)",
+    "2026-11-13 14:51:11,840 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977] agent.conversation_loop: API call #2: model=jarvis-hermes-aigoat24:3b provider=custom in=5562 out=127 total=5689 latency=32.2s cache=4520/5562 (81%) id=chatcmpl-475"
+  ],
+  "hud_and_paperclip_same_task": true,
+  "verified_policy_probes": [
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_pstg08mt",
+      "current_run": false,
+      "scope": "Verified same-issue history; never represented as a new tool call"
+    },
+    {
+      "native_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+      "tool_call_id": "call_ey5il108",
+      "current_run": false,
+      "scope": "Verified same-issue history; never represented as a new tool call"
+    }
+  ],
+  "verified_same_issue_source_writes": [
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_z6e7lxbn",
+      "sha256": "33f141c4cc51dbfaf044e0d9a97cee7365473f76325317d20e6953d830638515",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/config.yaml",
+      "current_run": false
+    },
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_010fd5gi",
+      "sha256": "c0bae8bfaea0f7da6738d0880139aef6c3eb12b53d55f3c2cc602639d975c5f6",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_runtime.py",
+      "current_run": false
+    },
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_dn9l8yuy",
+      "sha256": "4857661d08d01172632f3547164e4803b57172f98af604d14d17aeb526402363",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_runtime.py",
+      "current_run": false
+    },
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_g5t56wnx",
+      "sha256": "46a1087e3dbe42948d6796245f955085e31c31f6deda8810d71b8ddd39f9df81",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_runtime.py",
+      "current_run": false
+    },
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_5l5t9s3b",
+      "sha256": "39451fea3a5febaebfaff0f43ab126032836a773aa7b3e5b5ab4b1e182c127f2",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo_test.json",
+      "current_run": false
+    },
+    {
+      "native_run_id": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+      "tool_call_id": "call_pczxyf79",
+      "sha256": "895aede080e224025283183b0fe2bba0051c1b0d9ea7cf213fc10c773676f03f",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/",
+      "current_run": false
+    },
+    {
+      "native_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+      "tool_call_id": "call_39js4qpe",
+      "sha256": "63662201319479c1ead93f3e3effc33c3773b8de5496a48031c7e2d846f593c3",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py",
+      "current_run": false
+    },
+    {
+      "native_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+      "tool_call_id": "call_f9oq53pv",
+      "sha256": "d2b7d2178cd6e70304b221755678ab37c64590638c60c0e8dab58e9d8fc9a527",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json",
+      "current_run": false
+    },
+    {
+      "native_run_id": "d5b5df61-663a-4151-b649-11848c71f6c6",
+      "tool_call_id": "call_u6ltrghz",
+      "sha256": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py",
+      "current_run": false
+    },
+    {
+      "native_run_id": "d5b5df61-663a-4151-b649-11848c71f6c6",
+      "tool_call_id": "call_xnm22tne",
+      "sha256": "628cdf0e36ea987efdc9397e1cb06e76b3aa1fd315c59822be5722ccd0d26e22",
+      "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json",
+      "current_run": false
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "status": "passed",
+  "real_ssh_execution": true,
+  "sandbox": {
+    "uid": 1000,
+    "workspace_write": true,
+    "host_files_absent": true,
+    "docker_socket_absent": true,
+    "credentials_absent": true,
+    "root_read_only": true,
+    "offline_framework_ready": true,
+    "no_default_route": true
+  },
+  "image_id": "sha256:f866c827940394754202892cd87db580d7fa3156e743490df6544aa7c885cd49",
+  "isolated_gateway_mode": true,
+  "agent_or_task_created": false,
+  "inference_requested": false,
+  "cleanup": "Only test resources bearing this unique ownership label",
+  "operator_control_evaluation": {
+    "source": "Operator-owned transport fixture, not an employee execution",
+    "provider": "echo",
+    "stats": {
+      "successes": 3,
+      "failures": 0,
+      "errors": 0,
+      "tokenUsage": {
+        "prompt": 0,
+        "completion": 0,
+        "cached": 0,
+        "total": 0,
+        "numRequests": 3,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0
+        },
+        "assertions": {
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          }
+        }
+      },
+      "durationMs": 150,
+      "evaluationDurationMs": 150
+    },
+    "cloud_inference": false,
+    "command_exit_code": 0
+  },
+  "operator_isolation_fixture": {
+    "tests": 8,
+    "exit_code": 0,
+    "source": "Reviewed operator-authored fixture, executed through actual isolated SSH"
+  }
+}

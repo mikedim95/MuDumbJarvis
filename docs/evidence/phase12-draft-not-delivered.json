@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-13T07:01:46.509393+00:00",
+  "issue_id": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+  "identifier": "JAR-41",
+  "run_id": "2e16037c-1487-4020-8e20-3aca1c8e2c6e",
+  "status": "blocked_not_accepted",
+  "observed": "Three real source retrievals and native snapshots succeeded. Model returned a draft without publishing it; the draft also contained invented abbreviated hashes. No report completion is claimed.",
+  "fixes": [
+    "Runtime persists actual final reports and real workspace files only after successful work evidence; it never invents a tool invocation.",
+    "Do not feed raw runtime journal history back to the model: native payloadTemplate.input is a short wake; authenticated preflight supplies the actual objective, scoped state and latest human updates.",
+    "Public-source excerpts bounded; exact source manifest retained and appended by runtime; invented/truncated report hashes are rejected.",
+    "Actual newline in progress comment prevents native single-line escaped-newline normalization from corrupting JSON."
+  ]
+}

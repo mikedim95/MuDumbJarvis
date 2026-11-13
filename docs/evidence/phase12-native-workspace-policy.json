@@ -1,0 +1,40 @@
+{
+  "applied_at": "2026-11-13T14:56:16.744230+00:00",
+  "project_id": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+  "old_project_policy": null,
+  "new_project_policy": {
+    "enabled": true,
+    "defaultMode": "adapter_default"
+  },
+  "task_id": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+  "old_workspace_fields": {
+    "executionWorkspaceId": "71534fc2-b2e2-4ee5-8d0a-c6f496500b9d",
+    "executionWorkspaceSettings": {
+      "mode": "isolated_workspace"
+    },
+    "executionWorkspacePreference": "reuse_existing"
+  },
+  "source": "Installed official validators and execution-workspace-policy.ts; agent_default uses adapter-managed metadata and never creates a worktree",
+  "actual_isolation": "Existing per-role Hermes profiles and private execution containers; no host permission changed",
+  "prior_failures": [
+    "e92cb897-27c3-4521-81cb-b10ce27f56d4",
+    "2c2b26ee-78c9-4a28-b68e-daa4c4374593"
+  ],
+  "requested_task_workspace_mode": "agent_default",
+  "observed_task_workspace_mode": {
+    "mode": "isolated_workspace"
+  },
+  "behavior_verification_pending": true,
+  "project_policy_restored_to_baseline": true,
+  "resolution_pending": "Installed canonical workspaceSelection task_directory API; legacy fields did not change pinned issue mode",
+  "canonical_selection_requested": {
+    "kind": "task_directory"
+  },
+  "canonical_api": "PUT /issues/{id}/workspace",
+  "applies": "next_normal_admission",
+  "canonical_response": {
+    "kind": "scheduled",
+    "applies": "next_normal_admission",
+    "bindingRevision": 5
+  }
+}

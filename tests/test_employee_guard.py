@@ -29,7 +29,8 @@ def employee(monkeypatch):
 
 
 @pytest.mark.parametrize('args', [{'_host_local': True, 'command': 'id'}, {'force': True, 'command': 'id'},
-    {'backend': 'local', 'command': 'id'}, {'env': {'API_SERVER_KEY': 'x'}, 'command': 'id'}])
+    {'backend': 'local', 'command': 'id'}, {'env': {'API_SERVER_KEY': 'x'}, 'command': 'id'},
+    {'cross_profile': True, 'command': 'id'}])
 def test_model_cannot_override_private_execution_backend(employee, args):
     assert employee.guard(tool_name='terminal', args=args, session_id='issue-session')['action'] == 'block'
 
@@ -55,9 +56,17 @@ def test_research_profile_has_no_shell(employee, monkeypatch):
     assert employee.guard(tool_name='terminal', args={'command': 'id'}, session_id='issue-session')['action'] == 'block'
 
 
-@pytest.mark.parametrize('path', ['/opt/data/config.yaml', '/home/kali/.ssh/id_ed25519', '../../config.yaml'])
+@pytest.mark.parametrize('path', ['/opt/data/config.yaml', '/home/kali/.ssh/id_ed25519', '../../config.yaml', '/workspace/', '.', ''])
 def test_file_tools_cannot_read_profile_credentials_or_host_paths(employee, path):
     assert employee.guard(tool_name='read_file', args={'path': path}, session_id='issue-session')['action'] == 'block'
+
+
+def test_patch_cannot_hide_foreign_paths_inside_multifile_patch_text(employee):
+    assert employee.guard(tool_name='patch', args={'mode': 'patch',
+        'patch': '*** Begin Patch\n*** Add File: /opt/data/config.yaml\n+secret\n*** End Patch'},
+        session_id='issue-session')['action'] == 'block'
+    assert employee.guard(tool_name='patch', args={'path': '/workspace/test.py',
+        'old_string': 'old', 'new_string': 'new'}, session_id='issue-session') is None
 
 
 def test_unavailable_scope_fails_closed(employee, monkeypatch):
@@ -89,11 +98,22 @@ def test_identity_and_prose_cannot_complete_software_work(employee):
     assert 'No successful terminal' in employee.missing_execution(turn)
 
 
+def test_passing_unit_tests_do_not_hide_a_failed_required_framework_job(employee):
+    turn = {'needs_tests': True, 'needs_promptfoo': True, 'employee_execution': [
+        {'tool': 'terminal', 'success': True, 'args': {'command': 'python3 test.py'},
+         'result': {'output': 'Ran 2 tests in 0.001s\nOK', 'exit_code': 0}},
+        {'tool': 'terminal', 'success': False, 'args': {'command': 'promptfoo eval -c broken.json'},
+         'result': {'output': 'Invalid configuration', 'exit_code': 1}}]}
+    assert 'latest work tool failed' in employee.missing_execution(turn)
+    turn['employee_execution'].pop()
+    assert 'No successful Promptfoo result JSON' in employee.missing_execution(turn)
+
+
 def test_failed_terminal_and_successful_non_test_command_do_not_prove_tests(employee):
     turn = {'needs_tests': True, 'employee_execution': [
         {'tool': 'terminal', 'success': False, 'args': {'command': 'python3 test.py'},
          'result': {'output': 'FAILED', 'exit_code': 1}}]}
-    assert 'No successful terminal' in employee.missing_execution(turn)
+    assert 'latest work tool failed' in employee.missing_execution(turn)
     turn['employee_execution'].append({'tool': 'terminal', 'success': True,
         'args': {'command': 'pwd'}, 'result': {'output': '/workspace', 'exit_code': 0}})
     assert 'No passing test' in employee.missing_execution(turn)
@@ -115,6 +135,16 @@ def test_actual_admitted_test_result_is_required_for_completion(employee, monkey
     assert employee.missing_execution(turn) is None
 
 
+def test_operator_isolation_checks_do_not_replace_generated_program_tests(employee):
+    turn = {'needs_tests': True, 'needs_runtime_fixture': True, 'employee_execution': [
+        {'tool': 'terminal', 'success': True, 'args': {'command': 'python3 /usr/local/share/jarvis/isolation_checks.py'},
+         'result': {'output': 'Ran 8 tests in 0.001s\nOK', 'exit_code': 0}}]}
+    assert 'No passing test' in employee.missing_execution(turn)
+    turn['employee_execution'].append({'tool': 'terminal', 'success': True,
+        'args': {'command': 'python3 test_demo.py'}, 'result': {'output': 'Ran 2 tests in 0.001s\nOK', 'exit_code': 0}})
+    assert employee.missing_execution(turn) is None
+
+
 def test_verify_reprompts_then_stops_instead_of_accepting_prose(employee, monkeypatch):
     turn = {'session': 'issue-session', 'needs_tests': True}
     monkeypatch.setattr(employee.reporting, 'current_turn', lambda: turn)
@@ -123,12 +153,27 @@ def test_verify_reprompts_then_stops_instead_of_accepting_prose(employee, monkey
     assert employee.missing_execution(turn)
 
 
-def test_employee_receives_actual_bounded_assignment_separately_from_wake_metadata(employee):
-    context = employee.prepare_turn_context({'issue': 'real-issue', 'run': 'real-run', 'needs_tests': True},
+def test_employee_receives_actual_bounded_assignment_separately_from_wake_metadata(employee, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    monkeypatch.setitem(sys.modules, 'hermes_constants', SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    context = employee.prepare_turn_context({'issue': '11111111-1111-4111-8111-111111111111', 'run': 'real-run', 'needs_tests': True},
         {'title': 'Real task', 'description': 'Create and execute the assigned tests.'})
-    assert 'real-issue' in context and 'real-run' in context
+    assert '11111111-1111-4111-8111-111111111111' in context and 'real-run' in context
     assert 'Create and execute the assigned tests.' in context
     assert 'exit code zero' in context and 'not an execution receipt' in context
+    assert 'no parent or sibling deliverables' in context and 'foreground terminal' in context
+
+
+def test_retry_can_reuse_verified_files_without_instructions_to_regenerate_them(employee, monkeypatch, tmp_path):
+    import json
+    from types import SimpleNamespace
+    monkeypatch.setitem(sys.modules, 'hermes_constants', SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    context = employee.prepare_turn_context({'issue': '11111111-1111-4111-8111-111111111111', 'run': 'real-run', 'needs_tests': True},
+        {'description': 'Reuse existing files; do not rewrite them. Execute unittest and promptfoo, then report.'})
+    payload = json.loads(context.split('\n', 1)[1])
+    assert 'Reuse existing' in payload['instruction']
+    assert 'Use write_file to create' not in payload['instruction']
+    assert 'offline_framework_reference' not in payload
 
 
 def test_managed_completion_callback_blocks_the_observed_text_only_failure(employee, monkeypatch):
@@ -139,8 +184,28 @@ def test_managed_completion_callback_blocks_the_observed_text_only_failure(emplo
     monkeypatch.setitem(employee.reporting._turns, ('issue-session', 'turn'), turn)
     updates = []
     monkeypatch.setattr(employee.reporting, 'api', lambda *args: updates.append(args))
+    monkeypatch.setattr(employee, 'signed_execution', lambda *args: {'test_receipt': True})
     employee.reporting.finish(session_id='issue-session', turn_id='turn', completed=True)
     payload = updates[-1][2]
     assert payload['status'] == 'blocked'
     assert 'not accepted as completed work' in payload['comment']
     assert 'No successful terminal execution' in payload['comment']
+
+
+def test_native_multiline_comment_contract_preserves_json_escapes(employee, monkeypatch):
+    import json
+    turn = {'company': '11111111-1111-4111-8111-111111111111', 'issue': '33333333-3333-4333-8333-333333333333',
+        'agent': '22222222-2222-4222-8222-222222222222', 'run': 'native-run', 'session': 'issue-session'}
+    monkeypatch.setenv('JARVIS_EXECUTION_PROOF_KEY', 'synthetic-master-signing-key')
+    writes = []
+    monkeypatch.setattr(employee.reporting, 'api', lambda *args: writes.append(args))
+    employee.journal(turn, {'tool': 'terminal', 'tool_call_id': 'real-call', 'success': True,
+        'args': {'command': 'printf "line\\n"'}, 'result': {'output': 'line\nnext', 'exit_code': 0}})
+    body = writes[0][2]['body']
+    # Paperclip normalizes escaped newlines only in single-line input.
+    normalized = body if '\n' in body else body.replace('\\n', '\n')
+    line = next(line for line in normalized.splitlines() if line.startswith('JARVIS_TOOL_EVENT='))
+    receipt = json.loads(line.split('=', 1)[1])
+    assert receipt['result']['output'] == 'line\nnext'
+    assert receipt['args']['command'] == 'printf "line\\n"'
+    assert employee.reporting.authentic_evidence(receipt)

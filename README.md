@@ -36,9 +36,20 @@ runtime-derived scope separately from model-authored rationale; no separate
 planning-tool call or execution evidence is fabricated.
 
 Paperclip is the only task orchestrator and task database. Direct Hermes chat
-uses separate sessions. Agent tools are limited to read-only local model
-inventory; host files, shell execution and external actions are unavailable.
+uses separate sessions. The accepted staffing/runtime extension reuses the
+Research worker and one human-approved Software employee. Research has scoped
+primary-source tools; Software executes through Hermes SSH in a private,
+non-root container with no host mounts or external route. Unrestricted host
+access and external actions are unavailable. Other roles remain reusable
+capability templates and require human approval before hiring.
 No cloud LLM or voice subscription is configured for this deployment.
+
+See [dynamic staffing](docs/DYNAMIC_AGENTS.md) and
+[runtime isolation, verification and rollback](docs/RUNTIME_ISOLATION.md).
+Phase 12 passed 213 regression tests and live JAR-41/JAR-42 runtime checks.
+The three-framework comparative report still requires factual review; verified
+execution provenance alone does not approve generated analysis. Phases 13–14
+monitoring and complete multi-role objective acceptance are still in progress.
 
 With Docker/Compose installed and the existing `ollama` container running with
 `ministral-3:3b`, start from this directory:

@@ -1,0 +1,186 @@
+{
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "native_run_id": "d5b5df61-663a-4151-b649-11848c71f6c6",
+  "task_status": "blocked",
+  "cause": "Completion parser rejected actual successful commands with normal cwd/display prefixes or suffixes",
+  "actual_tests": {
+    "isolation": 8,
+    "generated_program": 2,
+    "promptfoo_successes": 3,
+    "failures": 0,
+    "errors": 0
+  },
+  "proof": {
+    "version": 3,
+    "kind": "execution",
+    "task_status": "blocked",
+    "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+    "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+    "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "paperclip_run_id": "d5b5df61-663a-4151-b649-11848c71f6c6",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977",
+    "profile": "software_development",
+    "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe",
+    "model": "jarvis-hermes-aigoat24:3b",
+    "tool_calls": [
+      {
+        "tool": "write_file",
+        "tool_call_id": "call_u6ltrghz",
+        "success": true,
+        "args": {
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py"
+        },
+        "content_sha256": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61",
+        "result": {
+          "bytes_written": 285,
+          "dirs_created": true,
+          "verified": true,
+          "lint": {
+            "status": "ok",
+            "output": ""
+          },
+          "resolved_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py",
+          "files_modified": [
+            "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py"
+          ]
+        },
+        "result_sha256": "3ff36cc73680ba051ef1bec13d4c277e9837ee7e4c9c009516c6304cae52b44a",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "write_file",
+        "tool_call_id": "call_xnm22tne",
+        "success": true,
+        "args": {
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+        },
+        "content_sha256": "628cdf0e36ea987efdc9397e1cb06e76b3aa1fd315c59822be5722ccd0d26e22",
+        "result": {
+          "bytes_written": 302,
+          "dirs_created": true,
+          "verified": true,
+          "lint": {
+            "status": "ok",
+            "output": ""
+          },
+          "resolved_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json",
+          "files_modified": [
+            "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+          ]
+        },
+        "result_sha256": "c4f544187930759b175e4710eb1258d77dcb257c76ae9df8d593e3149839f36a",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "read_worker_artifacts",
+        "tool_call_id": "call_j74alc9k",
+        "success": false,
+        "args": {
+          "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "error": "[TOOL_ERROR] Tool execution failed: PermissionError: Only assigned child work can read completed sibling deliverables"
+        },
+        "result_sha256": "84dafb272d3c5535ac374bd4c3a0cf9f73693e925e10c031351cc7a79285c882",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_0zu219tt",
+        "success": true,
+        "args": {
+          "command": "cd /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977 && python3 /usr/local/share/jarvis/isolation_checks.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "test_container_resource_caps (__main__.SandboxIsolation.test_container_resource_caps) ... ok\ntest_docker_socket_absent (__main__.SandboxIsolation.test_docker_socket_absent) ... ok\ntest_kali_files_absent (__main__.SandboxIsolation.test_kali_files_absent) ... ok\ntest_no_default_ipv4_route (__main__.SandboxIsolation.test_no_default_ipv4_route) ... ok\ntest_nonroot (__main__.SandboxIsolation.test_nonroot) ... ok\ntest_only_private_workspace_is_used (__main__.SandboxIsolation.test_only_private_workspace_is_used) ... ok\ntest_root_mount_readonly (__main__.SandboxIsolation.test_root_mount_readonly) ... ok\ntest_runtime_credentials_absent (__main__.SandboxIsolation.test_runtime_credentials_absent) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.005s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "bd7bc51f8d706bfa442907ac6be5d860bce274183a68b31e8232e70849bbab20",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_ox747rng",
+        "success": true,
+        "args": {
+          "command": "cd /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977 && python3 test_demo.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "5a9cd223653a9009e59313f2fd9a3699ca7fe670de603353e76dc8f941664fe8",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_nd9ueh1j",
+        "success": false,
+        "args": {
+          "argument_names": [
+            "command",
+            "workdir"
+          ]
+        },
+        "content_sha256": null,
+        "result": {
+          "error": "JARVIS capability guard denied this tool: The working directory must stay within the private workspace",
+          "policy_denied": true,
+          "executed": false
+        },
+        "result_sha256": "0473d8c4c328790e7afa886a11dbfeb472434af135a72d59603c479d8ff425b6",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_21pg9ivf",
+        "success": true,
+        "args": {
+          "command": "cd /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977 && promptfoo eval -c promptfoo.json --no-cache --no-write --max-concurrency 1 --output results.json; cat results.json; echo '=== EOF ==='",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "exit_code": 0,
+          "error": null,
+          "result_truncated": true,
+          "preview": "{\"error\":null,\"exit_code\":0,\"output\":\"Cache is disabled.\\nStarting evaluation eval-cDf-2026-11-13T14:39:34\\nRunning 3 test cases (up to 1 at a time)...\\n\\n\\u250c\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u252c\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2510\\n\\u2502 text                                                       \\u2502 [echo] {{text}}                                            \\u2502\\n\\u251c\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u253c\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2500\\u2",
+          "output": ",\n        \"latencyMs\": 1,\n        \"namedScores\": {},\n        \"prompt\": {\n          \"raw\": \"SAFE: gamma\",\n          \"label\": \"{{text}}\",\n          \"config\": {}\n        },\n        \"promptId\": \"b0453fe54c63b5f4e9cccc483d6e2ee51ffbb4a40f648e98b2e5c0dbd2324ab6\",\n        \"promptIdx\": 0,\n        \"provider\": {\n          \"id\": \"echo\",\n          \"label\": \"\"\n        },\n        \"response\": {\n          \"output\": \"SAFE: gamma\",\n          \"raw\": \"SAFE: gamma\",\n          \"cost\": 0,\n          \"cached\": false,\n          \"tokenUsage\": {\n            \"prompt\": 0,\n            \"completion\": 0,\n            \"cached\": 0,\n            \"total\": 0,\n            \"numRequests\": 1,\n            \"completionDetails\": {\n              \"reasoning\": 0,\n              \"acceptedPrediction\": 0,\n              \"rejectedPrediction\": 0,\n              \"cacheReadInputTokens\": 0,\n              \"cacheCreationInputTokens\": 0\n            },\n            \"assertions\": {\n              \"total\": 0,\n              \"prompt\": 0,\n              \"completion\": 0,\n              \"cached\": 0,\n              \"numRequests\": 0,\n              \"completionDetails\": {\n                \"reasoning\": 0,\n                \"acceptedPrediction\": 0,\n                \"rejectedPrediction\": 0,\n                \"cacheReadInputTokens\": 0,\n                \"cacheCreationInputTokens\": 0\n              }\n            }\n          },\n          \"isRefusal\": false,\n          \"metadata\": {}\n        },\n        \"score\": 1,\n        \"success\": true,\n        \"testCase\": {\n          \"vars\": {\n            \"text\": \"SAFE: gamma\"\n          },\n          \"assert\": [\n            {\n              \"type\": \"equals\",\n              \"value\": \"SAFE: gamma\"\n            }\n          ],\n          \"options\": {},\n          \"metadata\": {}\n        },\n        \"testIdx\": 2,\n        \"tokenUsage\": {\n          \"prompt\": 0,\n          \"completion\": 0,\n          \"cached\": 0,\n          \"total\": 0,\n          \"numRequests\": 1,\n          \"completionDetails\": {\n            \"reasoning\": 0,\n            \"acceptedPrediction\": 0,\n            \"rejectedPrediction\": 0,\n            \"cacheReadInputTokens\": 0,\n            \"cacheCreationInputTokens\": 0\n          },\n          \"assertions\": {\n            \"total\": 0,\n            \"prompt\": 0,\n            \"completion\": 0,\n            \"cached\": 0,\n            \"numRequests\": 0,\n            \"completionDetails\": {\n              \"reasoning\": 0,\n              \"acceptedPrediction\": 0,\n              \"rejectedPrediction\": 0,\n              \"cacheReadInputTokens\": 0,\n              \"cacheCreationInputTokens\": 0\n            }\n          }\n        },\n        \"vars\": {\n          \"text\": \"SAFE: gamma\"\n        },\n        \"metadata\": {\n          \"_promptfooFileMetadata\": {}\n        },\n        \"failureReason\": 0\n      }\n    ],\n    \"stats\": {\n      \"successes\": 3,\n      \"failures\": 0,\n      \"errors\": 0,\n      \"tokenUsage\": {\n        \"prompt\": 0,\n        \"completion\": 0,\n        \"cached\": 0,\n        \"total\": 0,\n        \"numRequests\": 3,\n        \"completionDetails\": {\n          \"reasoning\": 0,\n          \"acceptedPrediction\": 0,\n          \"rejectedPrediction\": 0,\n          \"cacheReadInputTokens\": 0,\n          \"cacheCreationInputTokens\": 0\n        },\n        \"assertions\": {\n          \"total\": 0,\n          \"prompt\": 0,\n          \"completion\": 0,\n          \"cached\": 0,\n          \"numRequests\": 0,\n          \"completionDetails\": {\n            \"reasoning\": 0,\n            \"acceptedPrediction\": 0,\n            \"rejectedPrediction\": 0,\n            \"cacheReadInputTokens\": 0,\n            \"cacheCreationInputTokens\": 0\n          }\n        }\n      },\n      \"durationMs\": 82,\n      \"evaluationDurationMs\": 82\n    }\n  },\n  \"config\": {\n    \"tags\": {},\n    \"prompts\": [\n      \"{{text}}\"\n    ],\n    \"providers\": [\n      \"echo\"\n    ],\n    \"tests\": [\n      {\n        \"vars\": {\n          \"text\": \"SAFE: alpha\"\n        },\n        \"assert\": [\n          {\n            \"type\": \"equals\",\n            \"value\": \"SAFE: alpha\"\n          }\n        ]\n      },\n      {\n        \"vars\": {\n          \"text\": \"SAFE: beta\"\n        },\n        \"assert\": [\n          {\n            \"type\": \"equals\",\n            \"value\": \"SAFE: beta\"\n          }\n        ]\n      },\n      {\n        \"vars\": {\n          \"text\": \"SAFE: gamma\"\n        },\n        \"assert\": [\n          {\n            \"type\": \"equals\",\n            \"value\": \"SAFE: gamma\"\n          }\n        ]\n      }\n    ],\n    \"env\": {},\n    \"outputPath\": [\n      \"results.json\"\n    ],\n    \"extensions\": [],\n    \"metadata\": {},\n    \"evaluateOptions\": {},\n    \"basePath\": \"/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977\"\n  },\n  \"shareableUrl\": null,\n  \"metadata\": {\n    \"promptfooVersion\": \"0.125.1\",\n    \"nodeVersion\": \"v22.22.0\",\n    \"platform\": \"linux\",\n    \"arch\": \"x64\",\n    \"exportedAt\": \"2026-11-13T14:39:35.177Z\",\n    \"evaluationCreatedAt\": \"2026-11-13T14:39:34.886Z\"\n  },\n  \"vars\": [\n    \"text\"\n  ],\n  \"runtimeOptions\": {\n    \"eventSource\": \"cli\",\n    \"showProgressBar\": true,\n    \"repeat\": 1,\n    \"maxConcurrency\": 1,\n    \"cache\": false\n  }\n}=== EOF ==="
+        },
+        "result_sha256": "4ed8bd58c7622fd1acc628258702cc6c92f891377003148c0c23d075f5ca4340",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_mx1e24mv",
+        "success": true,
+        "args": {
+          "background": false,
+          "command": "PYTHONPATH=/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977 python3 /usr/local/share/jarvis/isolation_checks.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "test_container_resource_caps (__main__.SandboxIsolation.test_container_resource_caps) ... ok\ntest_docker_socket_absent (__main__.SandboxIsolation.test_docker_socket_absent) ... ok\ntest_kali_files_absent (__main__.SandboxIsolation.test_kali_files_absent) ... ok\ntest_no_default_ipv4_route (__main__.SandboxIsolation.test_no_default_ipv4_route) ... ok\ntest_nonroot (__main__.SandboxIsolation.test_nonroot) ... ok\ntest_only_private_workspace_is_used (__main__.SandboxIsolation.test_only_private_workspace_is_used) ... ok\ntest_root_mount_readonly (__main__.SandboxIsolation.test_root_mount_readonly) ... ok\ntest_runtime_credentials_absent (__main__.SandboxIsolation.test_runtime_credentials_absent) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.003s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "c1c67b2e7ed7c6f3bc7abf32a0bd90469780ba0c044b6d3a768c8b0b7a2e244d",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      }
+    ],
+    "artifacts": [],
+    "runtime_deliveries": [],
+    "source_refs": [],
+    "framework_evaluations": [],
+    "inventory": [],
+    "signature": "f169ab977357e57eac07446389f4c4edb203d5b8c316a987c6ecc8b150d52612"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T15:20:44.215785+00:00",
+  "task_id": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+  "identifier": "JAR-41",
+  "paperclip_run_id": "c5b33e5a-3c4f-45f7-b6fe-869cd445a900",
+  "artifact": {
+    "id": "8b3b9df3-9fe3-4fd8-a7e5-0edd008d886b",
+    "issueId": "ef1c7ac9-46a4-4e00-b7ed-1b3e9cbb03e2",
+    "originalFilename": "source-module-inventory.md",
+    "contentType": "text/plain",
+    "byteSize": 1197,
+    "sha256": "b8dd3a849d446874f2673736066f97e0b5e9fe6c58e6dd4086cd25982a29446d",
+    "createdByAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+    "originatingRunId": "c5b33e5a-3c4f-45f7-b6fe-869cd445a900"
+  },
+  "accepted_scope": "Runtime-formatted inventory of observed repository module names, source URLs and hashes. Not comparative architectural analysis.",
+  "inventory": "# Observed source module inventory\n\nRuntime-formatted tool output from live GitHub API data; no model-authored analysis is accepted as this inventory.\n\n- garak: https://github.com/NVIDIA/garak/blob/HEAD/README.md\n  Observed component names: [\"__init__.py\", \"__main__.py\", \"_config.py\", \"_plugins.py\", \"_selection.py\"]\n  Git blob SHA-1: 29d7e4f4c740f1252c64b1b15045abfc7bd71051\n  README UTF-8 SHA-256: 640626790dc73543d58857ea0ebc7e47ccdb38cd9dd8fc56467147f7f3a5798e\n- promptfoo: https://github.com/promptfoo/promptfoo/blob/HEAD/README.md\n  Observed component names: [\"__mocks__\", \"app\", \"assertions\", \"blobs\", \"cache.ts\"]\n  Git blob SHA-1: 2a56017c2609e3a92d7d5539147c9c7e620a3420\n  README UTF-8 SHA-256: 7fd57809624e22da73bf6b6feb027c9e09aec74e0099bdea711fe2e276e87c4a\n- pyrit: https://github.com/microsoft/PyRIT/blob/HEAD/README.md\n  Observed component names: [\"__init__.py\", \"_code_execution\", \"_compatibility.py\", \"_version.py\", \"analytics\"]\n  Git blob SHA-1: 3773e4a423879eceb01e4836256e7e7b8d3fbae2\n  README UTF-8 SHA-256: e062f2bd5392b4a73ccf92a0f0c73432c316ec92c20730e3d296039383d2a8d1\n\nThese are observed source files/modules; no framework execution or efficacy evaluation was performed.\n",
+  "general_comparative_analysis_accepted": false,
+  "workspaceSelection": {
+    "source": "explicit",
+    "request": {
+      "key": "f46c1f7d-eb4c-4e31-9f8c-4b5e2f6bbea6",
+      "expectedBindingRevision": 4
+    },
+    "version": 1,
+    "selection": {
+      "kind": "task_directory"
+    }
+  },
+  "workspacePendingSelection": null,
+  "workspaceBindingRevision": 8
+}

@@ -1,0 +1,252 @@
+{
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "native_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+  "status": "blocked",
+  "isolation_fixture_8_passed": true,
+  "agent_program_2_tests_passed": true,
+  "framework_executed_successfully": false,
+  "actual_remaining_errors": [
+    "Malformed JSON refused before write",
+    "Then bare test array instead of whole config",
+    "Unsupported --json option; corrected CLI then exposed the array schema error"
+  ],
+  "proof": {
+    "version": 3,
+    "kind": "execution",
+    "task_status": "blocked",
+    "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+    "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+    "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "paperclip_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:27b20fae-a51b-43ab-9f36-514199fab977",
+    "profile": "software_development",
+    "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe",
+    "model": "jarvis-hermes-aigoat24:3b",
+    "tool_calls": [
+      {
+        "tool": "agent_identity",
+        "tool_call_id": "call_hnmb7g2u",
+        "success": true,
+        "args": {},
+        "content_sha256": null,
+        "result": {
+          "source": "Authenticated Paperclip employee and local capability policy",
+          "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+          "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+          "issue_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+          "paperclip_run_id": "aec78bdb-e762-4635-a564-2442cc4798fc",
+          "profile": "software_development",
+          "model": "jarvis-hermes-aigoat24:3b",
+          "workspace": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+          "allowed_tools": [
+            "terminal",
+            "read_file",
+            "write_file",
+            "patch",
+            "publish_artifact",
+            "read_worker_artifacts"
+          ],
+          "authority": "Create and test code only in a private, network-isolated container workspace. No Kali files, Docker socket, external network, publishing, or hiring.",
+          "inference_slots": 1,
+          "next": "Identity retrieval is complete; assigned work is still unperformed. Call the actual work tools now. For coding, call write_file and then terminal; report the real execution output. A sentence saying you are creating or executing is not a tool call and will be blocked."
+        },
+        "result_sha256": "22a2b43b1b6f081af64f6e5801566681b8f6c21db1564c3426cbd96f4d208b48",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "read_file",
+        "tool_call_id": "call_ey5il108",
+        "success": false,
+        "args": {
+          "argument_names": [
+            "path"
+          ]
+        },
+        "content_sha256": null,
+        "result": {
+          "error": "JARVIS capability guard denied this tool: Files must stay within the private workspace",
+          "policy_denied": true,
+          "executed": false
+        },
+        "result_sha256": "3896468d2d36c30affd5e9f0e250909dae012767dde1057cc8f68131cf909c32",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_zo4thu1g",
+        "success": true,
+        "args": {
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+          "command": "python3 /usr/local/share/jarvis/isolation_checks.py"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "test_container_resource_caps (__main__.SandboxIsolation.test_container_resource_caps) ... ok\ntest_docker_socket_absent (__main__.SandboxIsolation.test_docker_socket_absent) ... ok\ntest_kali_files_absent (__main__.SandboxIsolation.test_kali_files_absent) ... ok\ntest_no_default_ipv4_route (__main__.SandboxIsolation.test_no_default_ipv4_route) ... ok\ntest_nonroot (__main__.SandboxIsolation.test_nonroot) ... ok\ntest_only_private_workspace_is_used (__main__.SandboxIsolation.test_only_private_workspace_is_used) ... ok\ntest_root_mount_readonly (__main__.SandboxIsolation.test_root_mount_readonly) ... ok\ntest_runtime_credentials_absent (__main__.SandboxIsolation.test_runtime_credentials_absent) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.003s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "c1c67b2e7ed7c6f3bc7abf32a0bd90469780ba0c044b6d3a768c8b0b7a2e244d",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "write_file",
+        "tool_call_id": "call_39js4qpe",
+        "success": true,
+        "args": {
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py"
+        },
+        "content_sha256": "63662201319479c1ead93f3e3effc33c3773b8de5496a48031c7e2d846f593c3",
+        "result": {
+          "bytes_written": 280,
+          "dirs_created": true,
+          "verified": true,
+          "lint": {
+            "status": "ok",
+            "output": ""
+          },
+          "resolved_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py",
+          "files_modified": [
+            "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py"
+          ]
+        },
+        "result_sha256": "dc9053f6442dbb84b74e08309c551ad8bfc6a9f301f6a67becd31da954f47df7",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_55fwqqm2",
+        "success": true,
+        "args": {
+          "command": "python3 /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK",
+          "exit_code": 0,
+          "error": null
+        },
+        "result_sha256": "5a9cd223653a9009e59313f2fd9a3699ca7fe670de603353e76dc8f941664fe8",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "write_file",
+        "tool_call_id": "call_ch5g3yan",
+        "success": false,
+        "args": {
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+        },
+        "content_sha256": "b934ee913c44275c03917069b8bb106abd4ac4e77931601ebba0ba40b47a3c54",
+        "result": {
+          "bytes_written": 0,
+          "dirs_created": false,
+          "error": "Refusing to write '/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json': candidate content fails .json syntax validation (JSONDecodeError: Extra data (line 11, column 1)). The file was NOT created or modified. Fix the content and retry.",
+          "resolved_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+        },
+        "result_sha256": "5502aba26bcc658f1199d136e200d4e9cf3ef5e268137ba2da4bf7ff15524477",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "write_file",
+        "tool_call_id": "call_f9oq53pv",
+        "success": true,
+        "args": {
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+        },
+        "content_sha256": "d2b7d2178cd6e70304b221755678ab37c64590638c60c0e8dab58e9d8fc9a527",
+        "result": {
+          "bytes_written": 233,
+          "dirs_created": true,
+          "verified": true,
+          "lint": {
+            "status": "ok",
+            "output": ""
+          },
+          "resolved_path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json",
+          "files_modified": [
+            "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+          ]
+        },
+        "result_sha256": "5c36f798bfc049f3e1afd0b6327b26c9b8e7564f3d2f52820007f845c3047cc5",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "publish_artifact",
+        "tool_call_id": "call_nfqzwx7m",
+        "success": true,
+        "args": {
+          "name": "complete_promptfoo.json",
+          "path": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json"
+        },
+        "content_sha256": null,
+        "result": {
+          "source": "Paperclip native attachment receipt",
+          "artifact": {
+            "id": "31c5b38f-bccf-42ab-a1bc-579f82cf9fa3",
+            "issueId": "27b20fae-a51b-43ab-9f36-514199fab977",
+            "originalFilename": "complete_promptfoo.json",
+            "contentType": "text/plain",
+            "byteSize": 233,
+            "sha256": "d2b7d2178cd6e70304b221755678ab37c64590638c60c0e8dab58e9d8fc9a527",
+            "createdByAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+            "originatingRunId": "aec78bdb-e762-4635-a564-2442cc4798fc"
+          },
+          "next": "Deliverable is persisted in Paperclip. Finish other assigned work/tests, then report facts and blockers."
+        },
+        "result_sha256": "622893f89ffab1ebfc1ccac630f51474710176c326cd2d4ce2db72400b47f2df",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_qjtzmjyt",
+        "success": false,
+        "args": {
+          "command": "promptfoo eval -c /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json --no-cache --no-write --max-concurrency 1 --output /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/results.json --json",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "error: unknown option '--json'\n\nUsage: promptfoo eval [options] [command]\n\nEvaluate prompts\n\nOptions:\n  -c, --config <paths...>                           Path to configuration file or cloud config UUID. Automatically loads promptfooconfig.yaml\n  -a, --assertions <path>                           Path to assertions file\n  -p, --prompts <paths...>                          Paths to prompt files (.txt)\n  -r, --providers <name or path...>                 One of: openai:chat, openai:completion, openai:<model name>, or path to custom API caller module\n  -t, --tests <path>                                Path to CSV with test cases\n  -v, --vars <path>                                 Path to CSV with test cases (alias for --tests)\n  --model-outputs <path>                            Path to JSON containing list of LLM output strings\n  --prompt-prefix <path>                            This prefix is prepended to every prompt\n  --prompt-suffix <path>                            This suffix is appended to every prompt.\n  --var <key=value>                                 Set a variable in key=value format (default: {})\n  --tag <key=value>                                 Set an eval tag in key=value format. Can be specified multiple times; CLI tags override config tags.\n  -j, --max-concurrency <number>                    Maximum number of concurrent API calls (default: 4)\n  --repeat <number>                                 Number of times to run each test (default: 1)\n  --delay <number>                                  Delay between each test (in milliseconds) (default: 0)\n  --no-cache                                        Do not read or write results to disk cache\n  --remote                                          Force remote inference wherever possible (used for red teams) (default: false)\n  --safe-mode                                       Disable dynamic inline JavaScript execution for transforms and assertions\n  -n, --filter-first-n <number>                     Only run the first N tests\n  --filter-pattern <pattern>                        Only run tests whose description matches the regular expression pattern\n  --filter-range <start:end>                        Only run tests whose zero-based index is in the range. End is exclusive (e.g. 0:10, 10:20, 10:, :10)\n  --filter-prompts <pattern>                        Only run tests with prompts whose id or label matches the regex pattern\n  --filter-providers, --filter-targets <providers>  Only run tests with these providers (regex match)\n  --filter-sample <number>                          Only run a random sample of N tests\n  --filter-sample-seed <number>                     Numeric seed used to make --filter-sample repeatable\n  --filter-failing <path or id>                     Path to json output file or eval ID to filter non-passing tests from (failures + errors)\n  --filter-failing-only <path or id>                Path to json output file or eval ID to filter assertion failures from (excludes errors)\n  --filter-errors-only <path or id>                 Path to json output file or eval ID to filter error tests from\n  --filter-metadata <key=value>                     Only run tests whose metadata matches key=value. Comma-separated values use OR, and \\, is a literal comma; repeated flags use AND, even for the same key (e.g. --filter-metadata type=unit,integration --filter-metadata env=prod)\n  -o, --output <paths...>                           Path to output file (csv, html, json, jsonl, txt, xml, yaml, yml, junit.xml), default is no output file\n  --table                                           Output table in CLI (default: true)\n  --no-table                                        Do not output table in CLI\n  --table-cell-max-length <number>                  Truncate console table cells to this length\n  --share                                           Create a shareable URL\n  --no-share                                        Do not share, this overrides the config file\n  --resume [evalId]                                 Resume a paused/incomplete evaluation. Defaults to latest when omitted\n  --retry-errors                                    Retry all ERROR results from the latest evaluation\n  --no-write                                        Do not write results to promptfoo directory\n  --grader <provider>                               Model that will grade outputs\n  --suggest-prompts <number>                        Generate N new prompts (1-50) and append them to the prompt list\n  -w, --watch                                       Watch for changes in config and re-run\n  -x, --extension <paths...>                        Extension hooks to run (e.g., file://handler.js:afterAll)\n  --description <description>                       Description of the eval run\n  --no-progress-bar                                 Do not show progress bar\n  --env-file, --env-path <path>                     Path(s) to .env file(s). Repeat the flag or use comma-separated values for multiple files. (default: [])\n  -h, --help                                        display help for command\n\nCommands:\n  setup [options] [configDirectory]                 Start browser UI and open to eval setup",
+          "exit_code": 1,
+          "error": null
+        },
+        "result_sha256": "a3d4e09edc2c29e48e419c379d482f6bbbf3d66346733777b78b195d6fd82b19",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      },
+      {
+        "tool": "terminal",
+        "tool_call_id": "call_obeofb5g",
+        "success": false,
+        "args": {
+          "command": "promptfoo eval -c /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json --no-write --no-cache --max-concurrency 1 --output /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/results.json --no-table",
+          "workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977"
+        },
+        "content_sha256": null,
+        "result": {
+          "output": "Invalid configuration file /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/promptfoo.json:\n\u2716 Invalid input: expected object, received array\nYou must specify at least 1 provider (for example, openai:gpt-4.1)",
+          "exit_code": 1,
+          "error": null
+        },
+        "result_sha256": "659dd5e99abe273a3a80c036bd8840c741c7ff750ab7a0a3b36cac40c3cd0154",
+        "interpretation": "Observed tool data. Generated file/report content remains model-authored."
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "31c5b38f-bccf-42ab-a1bc-579f82cf9fa3",
+        "issueId": "27b20fae-a51b-43ab-9f36-514199fab977",
+        "originalFilename": "complete_promptfoo.json",
+        "contentType": "text/plain",
+        "byteSize": 233,
+        "sha256": "d2b7d2178cd6e70304b221755678ab37c64590638c60c0e8dab58e9d8fc9a527",
+        "createdByAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+        "originatingRunId": "aec78bdb-e762-4635-a564-2442cc4798fc"
+      }
+    ],
+    "runtime_deliveries": [],
+    "source_refs": [],
+    "framework_evaluations": [],
+    "inventory": [],
+    "signature": "d3d8d1ef06e436af6a8df51667cf5d830de0537e957e26f082b8570bf5fcea9e"
+  }
+}

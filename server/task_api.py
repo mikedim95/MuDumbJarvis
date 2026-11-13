@@ -99,6 +99,7 @@ def build_router(require_auth):
         issue = await p.request('POST', f'companies/{p.company}/issues', {
             'title': text[:120], 'description': text, 'status': 'todo', 'priority': 'medium',
             'projectId': p.project, 'assigneeAgentId': agent_id,
+            'workspaceSelection': {'kind': 'task_directory'},
             'idempotencyKey': 'jarvis:' + str(body.request_id), 'allowDuplicate': True})
         if issue.get('description') != text or issue.get('assigneeAgentId') != agent_id:
             raise HTTPException(409, 'Submission ID already belongs to another task')

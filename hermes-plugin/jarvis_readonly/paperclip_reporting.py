@@ -29,6 +29,16 @@ def current_turn():
 
 def sign_evidence(proof):
     key = os.environ.get('JARVIS_EXECUTION_PROOF_KEY', '')
+    if proof.get('version') == 3:
+        agent = str(proof.get('agent_id', ''))
+        if not re.fullmatch(r'[0-9a-f-]{36}', agent):
+            raise ValueError('A native employee ID is required for version 3 evidence')
+        if key:
+            key = hmac.new(key.encode(), ('jarvis-employee-proof-v3:' + agent).encode(), hashlib.sha256).hexdigest()
+        else:
+            if agent != os.environ.get('JARVIS_PAPERCLIP_AGENT_ID'):
+                raise PermissionError('This runtime cannot sign another employee identity')
+            key = os.environ.get('JARVIS_AGENT_PROOF_KEY', '')
     if not key:
         raise ValueError('Execution proof signing is not configured')
     encoded = json.dumps(proof, sort_keys=True, separators=(',', ':')).encode()
@@ -36,10 +46,13 @@ def sign_evidence(proof):
 
 
 def authentic_evidence(proof):
-    if not isinstance(proof, dict) or proof.get('version') != 2:
+    if not isinstance(proof, dict) or proof.get('version') not in (2, 3):
         return False
     unsigned = {k: v for k, v in proof.items() if k != 'signature'}
-    expected = sign_evidence(unsigned)['signature']
+    try:
+        expected = sign_evidence(unsigned)['signature']
+    except (ValueError, PermissionError):
+        return False
     return hmac.compare_digest(str(proof.get('signature', '')), expected)
 
 
@@ -114,7 +127,9 @@ def begin(session_id='', turn_id='', **kwargs):
             'agent': agent, 'company': company, 'project': issue.get('projectId'),
             'ceo': ceo, 'plan_decision': decision, 'reviewed_children': [],
             'needs_inventory': ('ollama' in description and 'model' in description) or 'installed models' in description,
-            'inventory_verified': False}
+            'inventory_verified': False, 'started_at': time.time()}
+        if ceo:
+            turn['needs_report'] = bool(re.search(r'\breport\b', description))
         if os.environ.get('JARVIS_PROFILE'):
             turn['needs_tests'] = bool(re.search(r'\btests?\b|unittest|pytest', description))
         with _lock:
@@ -126,6 +141,11 @@ def begin(session_id='', turn_id='', **kwargs):
             return {'context': context}
         if os.environ.get('JARVIS_PROFILE'):
             from . import employee_tools
+            updates = api('GET', '/issues/' + issue_id + '/comments')
+            turn['operator_updates'] = [{k: comment.get(k) for k in ('createdAt', 'body')} for comment in
+                sorted(updates, key=lambda c: c.get('createdAt') or '') if comment.get('authorUserId')][-3:]
+            for update in turn['operator_updates']:
+                update['body'] = str(update.get('body') or '')[:1200]
             return {'context': employee_tools.prepare_turn_context(turn, issue)}
     except Exception as exc:
         if turn is not None:
@@ -179,6 +199,11 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
         turn = _turns.pop((session_id, turn_id), None)
     if not turn or turn['session'] != session_id:
         return
+    if turn.get('ceo') or os.environ.get('JARVIS_PROFILE'):
+        current = api('GET', '/issues/' + turn['issue'])
+        if isinstance(current, dict) and current.get('status') == 'cancelled':
+            # A human cancellation remains authoritative after remote stop.
+            return
     if turn.get('ceo'):
         from . import ceo_tools
         ceo_tools.finalize(turn, completed=completed, failed=failed, interrupted=interrupted,
@@ -189,10 +214,25 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
     missing_execution = None
     if os.environ.get('JARVIS_PROFILE'):
         from . import employee_tools
+        if success and not employee_tools.missing_execution(turn, require_deliverables=False):
+            from . import employee_work
+            try:
+                selected = employee_tools.profile_registry.profile(os.environ['JARVIS_PROFILE'])
+                if selected['sandbox'] and turn.get('needs_artifact'):
+                    employee_work.deliver_workspace(turn)
+                if turn.get('needs_report') and not any(a['originalFilename'].endswith('.md') for a in turn.get('artifacts', {}).values()):
+                    employee_work.deliver_report(turn)
+            except Exception as error:
+                turn['delivery_error'] = str(error) if isinstance(error, (ValueError, PermissionError)) else 'Native deliverable storage failed; inspect the runtime log'
         missing_execution = employee_tools.missing_execution(turn)
+        if turn.get('delivery_error'):
+            missing_execution = 'Deliverable verification failed: ' + turn['delivery_error']
         success = success and not missing_execution
     success = success and not missing_tool
     comment = turn['response'] if success else 'Hermes execution failed or was interrupted. ' + str(turn_exit_reason)
+    if success and turn.get('report_kind') == 'source_module_inventory' and turn.get('source_inventory_report'):
+        comment = (turn['source_inventory_report'] + '\nThe task result is the observed tool inventory above. '
+            'The model narrative is retained in the native run log and is not used as inventory evidence.')
     if missing_tool:
         comment = 'Verification failed: no successful local_ollama_models call was recorded. Task is blocked; the response is not accepted as a retrieved inventory.\n\nRuntime response:\n' + turn['response']
     if missing_execution:
@@ -204,9 +244,21 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
             comment += '\n\nJARVIS_EXECUTION_EVIDENCE=' + json.dumps(sign_evidence({
                 'version': 2, 'agent_id': turn['agent'], 'paperclip_run_id': turn['run'],
                 'session_id': turn['session'], 'tool': 'local_ollama_models', 'models': verified}))
+    status = 'done' if success else 'blocked'
+    if os.environ.get('JARVIS_PROFILE'):
+        if turn.get('action_approval'):
+            approval = turn['action_approval']
+            status = 'in_review' if approval['status'] in ('pending', 'revision_requested') else 'blocked'
+            comment = ('Sensitive-action approval ' + approval['id'] + ' is ' + approval['status'] +
+                '. No sensitive action was executed and runtime permissions remain unchanged.\n\n' + turn['response'])
+        comment += ('\n\nVerified runtime identity: employee ' + turn['agent'] + '; issue ' + turn['issue'] +
+            '; execution ' + turn['run'] + '. Generated narrative above is not an execution receipt.')
+        if turn.get('runtime_deliveries'):
+            comment += '\n\nRuntime output delivery stored actual final text or existing workspace files in Paperclip. This storage does not imply a model publishing tool call.'
+        comment += '\n\nJARVIS_EXECUTION_EVIDENCE=' + json.dumps(employee_tools.signed_execution(turn, status), separators=(',', ':'))
     # One atomic Paperclip update records final disposition and the real runtime reply.
-    payload = {'status': 'done' if success else 'blocked', 'comment': comment}
-    if not success:
+    payload = {'status': status, 'comment': comment}
+    if status == 'blocked':
         payload['unblockDescriptor'] = {'owner': {'agentId': turn['agent']},
             'action': 'Review the Hermes execution error, fix its cause, then explicitly retry this task.'}
     api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])

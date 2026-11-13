@@ -53,7 +53,7 @@ Twenty-four inference threads do not imply concurrent agent model calls.
 From `/home/kali/jarvis-command-center/jarvis_ai`:
 
 ```sh
-docker build -f deploy/Dockerfile.employee-sandbox -t jarvis-command-center:employee-sandbox-v1 .
+docker build -f deploy/Dockerfile.employee-sandbox -t jarvis-command-center:employee-sandbox-v3 .
 python3 deploy/staffing.py                    # no mutation: show the plan
 python3 deploy/staffing.py --apply            # reconcile approved employees only
 python3 deploy/install-runtime-service.py

@@ -1,5 +1,5 @@
 name: jarvis_readonly
-version: 1.2.0
+version: 1.3.0
 description: Scoped inventory, native Paperclip staffing, and isolated employee tools
 provides_tools:
 - local_ollama_models
@@ -7,3 +7,7 @@ provides_tools:
 - paperclip_ceo
 - agent_identity
 - request_employee
+- research_sources
+- publish_artifact
+- read_worker_artifacts
+- request_action_approval

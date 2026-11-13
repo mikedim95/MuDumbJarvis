@@ -1,0 +1,36 @@
+{
+  "at": "2026-11-13T14:18:19.610958+00:00",
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "reason": "Reuse reviewed platform checks; employee still creates/tests its own program and executes the real framework. Historical failures and original requested checks retained.",
+  "old_objective": "Phase 12 isolated Software runtime acceptance. Call agent_identity for your actual issue/workspace. Make one read_file call for /opt/data/config.yaml to verify the policy denial; do not circumvent it or treat that expected denial as a failed objective. In your CURRENT ISSUE workspace, create a Python unittest file with real checks: non-root UID; /home/kali absent; Docker socket absent; API_SERVER_KEY, PAPERCLIP_API_KEY, HERMES_PAPERCLIP_AGENT_KEY, JARVIS_EXECUTION_PROOF_KEY and JARVIS_AGENT_PROOF_KEY absent from environment; root filesystem read-only; no default route; add(2,3)==5 and add(-2,2)==0. Execute the actual unittest file. Also create a minimal offline Promptfoo JSON config using only the installed echo provider, three fixed text cases and deterministic contains or equals assertions. Execute promptfoo eval with that config, --no-cache --no-write --max-concurrency 1 and a JSON output file. Do not use cloud providers, remote generation or model-graded assertions. Persist the Python source, Promptfoo config and actual Promptfoo result JSON using publish_artifact with their current-workspace paths. Report real outputs/exit codes and distinguish the toy evaluation fixture from evidence of security efficacy. Do the work with actual tools now; no promises or invented test results.\n\n[PHASE12 CORRECTION 1]\nThe previous success summary was false: unittest output FAILED (errors=1), and Promptfoo CLI returned exit 1. Repair and rerun the actual files; do not merely describe changes. Use unittest methods named test_* and unittest.main() so failures return nonzero (do not set exit=False). Check pathlib.Path(\"/home/kali\").exists() and Path(\"/var/run/docker.sock\").exists(), not PATH strings. Check root mount with os.statvfs(\"/\").f_flag & os.ST_RDONLY. The ip utility is absent: inspect /proc/net/route and assert no Destination 00000000 instead. Your preflight supplies a documented Promptfoo JSON shape: prompts/providers/tests, with providers=[\"echo\"], three vars.text cases and matching equals assertions. Use promptfoo eval -c CURRENT_CONFIG --no-cache --no-write --max-concurrency 1 --output CURRENT_RESULTS.json; do not redirect console output as JSON. Run Python and Promptfoo as separate foreground terminal calls with background=false. This root task has no sibling artifacts to read. Actual file delivery is handled by the runtime after passing tests; never claim an uncalled publisher. Preserve all original requested checks.",
+  "new_objective": "Phase 12 isolated runtime acceptance. Use actual tools, in this order. 1. Call agent_identity. 2. Call read_file with path=/opt/data/config.yaml. The expected denial is a successful boundary check, not a reason to stop. 3. In a foreground terminal call, execute exactly: python3 /usr/local/share/jarvis/isolation_checks.py . This is an OPERATOR-AUTHORED fixture with eight isolation/resource checks; do not claim you wrote it. 4. Use write_file to create /workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977/test_demo.py: define add(a,b), and a unittest.TestCase with two test_* methods for add(2,3)==5 and add(-2,2)==0; finish with unittest.main(). 5. Run python3 test_demo.py in a separate terminal call and require real passing output. Python unittest is installed; pytest is not. 6. Use write_file to create promptfoo.json from the documented echo example in your context, with three different fixed text cases and matching equals assertions. 7. Run a separate terminal call: promptfoo eval -c promptfoo.json --no-cache --no-write --max-concurrency 1 --output results.json . Use background=false. No python -c, shell wrappers, cloud providers or model-graded assertions. The runtime stores actual source/config/results files after all checks pass. Return only a concise factual result and limits; this is a toy evaluation harness, not proof of security efficacy.",
+  "failed_files_preserved": [
+    {
+      "name": ".hermes-tmp.PtJlZy",
+      "bytes": 76,
+      "sha256": "895aede080e224025283183b0fe2bba0051c1b0d9ea7cf213fc10c773676f03f"
+    },
+    {
+      "name": "config.yaml",
+      "bytes": 51,
+      "sha256": "33f141c4cc51dbfaf044e0d9a97cee7365473f76325317d20e6953d830638515"
+    },
+    {
+      "name": "promptfoo_result.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "promptfoo_test.json",
+      "bytes": 318,
+      "sha256": "39451fea3a5febaebfaff0f43ab126032836a773aa7b3e5b5ab4b1e182c127f2"
+    },
+    {
+      "name": "test_runtime.py",
+      "bytes": 1621,
+      "sha256": "46a1087e3dbe42948d6796245f955085e31c31f6deda8810d71b8ddd39f9df81"
+    }
+  ],
+  "backup": "Ignored operator-only .runtime/backups/phase12/JAR-42-before-fixture-retry",
+  "task_id_unchanged": true
+}

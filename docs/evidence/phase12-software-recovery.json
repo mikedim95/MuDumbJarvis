@@ -1,0 +1,39 @@
+{
+  "status": "retry_accepted",
+  "at": "2026-11-13T07:48:45.274552+00:00",
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "same_issue_preserved": true,
+  "observed_failed_run": "0e8484eb-2090-4ed7-9856-3a3f2bb20be0",
+  "recovery_action_id": "083264a5-17b6-402c-a122-b011d34ad01e",
+  "reconciliation": "actual failed exact Hermes state and isolated file/tool outcomes inspected",
+  "retained_files": [
+    {
+      "name": ".hermes-tmp.PtJlZy",
+      "bytes": 76,
+      "sha256": "895aede080e224025283183b0fe2bba0051c1b0d9ea7cf213fc10c773676f03f"
+    },
+    {
+      "name": "config.yaml",
+      "bytes": 51,
+      "sha256": "33f141c4cc51dbfaf044e0d9a97cee7365473f76325317d20e6953d830638515"
+    },
+    {
+      "name": "promptfoo_result.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "promptfoo_test.json",
+      "bytes": 318,
+      "sha256": "39451fea3a5febaebfaff0f43ab126032836a773aa7b3e5b5ab4b1e182c127f2"
+    },
+    {
+      "name": "test_runtime.py",
+      "bytes": 1621,
+      "sha256": "46a1087e3dbe42948d6796245f955085e31c31f6deda8810d71b8ddd39f9df81"
+    }
+  ],
+  "retry_request_id": "59665b4a-f8d6-4018-a502-9615b9852614",
+  "native_adapter_status": "pass",
+  "new_employees_created": 0
+}

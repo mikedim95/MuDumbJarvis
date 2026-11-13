@@ -8,6 +8,7 @@ No Docker socket or board credential is given to an AI runtime or sandbox.
 import argparse
 import fcntl
 import hashlib
+import hmac
 import importlib.util
 import json
 import os
@@ -27,8 +28,9 @@ spec = importlib.util.spec_from_file_location('jarvis_profiles', ROOT / 'hermes-
 registry = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(registry)
 HERMES_IMAGE = 'nousresearch/hermes-agent:v0.23.1@sha256:1a355ebc8981a4b72a28f4e47e347ba4f0f172b43dc876e5768d175a07c67b22'
-SANDBOX_IMAGE = 'jarvis-command-center:employee-sandbox-v1'
+SANDBOX_IMAGE = 'jarvis-command-center:employee-sandbox-v3'
 MANAGED = 'io.jarvis.employee'
+RUNTIME_SPEC = 'phase12-v1'
 
 
 def settings():
@@ -113,19 +115,30 @@ def validate_agent(agent, approvals, env):
     return item
 
 
-def container(name, argv, runtime_id):
+def container(name, argv, runtime_id, refresh=False):
     existing = inspect('container', name)
     if existing:
         if (existing['Config'].get('Labels') or {}).get(MANAGED) != runtime_id:
             raise ValueError('Container name belongs to an unmanaged resource')
+        if refresh or (existing['Config'].get('Labels') or {}).get('io.jarvis.runtime-spec') != RUNTIME_SPEC:
+            if not refresh:
+                raise ValueError('Reviewed runtime upgrade requires --refresh-idle-runtimes')
+            # Caller holds the operator lock and has checked native live runs.
+            if existing['State']['Running']:
+                run(['docker', 'stop', '--time', '60', name])
+            run(['docker', 'rm', name])
+            existing = None
+    if existing:
         if not existing['State']['Running']:
             run(['docker', 'start', name])
         return
-    run(['docker', 'create', '--name', name, '--label', MANAGED + '=' + runtime_id] + argv)
+    run(['docker', 'create', '--name', name, '--label', MANAGED + '=' + runtime_id,
+        '--label', 'io.jarvis.runtime-spec=' + RUNTIME_SPEC,
+        '--log-opt', 'max-size=10m', '--log-opt', 'max-file=3'] + argv)
     run(['docker', 'start', name])
 
 
-def provision(board, agent, item):
+def provision(board, agent, item, refresh=False):
     env, meta = board.env, agent['metadata']['jarvis']
     rid = meta['runtime_id']
     home = ROOT / '.runtime/employees' / agent['id']
@@ -151,14 +164,19 @@ def provision(board, agent, item):
     config['agent']['gateway_timeout'] = item['limits']['timeout_seconds']
     config['agent']['disabled_toolsets'] = [name for name in config['agent']['disabled_toolsets'] if name not in item['toolsets']]
     config['platform_toolsets'] = {'cli': item['toolsets'], 'api_server': item['toolsets']}
-    config['terminal'] = {'env_type': 'ssh', 'ssh_host': 'jarvis-sandbox-' + rid,
+    config['terminal'] = {'env_type': 'ssh', 'backend': 'ssh', 'ssh_host': 'jarvis-sandbox-' + rid,
         'ssh_port': 2222, 'ssh_user': 'employee', 'ssh_key': '/opt/data/.ssh/id_ed25519',
         'cwd': '/workspace', 'timeout': 120, 'env_passthrough': [], 'credential_files': []}
     config_path = home / 'config.yaml'
     if not config_path.exists():
         write_private(config_path, yaml.safe_dump(config, sort_keys=False))
     elif not same_runtime_config(yaml.safe_load(config_path.read_text()), config):
-        raise ValueError('Existing employee runtime configuration differs; review before changing authority')
+        observed = yaml.safe_load(config_path.read_text())
+        observed.pop('_config_version', None)
+        observed.setdefault('terminal', {})['backend'] = 'ssh'
+        if not refresh or observed != config:
+            raise ValueError('Existing employee runtime configuration differs; review before changing authority')
+        write_private(config_path, yaml.safe_dump(config, sort_keys=False))
     soul = ('You are ' + agent['name'] + ', the ' + item['name'] + ' employee reporting to JARVIS-CEO.\n'
         'Paperclip owns your assigned issue, dependencies and execution evidence.\n' + item['authority'] + '\n'
         'Use only your assigned issue context. Never use internal subagents. Do not perform host or external changes.\n'
@@ -169,7 +187,13 @@ def provision(board, agent, item):
         directory.mkdir(parents=True, exist_ok=True)
         (directory / 'SKILL.md').write_text('---\nname: ' + skill + '\ndescription: Scoped ' + item['name'] + ' workflow\n---\n'
             + item['authority'] + '\nRead the assigned Paperclip objective, retrieve actual evidence, and publish artifacts. '
-            'Distinguish retrieved facts from interpretation. Test generated code in the isolated workspace.\n')
+            'Distinguish retrieved facts from interpretation. Test generated code in the isolated workspace. '
+            'Use only the authenticated current issue workspace, not another task directory. '
+            + ('The sandbox includes Python unittest and promptfoo 0.125.1 for offline echo/deterministic-assertion demos. '
+            'Never use cloud providers, remote generation, or model-graded assertions. '
+            'Use promptfoo eval --no-cache --max-concurrency 1 with a JSON output file when a real framework demonstration is needed; '
+            'also run actual Python unittest checks. ' if 'terminal' in item['tools'] else '') +
+            'Publish the actual source/config/results as Paperclip attachments.\n')
     network = 'jarvis-exec-' + rid
     if item['sandbox']:
         if not inspect('image', SANDBOX_IMAGE):
@@ -199,9 +223,10 @@ def provision(board, agent, item):
             '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true', '--pids-limit', '128',
             '--cpus', str(item['limits']['cpus']), '--memory', str(item['limits']['memory_mb']) + 'm',
             '--tmpfs', '/tmp:rw,noexec,nosuid,size=256m', '--tmpfs', '/home/employee:rw,nosuid,uid=1000,gid=1000,size=64m',
-            '-v', str(workspace) + ':/workspace:rw', '-v', str(server_keys) + ':/run/jarvis-ssh:ro', SANDBOX_IMAGE], rid)
+            '-v', str(workspace) + ':/workspace:rw', '-v', str(server_keys) + ':/run/jarvis-ssh:ro', SANDBOX_IMAGE], rid, refresh)
     runtime_env = {'API_SERVER_KEY': credentials['api_key'], 'HERMES_PAPERCLIP_AGENT_KEY': credentials['paperclip_key'],
-        'JARVIS_EXECUTION_PROOF_KEY': env['JARVIS_EXECUTION_PROOF_KEY'], 'API_SERVER_ENABLED': 'true',
+        'JARVIS_AGENT_PROOF_KEY': hmac.new(env['JARVIS_EXECUTION_PROOF_KEY'].encode(),
+            ('jarvis-employee-proof-v3:' + agent['id']).encode(), hashlib.sha256).hexdigest(), 'API_SERVER_ENABLED': 'true',
         'API_SERVER_HOST': '0.0.0.0', 'API_SERVER_PORT': '8642', 'HERMES_DASHBOARD': 'false',
         'HERMES_UID': '1000', 'HERMES_GID': '1000', 'OPENAI_API_KEY': 'ollama-local-only',
         'HERMES_API_TIMEOUT': str(item['limits']['timeout_seconds']), 'JARVIS_OLLAMA_URL': 'http://ollama-models:11434',
@@ -215,29 +240,40 @@ def provision(board, agent, item):
     args = ['--network', 'jarvis-command-center_agent-private', '--restart', 'unless-stopped',
         '--security-opt', 'no-new-privileges:true', '--cap-drop', 'NET_RAW', '--pids-limit', str(item['limits']['pids']),
         '--cpus', str(item['limits']['cpus']), '--memory', str(item['limits']['memory_mb']) + 'm',
-        '--env-file', str(env_file), '-v', str(home) + ':/opt/data',
+        '--env-file', str(env_file), '--tmpfs', '/workspace:rw,nosuid,nodev,noexec,size=1m,mode=0755', '-v', str(home) + ':/opt/data',
         '-v', str(ROOT / 'hermes-plugin/jarvis_readonly') + ':/opt/data/plugins/jarvis_readonly:ro',
         HERMES_IMAGE, 'gateway', 'run']
     runtime_name = 'jarvis-employee-' + rid
-    container(runtime_name, args, rid)
+    container(runtime_name, args, rid, refresh)
     if item['sandbox']:
         state = inspect('container', runtime_name)
         if network not in state['NetworkSettings']['Networks']:
             run(['docker', 'network', 'connect', network, runtime_name])
+    if 'research_sources' in item['tools']:
+        state = inspect('container', runtime_name)
+        if 'jarvis-command-center_default' not in state['NetworkSettings']['Networks']:
+            run(['docker', 'network', 'connect', 'jarvis-command-center_default', runtime_name])
     health = "import urllib.request,os; r=urllib.request.Request('http://127.0.0.1:8642/health',headers={'Authorization':'Bearer '+os.environ['API_SERVER_KEY']}); urllib.request.urlopen(r,timeout=3).read()"
-    if run(['docker', 'exec', runtime_name, 'python3', '-c', health], check=False).returncode:
+    healthy = False
+    for attempt in range(25 if refresh else 1):
+        if not run(['docker', 'exec', runtime_name, 'python3', '-c', health], check=False).returncode:
+            healthy = True
+            break
+        if refresh:
+            time.sleep(2)
+    if not healthy:
         print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'starting'}))
-        return
+        return False
     adapter = {'apiBaseUrl': 'https://hermes-tls:8645/runtimes/' + rid,
         'apiKey': {'type': 'secret_ref', 'secretId': secret['id'], 'version': 'latest'},
         'paperclipApiUrl': 'http://paperclip:3100', 'sessionKeyStrategy': 'issue',
         'timeoutSec': item['limits']['timeout_seconds'], 'instructions': soul,
-        'payloadTemplate': {'input': None, 'conversation_history': [
+        'payloadTemplate': {'input': 'Execute the current Paperclip assignment supplied by the authenticated preflight context. Use actual approved tools, then return the completed result or real blocker. The runtime persists actual deliverables; never claim an unexecuted tool call.', 'conversation_history': [
             {'role': 'user', 'content': 'Where is authoritative task context?'},
             {'role': 'assistant', 'content': 'Paperclip. I use only the current authenticated issue and approved tools.'}]}}
     updated_meta = {**meta, 'provisioned': True, 'runtime_name': runtime_name, 'dormancy': 'No timer heartbeats or inference while idle'}
     capabilities = ', '.join(item['capabilities']) + '. ' + item['authority']
-    if (not meta.get('provisioned') or agent.get('adapterConfig', {}).get('apiBaseUrl') != adapter['apiBaseUrl']
+    if (not meta.get('provisioned') or any(agent.get('adapterConfig', {}).get(key) != value for key, value in adapter.items())
             or agent.get('capabilities') != capabilities or agent.get('role') != item['role']):
         board.api('PATCH', '/agents/' + agent['id'], {'adapterConfig': adapter,
             'role': item['role'], 'title': item['name'], 'capabilities': capabilities,
@@ -261,6 +297,7 @@ def provision(board, agent, item):
         board.api('PATCH', '/agents/' + agent['id'], {'metadata': {**agent.get('metadata', {}),
             'jarvis': {**updated_meta, 'ready_notice_sent': True}}})
     print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'ready', 'inference_slots': 1}))
+    return True
 
 
 def adopt(board, profile_id):
@@ -283,6 +320,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--adopt-existing', choices=['research'])
+    parser.add_argument('--refresh-idle-runtimes', action='store_true', help='Explicit reviewed runtime upgrade; never interrupts native live/queued work')
+    parser.add_argument('--agent-id', type=lambda value: str(UUID(value)), help='Restrict operator reconciliation to one existing native employee')
     args = parser.parse_args()
     if not args.apply:
         print(json.dumps({'action': 'plan_only', 'profiles': list(registry.catalog()['profiles']), 'employees_created': 0}))
@@ -297,9 +336,29 @@ def main():
         agents = board.api('GET', '/companies/' + company + '/agents')
         approvals = board.api('GET', '/companies/' + company + '/approvals')
         for agent in agents:
+            if args.agent_id and agent['id'] != args.agent_id:
+                continue
             item = validate_agent(agent, approvals, board.env)
             if item:
-                provision(board, agent, item)
+                live = board.api('GET', '/companies/' + company + '/live-runs')
+                owned = [r for r in live if r['agentId'] == agent['id'] and r['status'] in ('queued', 'running')]
+                if owned and ((agent.get('metadata') or {}).get('jarvis', {}).get('provisioned') or
+                        any(r['status'] == 'running' for r in owned) or args.refresh_idle_runtimes):
+                    print(json.dumps({'agent_id': agent['id'], 'runtime': 'busy_configuration_deferred'}))
+                    continue
+                if args.refresh_idle_runtimes:
+                    # Native pause holds assignments while the reviewed runtime
+                    # restarts. It is used only after confirming no live work.
+                    board.api('POST', '/agents/' + agent['id'] + '/pause', {})
+                ready = provision(board, agent, item, args.refresh_idle_runtimes)
+                if args.refresh_idle_runtimes and ready:
+                    current = board.api('GET', '/agents/' + agent['id'])
+                    tested = board.api('POST', '/companies/' + company + '/adapters/hermes_gateway/test-environment',
+                        {'agentId': agent['id'], 'adapterConfig': current['adapterConfig']})
+                    if tested.get('status') != 'pass':
+                        raise ValueError('Reviewed upgrade remains paused: native adapter verification failed')
+                    if current.get('status') == 'paused':
+                        board.api('POST', '/agents/' + agent['id'] + '/resume', {})
 
 
 if __name__ == '__main__':

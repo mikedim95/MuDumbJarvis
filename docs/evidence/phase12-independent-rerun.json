@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T14:52:14.422574+00:00",
+  "task_id": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "native_run_id": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+  "source": "Independent operator rerun, never represented as an employee tool call",
+  "source_config_match_native_artifact_hashes": true,
+  "unit_tests": {
+    "exit_code": 0,
+    "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+  },
+  "promptfoo": {
+    "exit_code": 0,
+    "successes": 3,
+    "failures": 0,
+    "errors": 0,
+    "provider": "echo",
+    "cloud_inference": false
+  },
+  "recheck_output": "Ephemeral private sandbox /tmp file removed; canonical workspace/results unchanged"
+}
