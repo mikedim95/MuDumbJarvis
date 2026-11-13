@@ -69,6 +69,8 @@ services:
       PAPERCLIP_PROJECT_ID: ${PAPERCLIP_PROJECT_ID:-}
       PAPERCLIP_AGENT_ID: ${PAPERCLIP_AGENT_ID:-}
       PAPERCLIP_CEO_AGENT_ID: ${PAPERCLIP_CEO_AGENT_ID:-}
+      JARVIS_EXECUTION_PROOF_KEY: ${JARVIS_EXECUTION_PROOF_KEY:-}
+      JARVIS_OLLAMA_URL: ${JARVIS_OLLAMA_URL:-http://ollama-models:11434}
     networks: [default, agent-private]
     ports:
       - "127.0.0.1:8765:8765"

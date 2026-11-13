@@ -34,7 +34,7 @@ def configuration_matches(current, expected):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', action='store_true')
-    parser.add_argument('--phase', choices=('12', '14'), default='12')
+    parser.add_argument('--phase', choices=('12', '13', '14'), default='12')
     args = parser.parse_args()
     if not args.run:
         print(json.dumps({'status': 'not_executed'}))

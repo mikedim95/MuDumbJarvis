@@ -1,0 +1,13 @@
+{
+  "phase": 13,
+  "status": "passed",
+  "checked_at": "2026-11-13T15:35:32.084568+00:00",
+  "regression_tests": 239,
+  "browser_evidence": "phase13-browser.json",
+  "first_native_ui_control_execution": "phase13-browser-initial.json",
+  "hud_restart_retained_identical_control_fixture": true,
+  "preservation_evidence": "phase13-preservation.json",
+  "live_model_inference_started_by_monitoring": false,
+  "task_database": "Paperclip only",
+  "remaining_phase": "14: three real CEO multi-role workflows, controlled execution recovery and final report quality review"
+}

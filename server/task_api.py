@@ -139,4 +139,6 @@ def build_router(require_auth):
         result['children'] = await asyncio.gather(*(child_details(item) for item in children))
         return result
 
+    from task_monitor import add_routes
+    add_routes(router, Paperclip)
     return router

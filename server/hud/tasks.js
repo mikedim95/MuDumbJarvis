@@ -31,7 +31,7 @@
       button.textContent = task.identifier + ' · ' + task.status + ' · ' +
         (task.parentId ? 'Subtask of ' + (parent?.identifier || task.parentId) + ' · ' : '') + task.title;
       button.setAttribute('aria-current', String(task.id === selected));
-      button.onclick = () => { selected = task.id; localStorage.setItem('jarvis-task-selected', selected); history(); detail().catch(e => error(e.message)); };
+      button.onclick = () => { selected = task.id; window.JarvisMonitor.clear(); localStorage.setItem('jarvis-task-selected', selected); history(); detail().catch(e => error(e.message)); };
       el('taskHistory').append(button);
     }
     if (!tasks.length) el('taskHistory').textContent = 'No tasks yet.';
@@ -45,7 +45,9 @@
       if (run.error || run.errorCode) lines.push('ERROR: ' + (run.error || run.errorCode));
     }
     for (const comment of [...(task.comments || [])].sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))) {
-      lines.push('', 'Update ' + (comment.createdAt || '') + ' · ' + agentName(comment.authorAgentId || comment.authorUserId), comment.body || '');
+      if ((comment.body || '').startsWith('[JARVIS TOOL EVENT]')) continue;
+      const body = (comment.body || '').split('\n').filter(line => !line.startsWith('JARVIS_EXECUTION_EVIDENCE=')).join('\n');
+      lines.push('', 'Update ' + (comment.createdAt || '') + ' · ' + agentName(comment.authorAgentId || comment.authorUserId), body);
     }
     if (task.status === 'done' && !(task.comments || []).length) lines.push('', 'Task is done in Paperclip, but no result comment was recorded.');
     return lines;
@@ -71,6 +73,7 @@
       }
     }
     el('taskDetail').textContent = lines.join('\n');
+    await window.JarvisMonitor.show(task);
   }
 
   function populateAgents() {
@@ -107,6 +110,7 @@
       if (!tasks.some(task => task.id === selected)) selected = tasks[0]?.id || null;
       if (selected) localStorage.setItem('jarvis-task-selected', selected);
       history();
+      window.JarvisMonitor.dashboard(await api('monitor'));
       await detail();
       el('taskConnection').textContent = 'Paperclip connected · ' + tasks.length + ' persistent tasks · updated ' + new Date().toLocaleTimeString();
       if (!pending) error('');
@@ -170,6 +174,7 @@
   el('taskRefresh').onclick = () => { error(''); refresh(true); };
   window.addEventListener('jarvis-reconnected', () => { if (persistent()) refresh(true); });
   window.addEventListener('online', () => { if (persistent()) refresh(true); });
+  window.addEventListener('jarvis-monitor-changed', () => { if (persistent()) refresh(true); });
   setInterval(() => { if (persistent()) refresh(); }, 3000);
   changeMode();
 })();

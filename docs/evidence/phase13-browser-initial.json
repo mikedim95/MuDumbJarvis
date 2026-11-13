@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T15:31:20.395Z",
+  "source": "Real Chromium HUD and native Paperclip APIs",
+  "verified_existing_task": "27b20fae-a51b-43ab-9f36-514199fab977",
+  "native_run_id": "f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57",
+  "signed_receipts_verified": true,
+  "artifact_hash_checked": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61",
+  "authenticated_native_log_visible": true,
+  "secrets_absent": true,
+  "control_fixture": {
+    "nonce": "bc6be83a-eec9-492a-94a9-6925aaa6ea00",
+    "task_id": "b30c823c-58d6-4c1d-a6ea-c0861ad98f89",
+    "identifier": "JAR-43",
+    "approvals": {
+      "approve": "9ca24310-294d-477c-8b8e-1fdb1f38b387",
+      "reject": "55a52cb2-05c5-4193-a80b-791038b5f10c"
+    }
+  },
+  "approvals": "Actual native audit fixtures; automated operator test, not a claim of human hiring approval",
+  "cancellation": "Native task-tree cancellation; no inference was started for the unassigned fixture",
+  "controlled_monitoring_outage_recovered": true,
+  "browser_refresh_preserved_history": true,
+  "inference_status": {
+    "provider": "local Ollama",
+    "inference_slots": 1,
+    "configured_cpu_threads": 24,
+    "scope": "Loaded models are observed; Paperclip runs may wait for the shared slot.",
+    "available": true,
+    "loaded_models": []
+  },
+  "browser_errors": []
+}

@@ -48,8 +48,11 @@ See [dynamic staffing](docs/DYNAMIC_AGENTS.md) and
 [runtime isolation, verification and rollback](docs/RUNTIME_ISOLATION.md).
 Phase 12 passed 213 regression tests and live JAR-41/JAR-42 runtime checks.
 The three-framework comparative report still requires factual review; verified
-execution provenance alone does not approve generated analysis. Phases 13–14
-monitoring and complete multi-role objective acceptance are still in progress.
+execution provenance alone does not approve generated analysis. The
+[monitoring HUD](docs/MONITORING.md) adds employees, native dependencies,
+signed tool receipts, artifact downloads, execution logs, local resources and
+authenticated approval/cancellation/retry controls. Phase 14 complete multi-role
+objective acceptance remains in progress.
 
 With Docker/Compose installed and the existing `ollama` container running with
 `ministral-3:3b`, start from this directory:
