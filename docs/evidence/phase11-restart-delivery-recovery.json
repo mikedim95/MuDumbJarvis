@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-13T06:02:37.813889+00:00",
+  "adapter_environment": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-13T06:02:37.462Z"
+  },
+  "request": {
+    "actionId": "4267e173-3c9c-42f4-ae34-ddd96c1f4b93",
+    "outcome": "restored",
+    "sourceIssueStatus": "todo",
+    "resolutionNote": "The corrective status comment woke this test during the owned runtime restart. Proxy error proves connection refused before HTTP delivery. Authenticated native adapter check now passes. Retain failed run and retry this same bounded task only.",
+    "executionReconciliation": {
+      "runId": "7586bdfa-5169-4e92-977f-f8632204d53c",
+      "providerStopped": true,
+      "actionOutcome": "not_performed",
+      "outcomeEvidence": "Native run failed at operation create_run with HTTP 502 at 06:01:17Z. Matching jarvis-hermes-tls error is connect() failed (111: Connection refused) connecting to upstream 172.29.0.9:8642/v1/runs, before delivery. No Hermes run ID was created for this failed request. The owned runtime had just restarted; native authenticated environment test now returns pass. Previous source/test operations were not performed."
+    }
+  },
+  "issue_status": "todo"
+}

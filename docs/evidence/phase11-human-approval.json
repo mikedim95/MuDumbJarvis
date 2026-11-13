@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-13T05:41:03.692188+00:00",
+  "human_instruction": "approve",
+  "scope": "JARVIS-DEV-01 Software Development only; reviewed bounded capability snapshot",
+  "approval": {
+    "id": "80bebd62-f765-421e-bab7-9ebbf313e9df",
+    "status": "approved",
+    "decidedAt": "2026-11-13T05:41:03.118Z",
+    "decidedByUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+    "decisionNote": "Explicit human authorization: the user reviewed the bounded JARVIS-DEV-01 Software Development proposal and replied \"approve\" on 2026-11-13. Operator records that decision for this employee/scope only: private isolated code/tests, 2 CPUs and 2 GiB per container, local Ollama, no host/Docker/external network/hiring authority."
+  },
+  "candidate_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+  "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe"
+}

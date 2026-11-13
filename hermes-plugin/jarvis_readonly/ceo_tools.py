@@ -7,6 +7,7 @@ import time
 from uuid import UUID
 
 from . import paperclip_reporting as reporting
+from . import profile_registry
 
 
 def scope():
@@ -34,10 +35,10 @@ def employees(turn):
             if a.get('reportsTo') == turn['agent'] and a.get('status') not in ('terminated', 'pending_approval')]
 
 
-def audit(turn, action, result):
+def audit(turn, action, result, tool_name='paperclip_ceo'):
     from hermes_constants import get_hermes_home
     record = {'timestamp': time.time(), 'issue_id': turn['issue'], 'paperclip_run_id': turn['run'],
-              'session_id': turn['session'], 'tool': 'paperclip_ceo', 'action': action, 'result': result}
+              'session_id': turn['session'], 'tool': tool_name, 'action': action, 'result': result}
     log = get_hermes_home() / 'logs' / 'ceo-tools.jsonl'
     log.parent.mkdir(parents=True, exist_ok=True)
     with log.open('a') as stream:
@@ -69,8 +70,12 @@ def context_snapshot(turn, issue=None, comments=None):
         'objective': {k: issue.get(k) for k in ('id', 'identifier', 'title', 'description', 'status', 'goalId')},
         'goals': [{k: g.get(k) for k in ('id', 'title', 'description', 'status')} for g in goals[:20]],
         'goal_count': len(goals), 'goal_list_truncated': len(goals) > 20,
-        'employees': [{k: a.get(k) for k in ('id', 'name', 'role', 'title', 'capabilities', 'lifecycleState')}
+        'employees': [{**{k: a.get(k) for k in ('id', 'name', 'role', 'title', 'capabilities', 'lifecycleState')},
+                       'profile': profile_registry.employee_profile(a),
+                       'runtime_ready': profile_registry.ready_employee(a)}
                       for a in roster],
+        'capability_profiles': [{k: profile_registry.profile(name)[k] for k in ('id', 'name', 'capabilities', 'authority')}
+                               for name in profile_registry.catalog()['profiles']],
         'plan_decision': turn.get('plan_decision'),
         'recent_updates': [{'authorAgentId': c.get('authorAgentId'), 'createdAt': c.get('createdAt'),
                             'body': update_body(c)} for c in updates[-3:]],
@@ -256,7 +261,7 @@ def manage(args, **kwargs):
                              'Request a hire for human approval only if existing employees cannot do the work.'})
     if action == 'delegate':
         agent_id = str(UUID(str(args.get('agent_id', ''))))
-        employee = next((a for a in employees(turn) if a['id'] == agent_id and a.get('lifecycleState') == 'ready'), None)
+        employee = next((a for a in employees(turn) if a['id'] == agent_id and profile_registry.ready_employee(a)), None)
         if employee is None:
             raise PermissionError('Only a ready existing direct report may receive delegated work')
         title, text = str(args.get('title', '')).strip(), str(args.get('text', '')).strip()
@@ -303,6 +308,8 @@ def manage(args, **kwargs):
         return audit(turn, action, {'reviewed': verified,
                     'next': 'Consolidate these verified facts into the final technical report. State blockers and limits.'})
     if action == 'request_hire':
+        if args.get('profile'):
+            return request_profile_hire(turn, me, args)
         if turn.get('plan_decision') != 'hire':
             raise ValueError('Record why existing employees cannot cover the essential capability first')
         reason = str(args.get('text', '')).strip()
@@ -324,6 +331,58 @@ def manage(args, **kwargs):
                      'agent_status': (hired.get('agent') or {}).get('status'),
                      'next': 'Stop and report the pending human hiring approval. The candidate cannot execute before approval and operator provisioning.'})
     raise ValueError('Unknown CEO action')
+
+
+def request_profile_hire(turn, me, args, tool_name='paperclip_ceo'):
+    """Native approval-aware staffing; no runtime or employee bypass is granted."""
+    def emit(result):
+        return audit(turn, 'request_hire', result, tool_name=tool_name)
+    selected = profile_registry.profile(args['profile'])
+    reason, name = str(args.get('text', '')).strip(), str(args.get('title', '')).strip()
+    if len(reason) < 40 or len(reason) > 4000 or not name:
+        raise ValueError('Name and concrete essential capability justification are required')
+    roster = employees(turn)
+    suitable = [a for a in roster if profile_registry.employee_profile(a) == selected['id']]
+    if suitable:
+        return emit({'hire_created': False, 'existing_employees': [
+            {'id': a['id'], 'name': a['name'], 'runtime_ready': profile_registry.ready_employee(a)} for a in suitable],
+            'next': 'Reuse the existing employee. If its runtime is being provisioned, wait for the native readiness notification; do not create a duplicate.'})
+    body = profile_registry.hire_body(turn, me, selected['id'], name, reason)
+    # Native roster/approvals remain the only durable source. Check across runs,
+    # complementing Paperclip's own per-run hire fingerprint idempotency.
+    all_agents = reporting.api('GET', '/companies/' + turn['company'] + '/agents')
+    pending = [a for a in all_agents if a.get('reportsTo') == me['id'] and a.get('status') == 'pending_approval'
+               and profile_registry.employee_profile(a) == selected['id']]
+    if pending:
+        return emit({'hire_created': False, 'pending_employee_ids': [a['id'] for a in pending],
+            'next': 'A matching employee hire is already awaiting a human decision. Do not create another employee for this capability.'})
+    prior = next((a for a in all_agents if ((a.get('metadata') or {}).get('jarvis') or {}).get('runtime_id') ==
+                  body['metadata']['jarvis']['runtime_id']), None)
+    if prior:
+        approvals = reporting.api('GET', '/issues/' + turn['issue'] + '/approvals')
+        approval = next((a for a in approvals if (a.get('payload') or {}).get('agentId') == prior['id']), {})
+        turn['hiring_approval'] = approval.get('id')
+        turn['plan_decision'] = 'hire'
+        return emit({'hire_created': False, 'agent_id': prior['id'],
+            'approval_id': approval.get('id'), 'approval_status': approval.get('status'),
+            'next': 'This request already exists. Respect its human decision; a rejection is a blocker, not permission to rehire.'})
+    company = reporting.api('GET', '/companies/' + turn['company'])
+    if not company.get('requireBoardApprovalForNewAgents'):
+        raise PermissionError('Human hiring approval must be enabled')
+    reporting.api('PATCH', '/issues/' + turn['issue'], {'comment':
+        '[JARVIS CEO PLAN decision=hire]\nEssential missing profile: ' + selected['name'] +
+        '\nCEO justification: ' + reason + '\nProposed authority: ' + selected['authority'] +
+        '\nNo employee runtime is provisioned until a human approves the native Paperclip hire.'}, turn['run'])
+    turn['plan_decision'] = 'hire'
+    hired = reporting.api('POST', '/companies/' + turn['company'] + '/agent-hires', body, turn['run'])
+    approval = hired.get('approval') or {}
+    if not approval.get('id') or approval.get('status') != 'pending':
+        raise ValueError('Native human hiring approval was not created')
+    turn['hiring_approval'] = approval['id']
+    return emit({'hire_created': True, 'profile': selected['id'],
+        'agent_id': (hired.get('agent') or {}).get('id'), 'approval_id': approval['id'],
+        'approval_status': approval['status'], 'authority': selected['authority'],
+        'next': 'End this turn and report the pending human approval. No tools or runtime are granted before approval. Paperclip will deliver the decision.'})
 
 
 def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_reason=''):
@@ -379,13 +438,26 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
 
 
 def register(ctx):
+    def request_employee(args, **kwargs):
+        turn, me, _ = scope()
+        return request_profile_hire(turn, me, {'profile': args['profile'], 'title': args['name'], 'text': args['reason']}, tool_name='request_employee')
+
+    ctx.register_tool(name='request_employee', toolset='jarvis_ceo', schema={
+        'name': 'request_employee',
+        'description': 'Create a REAL native Paperclip employee-hire approval for an essential missing capability. Use this tool, not a textual request, when no existing employee covers the required capability. The employee remains inert until a human approves. Do not use for capabilities already present.',
+        'parameters': {'type': 'object', 'properties': {
+            'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])},
+            'name': {'type': 'string'},
+            'reason': {'type': 'string', 'description': 'Why existing employees cannot provide this essential capability; at least 40 characters.'}},
+            'required': ['profile', 'name', 'reason'], 'additionalProperties': False}}, handler=request_employee)
     ctx.register_tool(name='paperclip_context', toolset='jarvis_ceo',
         schema={'name': 'paperclip_context', 'description': 'Read your actual assigned Paperclip objective, company goals, existing employees and child task states. Authenticated current context is automatically supplied; call for additional reads.',
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}}, handler=context)
     ctx.register_tool(name='paperclip_ceo', toolset='jarvis_ceo',
-        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Simple work uses your own local_ollama_models call, which records a bounded self scope before reading; an explicit plan with decision=self and text or plan rationale is optional. If an explicit self rationale is omitted, the runtime records scope from the assigned objective. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records this selected scope as the plan BEFORE creating one child. Optional plan adds rationale. End turn after delegation. When verified completed-child results are delivered, write the final consolidated report; review optionally rereads the evidence. request_hire only for essential missing capability with human approval.',
+        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. End turn after delegation. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
                 'parameters': {'type': 'object', 'properties': {
                     'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire']},
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},
-                    'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'}},
+                    'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
+                    'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])}},
                     'required': ['action'], 'additionalProperties': False}}, handler=manage)

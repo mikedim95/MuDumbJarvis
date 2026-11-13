@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "real_ssh_execution": true,
+  "sandbox": {
+    "uid": 1000,
+    "workspace_write": true,
+    "host_files_absent": true,
+    "docker_socket_absent": true,
+    "credentials_absent": true,
+    "no_default_route": true
+  },
+  "isolated_gateway_mode": true,
+  "agent_or_task_created": false,
+  "inference_requested": false,
+  "cleanup": "Only test resources bearing this unique ownership label"
+}

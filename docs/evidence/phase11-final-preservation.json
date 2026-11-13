@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-11-13T06:07:37.184382+00:00",
+  "protected_services": {
+    "ollama": {
+      "same_container_id": true,
+      "same_started_at": true,
+      "running": true,
+      "not_paused": true
+    },
+    "pentagi": {
+      "same_container_id": true,
+      "same_started_at": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-ollama-1": {
+      "same_container_id": true,
+      "same_started_at": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-backend-1": {
+      "same_container_id": true,
+      "same_started_at": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-frontend-1": {
+      "same_container_id": true,
+      "same_started_at": true,
+      "running": true,
+      "not_paused": true
+    }
+  },
+  "all_nine_model_manifests_unchanged": true,
+  "model_count": 9,
+  "runtime_settings_observed": {
+    "threads": 24,
+    "shared_inference_slots": 1
+  },
+  "configuration_fingerprints_for_following_phases": {
+    "ollama": "3084afb5e985de9b8874262155519b56f1527dc9e7005cbecadc0ad2aa9e8842",
+    "pentagi": "0405ad35a09f894dcfec2173fb7344f6f97323e7df1203c18d13c94fcbcfefcc",
+    "aigoat-ollama-1": "7e48b69ff13ed8a9602781da7c8d32a023681dad992bbc75b3126a9a1a548c57",
+    "aigoat-backend-1": "df70601b20575377c3cb59ac7b1d5cc44bfb8233523faeac71f520b707feb92e",
+    "aigoat-frontend-1": "ba793a26bf37d4e3245ec4586145a6b2da01187d048de4f40b6f6cb4eadb52d6"
+  },
+  "phase_entry_configuration_check": "See phase11-preservation.json: configuration equality verified at the initial Phase 11 checkpoint. This receipt rechecks container identity/start times and all model manifests."
+}

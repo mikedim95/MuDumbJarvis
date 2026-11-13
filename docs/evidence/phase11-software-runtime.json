@@ -1,0 +1,95 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T06:06:21.346937+00:00",
+  "issue_id": "3ae256e0-3994-4252-919b-b44031eacf7e",
+  "identifier": "JAR-40",
+  "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+  "paperclip_run_id": "c2f5ca60-3e0d-41e6-afd7-23d6b79ee7f2",
+  "hermes_run_id": "run_dd13c6dabbd44ae7b169d05869c4132c",
+  "issue_status": "done",
+  "run_status": "succeeded",
+  "started_at": "2026-11-13T06:02:38.144Z",
+  "finished_at": "2026-11-13T06:05:26.122Z",
+  "model": "jarvis-hermes-aigoat24:3b",
+  "actual_hermes_tool_results": [
+    {
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e",
+      "tool_name": "agent_identity",
+      "tool_call_id": "call_io5hpupp",
+      "content": {
+        "source": "Authenticated Paperclip employee and local capability policy",
+        "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+        "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+        "issue_id": "3ae256e0-3994-4252-919b-b44031eacf7e",
+        "paperclip_run_id": "c2f5ca60-3e0d-41e6-afd7-23d6b79ee7f2",
+        "profile": "software_development",
+        "model": "jarvis-hermes-aigoat24:3b",
+        "allowed_tools": [
+          "terminal",
+          "read_file",
+          "write_file",
+          "patch",
+          "publish_artifact",
+          "read_worker_artifacts"
+        ],
+        "authority": "Create and test code only in a private, network-isolated container workspace. No Kali files, Docker socket, external network, publishing, or hiring.",
+        "inference_slots": 1
+      },
+      "timestamp": 1794549849.5052235
+    },
+    {
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e",
+      "tool_name": "write_file",
+      "tool_call_id": "call_rdfr37ir",
+      "content": {
+        "bytes_written": 302,
+        "dirs_created": true,
+        "verified": true,
+        "lint": {
+          "status": "ok",
+          "output": ""
+        },
+        "resolved_path": "/workspace/phase11_smoke.py",
+        "files_modified": [
+          "/workspace/phase11_smoke.py"
+        ]
+      },
+      "timestamp": 1794549887.2745645
+    },
+    {
+      "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e",
+      "tool_name": "terminal",
+      "tool_call_id": "call_h9w7jojo",
+      "content": {
+        "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK",
+        "exit_code": 0,
+        "error": null
+      },
+      "timestamp": 1794549901.5984235
+    }
+  ],
+  "source": "import unittest\n\ndef add(a, b):\n    \"\"\"Add two integers.\"\"\"\n    return a + b\n\nclass TestAdd(unittest.TestCase):\n    def test_addPositive(self):\n        self.assertEqual(add(2, 3), 5)\n    def test_addNegative(self):\n        self.assertEqual(add(-2, 2), 0)\n\nif __name__ == \"__main__\":\n    unittest.main()",
+  "source_sha256": "5df4c1f6b1541d502b10d10175c09b62543788f3146458062756ce00ab098dbd",
+  "independent_operator_test": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+  },
+  "authenticated_hud_same_task_and_succeeded_run": true,
+  "runtime_trace": [
+    "2026-11-13 06:02:44,063 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.turn_context: conversation turn: session=paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e model=jarvis-hermes-aigoat24:3b provider=custom platform=api_server history=2 msg='You are JARVIS-DEV-01, an AI agent employee in a Paperclip-managed company.  Pap...'",
+    "2026-11-13 06:04:09,203 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.conversation_loop: API call #1: model=jarvis-hermes-aigoat24:3b provider=custom in=7815 out=80 total=7895 latency=84.4s cache=3520/7815 (45%) id=chatcmpl-213",
+    "2026-11-13 06:04:09,504 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.tool_executor: tool agent_identity completed (0.11s, 664 chars)",
+    "2026-11-13 06:04:45,982 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.conversation_loop: API call #2: model=jarvis-hermes-aigoat24:3b provider=custom in=8164 out=162 total=8326 latency=36.5s cache=7814/8164 (96%) id=chatcmpl-410",
+    "2026-11-13 06:04:47,273 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.tool_executor: tool write_file completed (1.26s, 201 chars)",
+    "2026-11-13 06:05:00,698 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.conversation_loop: API call #3: model=jarvis-hermes-aigoat24:3b provider=custom in=8390 out=38 total=8428 latency=13.4s cache=8163/8390 (97%) id=chatcmpl-170",
+    "2026-11-13 06:05:01,597 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.tool_executor: tool terminal completed (0.88s, 148 chars)",
+    "2026-11-13 06:05:25,318 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e] agent.conversation_loop: API call #4: model=jarvis-hermes-aigoat24:3b provider=custom in=8471 out=107 total=8578 latency=23.7s cache=8389/8471 (99%) id=chatcmpl-917"
+  ],
+  "limitation": "Model prose mistyped its own employee UUID; the verified agent_id above comes from native Paperclip and actual identity tool. Prose is not authority.",
+  "gateway_authentication": {
+    "missing": 401,
+    "invalid": 401,
+    "valid": 200
+  }
+}

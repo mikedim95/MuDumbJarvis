@@ -1,0 +1,12 @@
+FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-server openssh-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --uid 1000 --create-home --shell /bin/bash employee \
+    && passwd -d employee \
+    && mkdir -p /run/sshd /workspace /etc/ssh/jarvis \
+    && chown -R 1000:1000 /workspace /etc/ssh/jarvis
+COPY deploy/sandbox-sshd.conf /etc/ssh/jarvis/sshd_config
+USER 1000:1000
+WORKDIR /workspace
+ENTRYPOINT ["/usr/sbin/sshd", "-D", "-e", "-f", "/etc/ssh/jarvis/sshd_config"]

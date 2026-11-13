@@ -66,6 +66,9 @@ def local_ollama_models(args: dict, **kwargs) -> str:
 
 
 def register(ctx):
+    if os.environ.get('JARVIS_PROFILE'):
+        from . import employee_tools
+        employee_tools.register(ctx)
     from . import paperclip_reporting
     paperclip_reporting.register(ctx)
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':

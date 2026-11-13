@@ -77,10 +77,13 @@ if ceo.get('permissions', {}).get('canCreateAgents') is not True or ceo.get('per
     ceo = call('PATCH', '/agents/' + ceo['id'] + '/permissions',
                {'canCreateAgents': True, 'canCreateSkills': False})
 call('PATCH', '/companies/' + company, {'requireBoardApprovalForNewAgents': True})
-call('PATCH', '/agents/' + env['PAPERCLIP_AGENT_ID'], {'reportsTo': ceo['id'],
-     'capabilities': 'Local technical inventory operator. Retrieve actual installed Ollama models, names, '
-                     'byte sizes and architecture details using the read-only local_ollama_models tool. '
-                     'No filesystem changes, external actions or hiring.'})
+worker = call('GET', '/agents/' + env['PAPERCLIP_AGENT_ID'])
+worker_patch = {'reportsTo': ceo['id']}
+if not ((worker.get('metadata') or {}).get('jarvis') or {}).get('managed'):
+    worker_patch['capabilities'] = ('Local technical inventory operator. Retrieve actual installed Ollama models, names, '
+        'byte sizes and architecture details using the read-only local_ollama_models tool. '
+        'No filesystem changes, external actions or hiring.')
+call('PATCH', '/agents/' + env['PAPERCLIP_AGENT_ID'], worker_patch)
 save('PAPERCLIP_CEO_AGENT_ID', ceo['id'])
 if not env.get('HERMES_PAPERCLIP_CEO_KEY'):
     key = call('POST', '/agents/' + ceo['id'] + '/keys', {'name': 'Isolated Hermes CEO callbacks'})

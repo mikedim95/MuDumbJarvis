@@ -1,0 +1,172 @@
+{
+  "checked_at": "2026-11-13T05:56:52.899059+00:00",
+  "provider": {
+    "hermes_run_id": "run_2040b3db5e2d4ecb92ae546e40918e38",
+    "status": "cancelled",
+    "session_id": "paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:a5780699-e4d4-4256-b93e-2bbcf46da59b:issue:3ae256e0-3994-4252-919b-b44031eacf7e"
+  },
+  "independent_sandbox_inspection": {
+    "workspace_files": [],
+    "test_file_exists": false,
+    "tmp_test_file_exists": false
+  },
+  "reconciliation_request": {
+    "actionId": "4f1f5c2e-62cd-4b2e-9de4-d89c0a1cd497",
+    "outcome": "restored",
+    "sourceIssueStatus": "todo",
+    "resolutionNote": "Fixed the reviewed private SSH workspace mapping and builtin file root. Exact owned Hermes run is confirmed terminal cancelled; no smoke source file exists. Retry only the still-unperformed code/test portion on this same issue.",
+    "executionReconciliation": {
+      "runId": "79d95d5f-e219-4f54-915d-72056105d718",
+      "providerStopped": true,
+      "actionOutcome": "mixed",
+      "outcomeEvidence": "Authenticated GET of exact Hermes run confirms cancelled after operator stop. Native trace records successful read-only agent_identity, then file write denied by /opt/data policy and SSH commands failing cd /root. Independent sandbox inspection finds no /workspace/phase11_smoke.py or /tmp/phase11_smoke.py. No code/tests completed; previous identity read may safely repeat. Approved task scope stays confined to this private sandbox."
+    }
+  },
+  "native_result": {
+    "issue": {
+      "id": "3ae256e0-3994-4252-919b-b44031eacf7e",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "conversationAgentId": null,
+      "conversationUserId": null,
+      "conversationState": null,
+      "conversationSessionGeneration": 0,
+      "conversationBoundaryCommentId": null,
+      "projectId": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+      "projectWorkspaceId": null,
+      "goalId": null,
+      "parentId": null,
+      "visibility": "open",
+      "privacyRootIssueId": null,
+      "privacyParentIssueId": null,
+      "title": "Phase 11 approved employee verification. Call agent_identity to retrieve your actual employee identity and scope. Then u",
+      "titleNeedsGeneration": false,
+      "description": "Phase 11 approved employee verification. Call agent_identity to retrieve your actual employee identity and scope. Then use your terminal tool in the configured private SSH sandbox to create /workspace/phase11_smoke.py with an add(a,b) function and two unittest cases: add(2,3)==5 and add(-2,2)==0. Execute python3 /workspace/phase11_smoke.py. Report the actual test output, exit status and employee ID. Do not claim tests ran without a successful terminal execution. No network, host access, package installation or hiring.",
+      "status": "todo",
+      "statusVersion": 3,
+      "lastStatusDecisionId": null,
+      "workMode": "standard",
+      "harnessKind": null,
+      "priority": "medium",
+      "reviewPolicy": null,
+      "assigneeAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "assigneeUserId": null,
+      "checkoutRunId": null,
+      "executionRunId": null,
+      "executionAgentNameKey": null,
+      "executionLockedAt": null,
+      "createdByAgentId": null,
+      "createdByUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "responsibleUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "issueNumber": 40,
+      "identifier": "JAR-40",
+      "originKind": "manual",
+      "originId": null,
+      "originRunId": null,
+      "originIdentityContextId": null,
+      "continuationIdentityContextId": "95729023-584f-41ec-b0c7-865d525f3e2e",
+      "originFingerprint": "default",
+      "requestDepth": 0,
+      "billingCode": null,
+      "assigneeAdapterOverrides": null,
+      "executionPolicy": null,
+      "executionState": null,
+      "monitorNextCheckAt": null,
+      "monitorWakeRequestedAt": null,
+      "monitorLastTriggeredAt": null,
+      "monitorAttemptCount": 0,
+      "monitorNotes": null,
+      "monitorScheduledBy": null,
+      "executionWorkspaceId": "4614081f-9ae7-48f1-aeb6-9e45011264c5",
+      "workspaceBindingRevision": 1,
+      "workspaceSelection": null,
+      "workspacePendingSelection": null,
+      "executionWorkspacePreference": "reuse_existing",
+      "executionWorkspaceSettings": {
+        "mode": "shared_workspace"
+      },
+      "sourceTrust": null,
+      "unblockDescriptor": null,
+      "blockedTransitionAt": null,
+      "blockedOwnerNotifiedAt": null,
+      "startedAt": "2026-11-13T05:43:17.588Z",
+      "completedAt": null,
+      "cancelledAt": null,
+      "hiddenAt": null,
+      "createdAt": "2026-11-13T05:43:10.964Z",
+      "updatedAt": "2026-11-13T05:56:52.756Z",
+      "labels": [],
+      "labelIds": [],
+      "watchdog": null,
+      "changes": {
+        "status": {
+          "from": "blocked",
+          "to": "todo"
+        },
+        "statusVersion": {
+          "from": 2,
+          "to": 3
+        },
+        "unblockDescriptor": {
+          "from": {
+            "owner": {
+              "agentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b"
+            },
+            "action": "Review the Hermes execution error, fix its cause, then explicitly retry this task."
+          },
+          "to": null
+        },
+        "blockedTransitionAt": {
+          "from": "2026-11-13T05:54:14.726Z",
+          "to": null
+        },
+        "blockedOwnerNotifiedAt": {
+          "from": "2026-11-13T05:54:14.901Z",
+          "to": null
+        }
+      },
+      "activeRecoveryAction": null
+    },
+    "recoveryAction": {
+      "id": "4f1f5c2e-62cd-4b2e-9de4-d89c0a1cd497",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "sourceIssueId": "3ae256e0-3994-4252-919b-b44031eacf7e",
+      "recoveryIssueId": null,
+      "kind": "active_run_watchdog",
+      "status": "resolved",
+      "ownerType": "board",
+      "ownerAgentId": null,
+      "ownerUserId": null,
+      "previousOwnerAgentId": null,
+      "returnOwnerAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "cause": "legacy_execution_requires_reconciliation",
+      "fingerprint": "legacy-execution:79d95d5f-e219-4f54-915d-72056105d718",
+      "evidence": {
+        "runId": "79d95d5f-e219-4f54-915d-72056105d718",
+        "attempt": 1,
+        "adapterRecovery": "unsupported_or_unknown",
+        "originalFailureCode": "cancelled",
+        "continuationDelivery": "pending",
+        "executionReconciliation": {
+          "runId": "79d95d5f-e219-4f54-915d-72056105d718",
+          "actorId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+          "recordedAt": "2026-11-13T05:56:52.713Z",
+          "actionOutcome": "mixed",
+          "outcomeEvidence": "Authenticated GET of exact Hermes run confirms cancelled after operator stop. Native trace records successful read-only agent_identity, then file write denied by /opt/data policy and SSH commands failing cd /root. Independent sandbox inspection finds no /workspace/phase11_smoke.py or /tmp/phase11_smoke.py. No code/tests completed; previous identity read may safely repeat. Approved task scope stays confined to this private sandbox.",
+          "providerStopped": true
+        }
+      },
+      "nextAction": "Automatic recovery stopped. Recorded work is preserved; actions with unverified outcomes will not be repeated.",
+      "wakePolicy": null,
+      "monitorPolicy": null,
+      "attemptCount": 1,
+      "maxAttempts": 3,
+      "timeoutAt": null,
+      "lastAttemptAt": "2026-11-13T05:54:15.289Z",
+      "outcome": "handed_back",
+      "resolutionNote": "Fixed the reviewed private SSH workspace mapping and builtin file root. Exact owned Hermes run is confirmed terminal cancelled; no smoke source file exists. Retry only the still-unperformed code/test portion on this same issue.",
+      "resolvedAt": "2026-11-13T05:56:52.791Z",
+      "createdAt": "2026-11-13T05:54:15.257Z",
+      "updatedAt": "2026-11-13T05:56:52.791Z"
+    }
+  }
+}

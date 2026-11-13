@@ -115,6 +115,8 @@ def begin(session_id='', turn_id='', **kwargs):
             'ceo': ceo, 'plan_decision': decision, 'reviewed_children': [],
             'needs_inventory': ('ollama' in description and 'model' in description) or 'installed models' in description,
             'inventory_verified': False}
+        if os.environ.get('JARVIS_PROFILE'):
+            turn['needs_tests'] = bool(re.search(r'\btests?\b|unittest|pytest', description))
         with _lock:
             _turns[key] = turn
         if ceo:
@@ -122,6 +124,9 @@ def begin(session_id='', turn_id='', **kwargs):
             context = ceo_tools.prepare_turn_context(turn, issue=issue, comments=comments, deadline=deadline)
             check_budget(deadline)
             return {'context': context}
+        if os.environ.get('JARVIS_PROFILE'):
+            from . import employee_tools
+            return {'context': employee_tools.prepare_turn_context(turn, issue)}
     except Exception as exc:
         if turn is not None:
             for name in ('delivered_children', 'delivery_run_id', 'delivery_context_sha256', 'child_evidence'):
@@ -181,10 +186,17 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
         return
     success = completed and not failed and not interrupted and bool(turn['response'].strip())
     missing_tool = turn['needs_inventory'] and not turn['inventory_verified']
+    missing_execution = None
+    if os.environ.get('JARVIS_PROFILE'):
+        from . import employee_tools
+        missing_execution = employee_tools.missing_execution(turn)
+        success = success and not missing_execution
     success = success and not missing_tool
     comment = turn['response'] if success else 'Hermes execution failed or was interrupted. ' + str(turn_exit_reason)
     if missing_tool:
         comment = 'Verification failed: no successful local_ollama_models call was recorded. Task is blocked; the response is not accepted as a retrieved inventory.\n\nRuntime response:\n' + turn['response']
+    if missing_execution:
+        comment = 'Execution verification failed: ' + missing_execution + '\nTask is blocked; the model response is not accepted as completed work.\n\nRuntime response:\n' + turn['response']
     if success and turn.get('inventory') is not None:
         verified = [{k: model.get(k) for k in ('name', 'size_bytes', 'size_gib')} for model in turn['inventory']]
         comment += '\n\nVerified local_ollama_models data (exact tool output; recommendations above are model-generated):\n```json\n' + json.dumps(verified, indent=2) + '\n```'

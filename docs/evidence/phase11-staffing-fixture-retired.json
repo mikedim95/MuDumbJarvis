@@ -1,0 +1,6 @@
+{
+  "issue_id": "61b95c0b-bc96-46e8-ab66-51b2e9198cfc",
+  "reason": "Retire the completed staffing-only verification after the explicit human-approved hire; do not claim implementation completion",
+  "started_at": "2026-11-13T05:50:17.137826+00:00",
+  "idle_ceo_restart_to_close_stopped_provider_connection": true
+}

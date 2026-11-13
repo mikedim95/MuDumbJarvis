@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-11-13T05:55:32.102992+00:00",
+  "issue_id": "3ae256e0-3994-4252-919b-b44031eacf7e",
+  "identifier": "JAR-40",
+  "issue_status": "blocked",
+  "paperclip_run_id": "79d95d5f-e219-4f54-915d-72056105d718",
+  "run_status": "cancelled",
+  "hermes_run_id": "run_2040b3db5e2d4ecb92ae546e40918e38",
+  "reason": "Operator stopped only this owned failing workspace-configuration test. No code file or passing tests existed.",
+  "workspace_configuration_errors": [
+    "builtin file safe root /opt/data instead of /workspace",
+    "gateway seeded terminal cwd /root in non-root SSH sandbox"
+  ],
+  "fix": [
+    "Sandbox role file policy /workspace",
+    "Trusted guard binds native task SSH cwd /workspace before builtin dispatch"
+  ],
+  "false_completion": false,
+  "before_restart_live_runs": 0
+}

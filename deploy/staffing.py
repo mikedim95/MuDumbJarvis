@@ -1,0 +1,311 @@
+#!/usr/bin/env python3
+"""Provision approved Paperclip employees. Never creates, schedules or completes tasks.
+
+Paperclip is the only employee/approval/task authority. This operator-owned
+runtime reconciler manages labeled containers and reports runtime readiness.
+No Docker socket or board credential is given to an AI runtime or sandbox.
+"""
+import argparse
+import fcntl
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+import subprocess
+import time
+import urllib.error
+import urllib.request
+from uuid import UUID
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('jarvis_profiles', ROOT / 'hermes-plugin/jarvis_readonly/profile_registry.py')
+registry = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(registry)
+HERMES_IMAGE = 'nousresearch/hermes-agent:v0.23.1@sha256:1a355ebc8981a4b72a28f4e47e347ba4f0f172b43dc876e5768d175a07c67b22'
+SANDBOX_IMAGE = 'jarvis-command-center:employee-sandbox-v1'
+MANAGED = 'io.jarvis.employee'
+
+
+def settings():
+    result = {}
+    for line in (ROOT / 'deploy/.env').read_text().splitlines():
+        if line and not line.startswith('#') and '=' in line:
+            key, value = line.split('=', 1)
+            result[key] = value.strip().strip('"\'')
+    return result
+
+
+class Board:
+    def __init__(self, env):
+        self.env = env
+        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+    def api(self, method, path, body=None):
+        request = urllib.request.Request('http://127.0.0.1:3100/api' + path, method=method,
+            headers={'Authorization': 'Bearer ' + self.env['PAPERCLIP_API_KEY'], 'Content-Type': 'application/json'},
+            data=None if body is None else json.dumps(body).encode())
+        try:
+            with self.opener.open(request, timeout=20) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            raise RuntimeError('Paperclip ' + method + ' failed: HTTP ' + str(error.code)) from None
+
+
+def run(argv, *, data=None, check=True):
+    result = subprocess.run(argv, input=data, text=True, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, timeout=180)
+    if check and result.returncode:
+        raise RuntimeError('Runtime operation failed: ' + argv[0] + ' (exit ' + str(result.returncode) + ')')
+    return result
+
+
+def inspect(kind, name):
+    result = run(['docker', kind, 'inspect', name], check=False)
+    return json.loads(result.stdout)[0] if result.returncode == 0 else None
+
+
+def write_private(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise ValueError('Private configuration must not be a symlink')
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as stream:
+        os.fchmod(stream.fileno(), 0o600)
+        stream.write(value)
+
+
+def same_runtime_config(observed, expected):
+    # The pinned official entrypoint adds this schema receipt on first boot.
+    # Every authority-bearing setting still has to match exactly.
+    return {key: value for key, value in observed.items() if key != '_config_version'} == expected
+
+
+def validate_agent(agent, approvals, env):
+    meta = (agent.get('metadata') or {}).get('jarvis') or {}
+    if not meta.get('managed'):
+        return None
+    UUID(agent['id'])
+    if agent.get('companyId') != env['PAPERCLIP_COMPANY_ID'] or agent.get('reportsTo') != env['PAPERCLIP_CEO_AGENT_ID']:
+        raise ValueError('Managed employee company/hierarchy mismatch')
+    item = registry.profile(meta.get('profile'))
+    if meta.get('profile_sha256') != item['sha256'] or not re.fullmatch(r'[a-f0-9]{24}', meta.get('runtime_id', '')):
+        raise ValueError('Approved capability snapshot or runtime identifier differs')
+    if agent.get('status') in ('pending_approval', 'terminated'):
+        return None
+    if agent.get('status') == 'paused' and (meta.get('provisioned') or agent.get('pauseReason') not in (None, 'setup')):
+        return None
+    if (meta.get('origin') == 'existing_worker' and agent['id'] == env['PAPERCLIP_AGENT_ID']
+            and item['id'] == 'research'):
+        return item
+    approved = next((a for a in approvals if a.get('type') == 'hire_agent' and a.get('status') == 'approved'
+        and a.get('requestedByAgentId') == env['PAPERCLIP_CEO_AGENT_ID']
+        and (a.get('payload') or {}).get('agentId') == agent['id']), None)
+    if not approved:
+        return None
+    snapshot = ((approved['payload'].get('metadata') or {}).get('jarvis') or {})
+    if any(snapshot.get(k) != meta.get(k) for k in ('profile', 'profile_sha256', 'runtime_id', 'source_issue_id')):
+        raise ValueError('Employee configuration differs from human-approved snapshot')
+    return item
+
+
+def container(name, argv, runtime_id):
+    existing = inspect('container', name)
+    if existing:
+        if (existing['Config'].get('Labels') or {}).get(MANAGED) != runtime_id:
+            raise ValueError('Container name belongs to an unmanaged resource')
+        if not existing['State']['Running']:
+            run(['docker', 'start', name])
+        return
+    run(['docker', 'create', '--name', name, '--label', MANAGED + '=' + runtime_id] + argv)
+    run(['docker', 'start', name])
+
+
+def provision(board, agent, item):
+    env, meta = board.env, agent['metadata']['jarvis']
+    rid = meta['runtime_id']
+    home = ROOT / '.runtime/employees' / agent['id']
+    home.mkdir(parents=True, exist_ok=True)
+    if home.is_symlink():
+        raise ValueError('Employee state must not be a symlink')
+    private = ROOT / '.runtime/provisioning' / (agent['id'] + '.json')
+    if private.exists():
+        credentials = json.loads(private.read_text())
+    else:
+        token = board.api('POST', '/agents/' + agent['id'] + '/keys', {'name': 'Isolated JARVIS employee callbacks'})['token']
+        credentials = {'api_key': secrets.token_hex(32), 'paperclip_key': token}
+        write_private(private, json.dumps(credentials))
+    stored = board.api('GET', '/companies/' + env['PAPERCLIP_COMPANY_ID'] + '/secrets')
+    secret_name = 'hermes-employee-' + rid
+    secret = next((s for s in stored if s['name'] == secret_name), None)
+    if not secret:
+        secret = board.api('POST', '/companies/' + env['PAPERCLIP_COMPANY_ID'] + '/secrets',
+            {'name': secret_name, 'value': credentials['api_key']})
+    config = yaml.safe_load((ROOT / 'deploy/hermes.config.example.yaml').read_text())
+    config['model']['default'] = item['model']
+    config['agent']['max_turns'] = item['limits']['max_turns']
+    config['agent']['gateway_timeout'] = item['limits']['timeout_seconds']
+    config['agent']['disabled_toolsets'] = [name for name in config['agent']['disabled_toolsets'] if name not in item['toolsets']]
+    config['platform_toolsets'] = {'cli': item['toolsets'], 'api_server': item['toolsets']}
+    config['terminal'] = {'env_type': 'ssh', 'ssh_host': 'jarvis-sandbox-' + rid,
+        'ssh_port': 2222, 'ssh_user': 'employee', 'ssh_key': '/opt/data/.ssh/id_ed25519',
+        'cwd': '/workspace', 'timeout': 120, 'env_passthrough': [], 'credential_files': []}
+    config_path = home / 'config.yaml'
+    if not config_path.exists():
+        write_private(config_path, yaml.safe_dump(config, sort_keys=False))
+    elif not same_runtime_config(yaml.safe_load(config_path.read_text()), config):
+        raise ValueError('Existing employee runtime configuration differs; review before changing authority')
+    soul = ('You are ' + agent['name'] + ', the ' + item['name'] + ' employee reporting to JARVIS-CEO.\n'
+        'Paperclip owns your assigned issue, dependencies and execution evidence.\n' + item['authority'] + '\n'
+        'Use only your assigned issue context. Never use internal subagents. Do not perform host or external changes.\n'
+        'Use actual tools, publish deliverables with publish_artifact, and report real tests/errors. Do not invent evidence.\n')
+    (home / 'SOUL.md').write_text(soul)
+    for skill in item['skills']:
+        directory = home / 'skills' / skill
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / 'SKILL.md').write_text('---\nname: ' + skill + '\ndescription: Scoped ' + item['name'] + ' workflow\n---\n'
+            + item['authority'] + '\nRead the assigned Paperclip objective, retrieve actual evidence, and publish artifacts. '
+            'Distinguish retrieved facts from interpretation. Test generated code in the isolated workspace.\n')
+    network = 'jarvis-exec-' + rid
+    if item['sandbox']:
+        if not inspect('image', SANDBOX_IMAGE):
+            raise ValueError('Build the reviewed employee sandbox image before provisioning')
+        existing_network = inspect('network', network)
+        if existing_network and (not existing_network.get('Internal') or
+                (existing_network.get('Labels') or {}).get(MANAGED) != rid or
+                (existing_network.get('Options') or {}).get('com.docker.network.bridge.gateway_mode_ipv4') != 'isolated'):
+            raise ValueError('Execution network is not an owned internal sandbox network')
+        if not existing_network:
+            run(['docker', 'network', 'create', '--internal', '--opt',
+                'com.docker.network.bridge.gateway_mode_ipv4=isolated', '--label', MANAGED + '=' + rid, network])
+        workspace = home / 'workspace'
+        workspace.mkdir(exist_ok=True)
+        ssh_dir = home / '.ssh'
+        ssh_dir.mkdir(mode=0o700, exist_ok=True)
+        ssh_key = ssh_dir / 'id_ed25519'
+        if not ssh_key.exists():
+            run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', str(ssh_key)])
+        server_keys = home / 'sandbox-ssh'
+        server_keys.mkdir(exist_ok=True)
+        host_key = server_keys / 'host_key'
+        if not host_key.exists():
+            run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', str(host_key)])
+        (server_keys / 'authorized_keys').write_text((ssh_dir / 'id_ed25519.pub').read_text())
+        container('jarvis-sandbox-' + rid, ['--network', network, '--dns', '127.0.0.1', '--user', '1000:1000', '--read-only',
+            '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true', '--pids-limit', '128',
+            '--cpus', str(item['limits']['cpus']), '--memory', str(item['limits']['memory_mb']) + 'm',
+            '--tmpfs', '/tmp:rw,noexec,nosuid,size=256m', '--tmpfs', '/home/employee:rw,nosuid,uid=1000,gid=1000,size=64m',
+            '-v', str(workspace) + ':/workspace:rw', '-v', str(server_keys) + ':/run/jarvis-ssh:ro', SANDBOX_IMAGE], rid)
+    runtime_env = {'API_SERVER_KEY': credentials['api_key'], 'HERMES_PAPERCLIP_AGENT_KEY': credentials['paperclip_key'],
+        'JARVIS_EXECUTION_PROOF_KEY': env['JARVIS_EXECUTION_PROOF_KEY'], 'API_SERVER_ENABLED': 'true',
+        'API_SERVER_HOST': '0.0.0.0', 'API_SERVER_PORT': '8642', 'HERMES_DASHBOARD': 'false',
+        'HERMES_UID': '1000', 'HERMES_GID': '1000', 'OPENAI_API_KEY': 'ollama-local-only',
+        'HERMES_API_TIMEOUT': str(item['limits']['timeout_seconds']), 'JARVIS_OLLAMA_URL': 'http://ollama-models:11434',
+        'JARVIS_AGENT_ROLE': item['id'], 'JARVIS_PAPERCLIP_AGENT_ID': agent['id'], 'JARVIS_PROFILE': item['id']}
+    if item['sandbox']:
+        runtime_env.update({'TERMINAL_ENV': 'ssh', 'TERMINAL_SSH_HOST': 'jarvis-sandbox-' + rid,
+            'TERMINAL_SSH_USER': 'employee', 'TERMINAL_SSH_PORT': '2222',
+            'TERMINAL_SSH_KEY': '/opt/data/.ssh/id_ed25519', 'TERMINAL_CWD': '/workspace'})
+    env_file = home / 'runtime.env'
+    write_private(env_file, '\n'.join(k + '=' + v for k, v in runtime_env.items()) + '\n')
+    args = ['--network', 'jarvis-command-center_agent-private', '--restart', 'unless-stopped',
+        '--security-opt', 'no-new-privileges:true', '--cap-drop', 'NET_RAW', '--pids-limit', str(item['limits']['pids']),
+        '--cpus', str(item['limits']['cpus']), '--memory', str(item['limits']['memory_mb']) + 'm',
+        '--env-file', str(env_file), '-v', str(home) + ':/opt/data',
+        '-v', str(ROOT / 'hermes-plugin/jarvis_readonly') + ':/opt/data/plugins/jarvis_readonly:ro',
+        HERMES_IMAGE, 'gateway', 'run']
+    runtime_name = 'jarvis-employee-' + rid
+    container(runtime_name, args, rid)
+    if item['sandbox']:
+        state = inspect('container', runtime_name)
+        if network not in state['NetworkSettings']['Networks']:
+            run(['docker', 'network', 'connect', network, runtime_name])
+    health = "import urllib.request,os; r=urllib.request.Request('http://127.0.0.1:8642/health',headers={'Authorization':'Bearer '+os.environ['API_SERVER_KEY']}); urllib.request.urlopen(r,timeout=3).read()"
+    if run(['docker', 'exec', runtime_name, 'python3', '-c', health], check=False).returncode:
+        print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'starting'}))
+        return
+    adapter = {'apiBaseUrl': 'https://hermes-tls:8645/runtimes/' + rid,
+        'apiKey': {'type': 'secret_ref', 'secretId': secret['id'], 'version': 'latest'},
+        'paperclipApiUrl': 'http://paperclip:3100', 'sessionKeyStrategy': 'issue',
+        'timeoutSec': item['limits']['timeout_seconds'], 'instructions': soul,
+        'payloadTemplate': {'input': None, 'conversation_history': [
+            {'role': 'user', 'content': 'Where is authoritative task context?'},
+            {'role': 'assistant', 'content': 'Paperclip. I use only the current authenticated issue and approved tools.'}]}}
+    updated_meta = {**meta, 'provisioned': True, 'runtime_name': runtime_name, 'dormancy': 'No timer heartbeats or inference while idle'}
+    capabilities = ', '.join(item['capabilities']) + '. ' + item['authority']
+    if (not meta.get('provisioned') or agent.get('adapterConfig', {}).get('apiBaseUrl') != adapter['apiBaseUrl']
+            or agent.get('capabilities') != capabilities or agent.get('role') != item['role']):
+        board.api('PATCH', '/agents/' + agent['id'], {'adapterConfig': adapter,
+            'role': item['role'], 'title': item['name'], 'capabilities': capabilities,
+            'metadata': {**(agent.get('metadata') or {}), 'jarvis': {**updated_meta, 'provisioned': False}}})
+        tested = board.api('POST', '/companies/' + env['PAPERCLIP_COMPANY_ID'] + '/adapters/hermes_gateway/test-environment',
+            {'agentId': agent['id'], 'adapterConfig': adapter})
+        if tested.get('status') != 'pass':
+            print(json.dumps({'agent_id': agent['id'], 'runtime': 'awaiting_native_verification'}))
+            return
+        current = board.api('GET', '/agents/' + agent['id'])
+        if current.get('status') == 'paused':
+            board.api('POST', '/agents/' + agent['id'] + '/resume', {})
+        board.api('PATCH', '/agents/' + agent['id'], {'metadata': {**(agent.get('metadata') or {}), 'jarvis': updated_meta}})
+    source = meta.get('source_issue_id')
+    if source and not meta.get('ready_notice_sent'):
+        comments = board.api('GET', '/issues/' + source + '/comments')
+        marker = '[JARVIS RUNTIME READY ' + rid + ']'
+        if not any(c.get('body', '').startswith(marker) for c in comments):
+            board.api('POST', '/issues/' + source + '/comments', {'body': marker + '\nHuman-approved ' +
+                item['name'] + ' employee ' + agent['name'] + ' (' + agent['id'] + ') has an authenticated isolated Hermes runtime. Reuse this employee for the approved capability. No task was assigned by the runtime provisioner.'})
+        board.api('PATCH', '/agents/' + agent['id'], {'metadata': {**agent.get('metadata', {}),
+            'jarvis': {**updated_meta, 'ready_notice_sent': True}}})
+    print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'ready', 'inference_slots': 1}))
+
+
+def adopt(board, profile_id):
+    """Explicit operator migration of the one pre-existing, authorized employee."""
+    agent = board.api('GET', '/agents/' + board.env['PAPERCLIP_AGENT_ID'])
+    if agent['companyId'] != board.env['PAPERCLIP_COMPANY_ID'] or agent.get('reportsTo') != board.env['PAPERCLIP_CEO_AGENT_ID']:
+        raise ValueError('Existing worker identity mismatch')
+    if ((agent.get('metadata') or {}).get('jarvis') or {}).get('managed'):
+        raise ValueError('Existing worker already has a managed capability; no implicit permission change')
+    item = registry.profile(profile_id)
+    rid = hashlib.sha256((agent['companyId'] + ':' + agent['id'] + ':' + profile_id).encode()).hexdigest()[:24]
+    board.api('PATCH', '/agents/' + agent['id'], {'role': item['role'], 'title': item['name'],
+        'capabilities': ', '.join(item['capabilities']) + '. ' + item['authority'],
+        'metadata': {**(agent.get('metadata') or {}), 'jarvis': {'managed': True, 'provisioned': False,
+            'origin': 'existing_worker', 'runtime_id': rid, 'profile': profile_id, 'profile_sha256': item['sha256'],
+            'model': item['model'], 'limits': item['limits']}}})
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--adopt-existing', choices=['research'])
+    args = parser.parse_args()
+    if not args.apply:
+        print(json.dumps({'action': 'plan_only', 'profiles': list(registry.catalog()['profiles']), 'employees_created': 0}))
+        return
+    board = Board(settings())
+    lock_path = ROOT / '.runtime/employee-runtime.lock'
+    with lock_path.open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if args.adopt_existing:
+            adopt(board, args.adopt_existing)
+        company = board.env['PAPERCLIP_COMPANY_ID']
+        agents = board.api('GET', '/companies/' + company + '/agents')
+        approvals = board.api('GET', '/companies/' + company + '/approvals')
+        for agent in agents:
+            item = validate_agent(agent, approvals, board.env)
+            if item:
+                provision(board, agent, item)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as error:
+        print(json.dumps({'runtime_provisioning': 'failed', 'error_type': type(error).__name__,
+            'detail': str(error) if isinstance(error, (ValueError, RuntimeError)) else 'Inspect operator log; credentials omitted'}))
+        raise SystemExit(1)

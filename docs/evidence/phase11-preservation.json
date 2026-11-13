@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "protected_services": {
+    "ollama": {
+      "same_id": true,
+      "same_started_at": true,
+      "same_configuration": true,
+      "running": true,
+      "not_paused": true
+    },
+    "pentagi": {
+      "same_id": true,
+      "same_started_at": true,
+      "same_configuration": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-ollama-1": {
+      "same_id": true,
+      "same_started_at": true,
+      "same_configuration": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-backend-1": {
+      "same_id": true,
+      "same_started_at": true,
+      "same_configuration": true,
+      "running": true,
+      "not_paused": true
+    },
+    "aigoat-frontend-1": {
+      "same_id": true,
+      "same_started_at": true,
+      "same_configuration": true,
+      "running": true,
+      "not_paused": true
+    }
+  },
+  "all_nine_model_names_sizes_and_digests_unchanged": true
+}

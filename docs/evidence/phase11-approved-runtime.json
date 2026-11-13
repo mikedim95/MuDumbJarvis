@@ -1,0 +1,51 @@
+{
+  "checked_at": "2026-11-13T05:46:31.038119+00:00",
+  "status": "passed",
+  "agent": {
+    "id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "name": "JARVIS-DEV-01",
+    "role": "engineer",
+    "status": "running",
+    "reportsTo": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "lifecycleState": "ready"
+  },
+  "native_adapter_test": {
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ]
+  },
+  "resources": {
+    "jarvis-employee-eb7f0f48854a87e840613483": {
+      "image_id": "sha256:ed43b1c44a722eff23041b7db2f3866ac80edc33650104a684837830d3798cd3",
+      "nano_cpus": 2000000000,
+      "memory_bytes": 2147483648,
+      "pids_limit": 256,
+      "published_ports": {},
+      "network_names": [
+        "jarvis-command-center_agent-private",
+        "jarvis-exec-eb7f0f48854a87e840613483"
+      ]
+    },
+    "jarvis-sandbox-eb7f0f48854a87e840613483": {
+      "image_id": "sha256:6504909c22388b6111b55842291300afe4b0e6ddfc960a6414da8e01f5539cd9",
+      "nano_cpus": 2000000000,
+      "memory_bytes": 2147483648,
+      "pids_limit": 128,
+      "published_ports": {},
+      "network_names": [
+        "jarvis-exec-eb7f0f48854a87e840613483"
+      ]
+    }
+  },
+  "isolation": {
+    "non_root": true,
+    "readonly_root": true,
+    "all_capabilities_dropped": true,
+    "no_host_or_docker_mounts": true
+  }
+}

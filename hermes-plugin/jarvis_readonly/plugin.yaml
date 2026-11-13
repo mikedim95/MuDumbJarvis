@@ -1,7 +1,9 @@
 name: jarvis_readonly
-version: 1.1.0
-description: Read-only inventory and identity-bound Paperclip CEO operations
+version: 1.2.0
+description: Scoped inventory, native Paperclip staffing, and isolated employee tools
 provides_tools:
 - local_ollama_models
 - paperclip_context
 - paperclip_ceo
+- agent_identity
+- request_employee

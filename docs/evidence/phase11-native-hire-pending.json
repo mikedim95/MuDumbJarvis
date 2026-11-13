@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-11-12T12:51:15.049977+00:00",
+  "status": "awaiting_human_decision",
+  "phase11_complete": false,
+  "task": {
+    "id": "61b95c0b-bc96-46e8-ab66-51b2e9198cfc",
+    "identifier": "JAR-38",
+    "status": "in_review",
+    "assigneeAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+  },
+  "approval": {
+    "id": "80bebd62-f765-421e-bab7-9ebbf313e9df",
+    "status": "pending",
+    "requestedByAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "createdAt": "2026-11-12T12:47:06.020Z"
+  },
+  "candidate": {
+    "id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "name": "JARVIS-DEV-01",
+    "role": "engineer",
+    "status": "pending_approval",
+    "reportsTo": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "capabilities": "software_development, isolated_demonstration, test_execution. Create and test code only in a private, network-isolated container workspace. No Kali files, Docker socket, external network, publishing, or hiring.",
+    "permissions": {
+      "canCreateAgents": false,
+      "canCreateSkills": false
+    }
+  },
+  "capability_snapshot": {
+    "model": "jarvis-hermes-aigoat24:3b",
+    "limits": {
+      "cpus": 2,
+      "pids": 256,
+      "max_turns": 16,
+      "memory_mb": 2048,
+      "timeout_seconds": 1800
+    },
+    "managed": true,
+    "profile": "software_development",
+    "workspace": "private employee container; issue-scoped directories; no host access",
+    "runtime_id": "eb7f0f48854a87e840613483",
+    "provisioned": false,
+    "hiring_reason": "Existing inventory/research capability cannot implement a minimal Python demonstration and execute tests in a private network-isolated workspace.",
+    "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe",
+    "source_issue_id": "61b95c0b-bc96-46e8-ab66-51b2e9198cfc"
+  },
+  "no_runtime_before_approval": true,
+  "no_execution_credentials_before_approval": true,
+  "actual_hermes_log": [
+    "2026-11-12 12:37:56,116 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:61b95c0b-bc96-46e8-ab66-51b2e9198cfc] agent.conversation_loop: API call #1: model=jarvis-hermes-aigoat24:3b provider=custom in=7910 out=259 total=8169 latency=147.8s cache=8/7910 (0%) id=chatcmpl-270",
+    "2026-11-12 12:47:04,626 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:61b95c0b-bc96-46e8-ab66-51b2e9198cfc] agent.conversation_loop: API call #1: model=jarvis-hermes-aigoat24:3b provider=custom in=11193 out=206 total=11399 latency=196.3s cache=2545/11193 (23%) id=chatcmpl-593",
+    "2026-11-12 12:47:06,099 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:61b95c0b-bc96-46e8-ab66-51b2e9198cfc] agent.tool_executor: tool request_employee completed (1.22s, 509 chars)",
+    "2026-11-12 12:47:32,521 INFO [paperclip:company:1da0bc85-d81f-4e61-b73e-1569f5eced85:agent:50a7204d-39f5-4e4a-98bb-ff07cf4e526e:issue:61b95c0b-bc96-46e8-ab66-51b2e9198cfc] agent.conversation_loop: API call #2: model=jarvis-hermes-aigoat24:3b provider=custom in=11560 out=86 total=11646 latency=26.4s cache=11192/11560 (97%) id=chatcmpl-3"
+  ],
+  "tool_audit_note": "The first alias call reused the legacy paperclip_ceo label in the custom audit. Actual request_employee execution is proved by the Hermes core log above. Future audit labels are fixed and regression-tested; no historical log was rewritten."
+}

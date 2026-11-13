@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "model": "jarvis-hermes-aigoat24:3b",
+  "inference_slots": 1,
+  "profiles": {
+    "research": {
+      "name": "Research", "role": "researcher",
+      "capabilities": ["public_source_research", "technical_comparison", "local_inventory"],
+      "tools": ["local_ollama_models", "research_sources", "publish_artifact"],
+      "toolsets": ["jarvis_readonly", "jarvis_employee"],
+      "skills": ["source-research"], "sandbox": false,
+      "limits": {"cpus": 2, "memory_mb": 2048, "pids": 256, "max_turns": 12, "timeout_seconds": 1200},
+      "authority": "Read public primary sources and local model metadata; publish issue artifacts. No shell, host files, external writes, or hiring."
+    },
+    "software_development": {
+      "name": "Software Development", "role": "engineer",
+      "capabilities": ["software_development", "isolated_demonstration", "test_execution"],
+      "tools": ["terminal", "read_file", "write_file", "patch", "publish_artifact", "read_worker_artifacts"],
+      "toolsets": ["terminal", "file", "jarvis_employee"],
+      "skills": ["isolated-development"], "sandbox": true,
+      "limits": {"cpus": 2, "memory_mb": 2048, "pids": 256, "max_turns": 16, "timeout_seconds": 1800},
+      "authority": "Create and test code only in a private, network-isolated container workspace. No Kali files, Docker socket, external network, publishing, or hiring."
+    },
+    "system_administration": {
+      "name": "System Administration", "role": "devops",
+      "capabilities": ["local_inventory", "system_diagnostics", "sandbox_administration"],
+      "tools": ["local_ollama_models", "terminal", "publish_artifact", "request_action_approval"],
+      "toolsets": ["jarvis_readonly", "terminal", "jarvis_employee"],
+      "skills": ["scoped-administration"], "sandbox": true,
+      "limits": {"cpus": 2, "memory_mb": 2048, "pids": 256, "max_turns": 12, "timeout_seconds": 1200},
+      "authority": "Inspect local model metadata and administer only the isolated sandbox. Host changes and sensitive external actions require a separate human approval and are not executable by this profile."
+    },
+    "documentation": {
+      "name": "Documentation", "role": "general",
+      "capabilities": ["technical_documentation", "report_authoring"],
+      "tools": ["read_file", "write_file", "patch", "research_sources", "publish_artifact", "read_worker_artifacts"],
+      "toolsets": ["file", "jarvis_employee"],
+      "skills": ["evidence-documentation"], "sandbox": true,
+      "limits": {"cpus": 1, "memory_mb": 1536, "pids": 192, "max_turns": 12, "timeout_seconds": 1200},
+      "authority": "Read approved public sources and worker artifacts; write documentation only in a private container workspace. No shell, external writes, host files, or hiring."
+    },
+    "security_analysis": {
+      "name": "Security Analysis", "role": "security",
+      "capabilities": ["security_research", "static_analysis", "isolated_security_testing"],
+      "tools": ["terminal", "read_file", "write_file", "patch", "research_sources", "publish_artifact", "read_worker_artifacts", "request_action_approval"],
+      "toolsets": ["terminal", "file", "jarvis_employee"],
+      "skills": ["isolated-security-analysis"], "sandbox": true,
+      "limits": {"cpus": 2, "memory_mb": 2048, "pids": 256, "max_turns": 16, "timeout_seconds": 1800},
+      "authority": "Analyze public sources and test local fixtures in a private, network-isolated workspace. No network scans, host access, exploitation of external targets, external writes, or hiring."
+    }
+  }
+}

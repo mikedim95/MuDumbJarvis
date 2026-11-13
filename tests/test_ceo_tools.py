@@ -7,6 +7,55 @@ import sys
 
 import pytest
 
+
+def test_profile_hire_records_model_rationale_before_native_approval(plugin):
+    result = json.loads(plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development',
+        'title': 'Bounded developer', 'text': 'Existing research employee cannot create and execute the required isolated code and tests.'}))
+    assert result['approval_status'] == 'pending' and result['profile'] == 'software_development'
+    writes = [call for call in plugin.calls if call[0] in ('POST', 'PATCH')]
+    plan = next(i for i, call in enumerate(writes) if call[0] == 'PATCH' and '[JARVIS CEO PLAN decision=hire]' in call[2].get('comment', ''))
+    hire = next(i for i, call in enumerate(writes) if call[1].endswith('/agent-hires'))
+    assert plan < hire
+    body = writes[hire][2]
+    assert body['adapterConfig'] == {} and body['metadata']['jarvis']['provisioned'] is False
+    assert body['permissions']['canCreateAgents'] is False
+    assert 'synthetic-secret' not in json.dumps(result)
+
+
+def test_existing_profile_is_reused_instead_of_hired(plugin):
+    plugin.employees[0]['metadata'] = {'jarvis': {'profile': 'software_development', 'managed': True, 'provisioned': True}}
+    result = json.loads(plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development',
+        'title': 'Duplicate developer', 'text': 'Need an isolated developer to create code and execute the test suite.'}))
+    assert result['hire_created'] is False
+    assert result['existing_employees'][0]['id'] == WORKER
+    assert not any(call[1].endswith('/agent-hires') for call in plugin.calls)
+
+
+def test_pending_matching_profile_is_not_duplicated_across_objectives(plugin):
+    plugin.employees[0].update({'status': 'pending_approval', 'metadata': {'jarvis': {'profile': 'software_development'}}})
+    result = json.loads(plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development',
+        'title': 'Duplicate pending developer', 'text': 'Need a developer for isolated implementation and real test execution.'}))
+    assert result['hire_created'] is False and result['pending_employee_ids'] == [WORKER]
+    assert not any(call[1].endswith('/agent-hires') for call in plugin.calls)
+
+
+def test_profile_hire_cannot_bypass_disabled_human_gate(plugin):
+    plugin.approval_required = False
+    with pytest.raises(PermissionError, match='Human hiring approval'):
+        plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development',
+            'title': 'Developer', 'text': 'Essential missing isolated software implementation and test execution capability.'})
+    assert not any(call[1].endswith('/agent-hires') for call in plugin.calls)
+
+
+def test_dedicated_hiring_tool_keeps_its_actual_name_in_audit(plugin, tmp_path):
+    registered = {}
+    ctx = SimpleNamespace(register_tool=lambda **entry: registered.update({entry['name']: entry['handler']}))
+    plugin.tools.register(ctx)
+    registered['request_employee']({'profile': 'software_development', 'name': 'Developer',
+        'reason': 'Existing research capability cannot implement software and execute tests in an isolated workspace.'})
+    row = json.loads((tmp_path / 'logs/ceo-tools.jsonl').read_text().splitlines()[-1])
+    assert row['tool'] == 'request_employee' and row['action'] == 'request_hire'
+
 COMPANY = '11111111-1111-4111-8111-111111111111'
 CEO = '22222222-2222-4222-8222-222222222222'
 ROOT = '33333333-3333-4333-8333-333333333333'
