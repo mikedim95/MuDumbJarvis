@@ -7,6 +7,10 @@ evidence, warning, graph, timeline, and operation-log windows. They follow real
 Paperclip records, retain layout after refresh, and include a persistent CEO
 uplink and agent response channel. See [CSI architecture, controls, tests and rollback](docs/CSI_WINDOWS.md).
 
+Direct chat keeps its original local Hermes session, separately from CEO tasks.
+See [provider binding and safe chat errors](docs/DIRECT_CHAT_FIX.md) for the
+installed-version compatibility repair and the real browser regression test.
+
 ## Local command-center deployment
 
 This workspace adds a text-only Linux deployment using the existing FastAPI

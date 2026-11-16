@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T10:42:12.432Z",
+  "source": "Actual authenticated HUD direct-chat requests",
+  "real_replies": [
+    {
+      "input": "What is two plus two? Reply with the number only.",
+      "reply": "4",
+      "elapsed_seconds": 4.156,
+      "run_id": "run_bee7d2c5661a4b6e9c4b8f5da2a4bf42"
+    },
+    {
+      "input": "Repeat your previous answer only.",
+      "reply": "**4**",
+      "elapsed_seconds": 4.111,
+      "run_id": "run_760a8ae35d13444785f653fd3c66f190"
+    }
+  ],
+  "contextual_followup_verified": true,
+  "no_overlapping_chat": true,
+  "task_history_unchanged": true,
+  "paperclip_task_submissions": 0,
+  "chat_submissions": 2,
+  "browser_errors": []
+}

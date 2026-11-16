@@ -23,10 +23,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
 import threading
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import AsyncIterator, Iterator
@@ -49,6 +51,7 @@ LOG_PATH = ROOT / "logs" / "latency.jsonl"
 STATE_PATH = ROOT / "logs" / "hermes_sessions.json"
 USAGE_PATH = ROOT / "logs" / "usage_stats.json"
 _USAGE_LOCK = threading.Lock()
+LOGGER = logging.getLogger(__name__)
 
 
 def _today() -> str:
@@ -168,6 +171,16 @@ class TurnTiming:
 # ===================================================================== Hermes
 
 
+class HermesChatError(RuntimeError):
+    """Safe user-facing failure with non-secret diagnostic metadata."""
+    def __init__(self, message: str, code: str = "hermes_chat_failed", *, status_code: int | None = None,
+                 diagnostic: dict | None = None):
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
+        self.diagnostic = diagnostic or {}
+
+
 class HermesAPI:
     """Thin client for the Hermes Agent API server (sessions, runs, approvals)."""
 
@@ -230,8 +243,13 @@ class HermesAPI:
             json={"input": input_text}, stream=True, timeout=(10, timeout),
         )
         if resp.status_code >= 400:
+            status = resp.status_code
             resp.close()
-            raise RuntimeError(f"Hermes session chat HTTP {resp.status_code}: {resp.text[:300]}")
+            message = ("Direct chat is busy. Wait for its current turn to finish, then try again." if status == 429 else
+                       "The chat service connection needs authentication repair." if status in (401, 403) else
+                       "The saved chat session is no longer available." if status == 404 else
+                       "The chat service is temporarily unavailable. Please try again.")
+            raise HermesChatError(message, "hermes_http_error", status_code=status)
         resp.encoding = "utf-8"  # SSE has no charset header; requests would assume latin-1 (mojibake)
         try:
             yield from self._parse_sse(resp)
@@ -254,6 +272,8 @@ class HermesAPI:
                 data = json.loads(data_text)
             except json.JSONDecodeError:
                 continue
+            if not isinstance(data, dict):
+                continue
             ev = event_name or data.get("event", "")
             if ev == "run.started":
                 yield ("run", data.get("run_id") or "")
@@ -274,7 +294,15 @@ class HermesAPI:
                     "interrupted": bool(data.get("interrupted")),
                 }))
             elif ev in ("run.failed", "error"):
-                raise RuntimeError(f"Hermes stream error: {data_text[:300]}")
+                runtime = data.get("runtime") if isinstance(data.get("runtime"), dict) else {}
+                route_failure = bool(runtime and not runtime.get("provider") and not runtime.get("model"))
+                raise HermesChatError(
+                    "Direct chat could not start because its saved model connection is unavailable." if route_failure else
+                    "The agent could not complete this chat reply. Please try again.",
+                    "model_route_unavailable" if route_failure else "hermes_execution_failed",
+                    diagnostic={"event": ev, "session_id": data.get("session_id"),
+                                "message_id": data.get("message_id"), "route_source": runtime.get("route_source"),
+                                "partial": bool(data.get("partial"))})
             elif ev == "run.completed":
                 usage = data.get("usage") or {}
                 if usage:
@@ -423,7 +451,7 @@ class VoicePipelineServer:
                 yield (kind, value)
         except RuntimeError as exc:
             # stale session id (e.g. Hermes DB reset) -> recreate once
-            if "404" in str(exc):
+            if isinstance(exc, HermesChatError) and exc.status_code == 404:
                 session_id = self.hermes.get_session_id(conversation, force_new=True)
                 for kind, value in self.hermes.chat_stream_events(session_id, transcript, timeout):
                     if kind == "text" and timing.llm_first_token_monotonic is None:
@@ -785,6 +813,7 @@ async def hud_chat(request: Request) -> JSONResponse:
 
         def consume(sid: str) -> list[str]:
             parts: list[str] = []
+            completed = False
             for kind, value in HERMES.chat_stream_events(sid, text, timeout):
                 if kind == "text":
                     parts.append(value)
@@ -794,14 +823,17 @@ async def hud_chat(request: Request) -> JSONResponse:
                     out["run_id"] = value
                 elif kind == "final":
                     info = json.loads(value)
+                    completed = not info.get("interrupted", False)
                     if info.get("content"):
                         parts = [info["content"]]
+            if not completed or not "".join(parts).strip():
+                raise HermesChatError("Chat ended before a complete reply arrived. Please try again.", "incomplete_reply")
             return parts
 
         try:
             parts = consume(HERMES.get_session_id(conversation))
         except RuntimeError as exc:
-            if "404" not in str(exc):
+            if not isinstance(exc, HermesChatError) or exc.status_code != 404:
                 raise
             # stale session id (e.g. profile switch / DB reset) -> recreate once
             out["tools"].clear()
@@ -812,7 +844,12 @@ async def hud_chat(request: Request) -> JSONResponse:
         await asyncio.to_thread(run_sync)
         return JSONResponse(out)
     except Exception as exc:
-        return JSONResponse({"error": str(exc)}, status_code=502)
+        reference = uuid.uuid4().hex[:12]
+        known = isinstance(exc, HermesChatError)
+        LOGGER.error("Direct chat failed reference=%s type=%s diagnostic=%s", reference,
+                     type(exc).__name__, json.dumps(exc.diagnostic if known else {}, sort_keys=True))
+        return JSONResponse({"error": str(exc) if known else "Direct chat is temporarily unavailable. Please try again.",
+                             "error_code": exc.code if known else "hermes_chat_failed", "reference": reference}, status_code=502)
 
 
 _ELEVEN_CACHE: dict = {"ts": 0.0, "data": None}

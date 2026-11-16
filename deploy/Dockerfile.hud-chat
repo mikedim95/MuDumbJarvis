@@ -1,0 +1,5 @@
+# Small chat-failure fix over the verified CSI/HUD image.
+ARG HUD_BASE=jarvis-command-center:hud-before-direct-chat-fix
+FROM ${HUD_BASE}
+COPY --chown=1000:1000 server/server.py /app/server/server.py
+COPY --chown=1000:1000 server/hud/index.html /app/server/hud/index.html

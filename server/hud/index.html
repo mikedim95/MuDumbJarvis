@@ -653,21 +653,25 @@ addEventListener("keydown",e=>{
 });
 
 /* ============================== typed chat ========================= */
+let chatSending=false;
 async function sendChat(){
   const inp=$("chatInput"); const text=inp.value.trim(); if(!text)return;
   if(["task","objective"].includes($("commandMode").value))return window.JarvisTasks.submit(text);
+  if(chatSending)return;
+  chatSending=true;$("sendBtn").disabled=true;
   inp.value=""; addMsg("you",text); setState("thinking","PROCESSING");
   try{
     const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({input:text,conversation:CONV})});
     const j=await r.json();
-    if(!r.ok)throw new Error(j.error||r.status);
+    if(!r.ok)throw new Error((j.error||"Direct chat is unavailable.")+(j.reference?" Reference: "+j.reference:""));
     (j.tools||[]).forEach(t=>addActivity("",t.name,t.preview));
     addMsg("jarvis",j.text||"(no reply)");
     if(/^\/(new|reset|clear)\b/i.test(text)){     // slash reset → also clear the visible feed
       setTimeout(()=>{feed.innerHTML="";addMsg("sys","conversation reset");},800);
     }
-  }catch(err){ addMsg("sys","chat error: "+err.message); }
+  }catch(err){ addMsg("sys","Unable to get a reply: "+err.message); }
+  finally{chatSending=false;$("sendBtn").disabled=false;}
   if(state!=="listening")setState("standby","STANDBY");
 }
 $("sendBtn").onclick=sendChat;
