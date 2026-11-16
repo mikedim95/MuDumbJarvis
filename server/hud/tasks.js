@@ -139,9 +139,9 @@
     }
   }
 
-  async function submit(text) {
+  async function submit(text, objective = null) {
     if (submitting) return;
-    const isObjective = mode.value === 'objective';
+    const isObjective = objective === true || (objective === null && mode.value === 'objective');
     if (pending && (pending.input !== text || Boolean(pending.objective) !== isObjective)) {
       error('A previous submission is awaiting confirmation. Retry its original ' +
         (pending.objective ? 'CEO objective' : 'persistent task') + ' first: ' + pending.input);
@@ -149,7 +149,9 @@
     }
     if (!pending) {
       if (isObjective && !ceoId) { error('No CEO is configured. Refresh and retry.'); return; }
-      if (!el('taskAgent').value) { error('No ready agent is connected. Refresh and retry.'); return; }
+      if (isObjective ? !agents.some(agent => agent.id === ceoId && agent.lifecycleState === 'ready') : !el('taskAgent').value) {
+        error('No ready agent is connected. Refresh and retry.'); return;
+      }
       pending = {input: text, request_id: crypto.randomUUID(), objective: isObjective};
       if (!isObjective) pending.agent_id = el('taskAgent').value;
       localStorage.setItem('jarvis-task-pending', JSON.stringify(pending));
@@ -160,6 +162,9 @@
       pending = null; localStorage.removeItem('jarvis-task-pending');
       selected = task.id; localStorage.setItem('jarvis-task-selected', selected);
       el('chatInput').value = '';
+      if (isObjective && document.body.classList.contains('ai-minimal')) {
+        window.dispatchEvent(new CustomEvent('jarvis-objective-submitted', {detail: {task}}));
+      }
       await refresh();
       return task;
     } catch (err) {
@@ -173,7 +178,7 @@
     localStorage.setItem('jarvis-command-mode', mode.value);
     for (const id of ['taskPanel', 'taskAgentLabel', 'taskRefresh']) el(id).hidden = !isPersistent;
     el('feed').hidden = isPersistent; el('clearBtn').hidden = isPersistent;
-    el('chatInput').placeholder = document.body.classList.contains('ai-minimal') ? 'Talk to JARVIS…' : mode.value === 'objective' ? 'Give the CEO one objective to plan, execute and review…' :
+    el('chatInput').placeholder = document.body.classList.contains('ai-minimal') ? 'Talk to JARVIS… · @ceo for an objective' : mode.value === 'objective' ? 'Give the CEO one objective to plan, execute and review…' :
       (isPersistent ? 'Submit a persistent task to the selected agent…' : 'Type to Hermes… (/new resets your conversation)');
     el('sendBtn').textContent = mode.value === 'objective' ? 'SEND OBJECTIVE' : (isPersistent ? 'SEND TASK' : 'SEND');
     if (isPersistent) refresh(true);
@@ -185,6 +190,13 @@
       window.JarvisMonitor.clear(); await detail(); announce();
     },
     submitObjective: async text => {
+      if (document.body.classList.contains('ai-minimal')) {
+        try {
+          const data = await api('agents');
+          agents = data.agents; ceoId = data.ceo_id || null;
+          return await submit(text, true);
+        } catch (err) { error(err.message); announce(); return; }
+      }
       mode.value = 'objective'; changeMode();
       return submit(text);
     }

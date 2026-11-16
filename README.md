@@ -7,6 +7,9 @@ Direct chat uses **Codex / gpt-6.1-sol**, through its existing Hermes session,
 separately from CEO tasks. Every reply must confirm that actual provider and
 model; local fallback is disabled. Real agent tool activity and errors open
 small floating panels automatically. Ordinary conversation opens no dashboard.
+To interact with Paperclip from that same input, write `@ceo` followed by your
+objective. Its agent panel opens automatically and follows the native task,
+published updates and result; other messages remain direct Codex chat.
 See [minimal AI view, startup, verification and rollback](docs/MINIMAL_AI.md).
 The previous [CSI operations workspace](docs/CSI_WINDOWS.md) remains available
 to operators at `/hud/?layout=operations`.

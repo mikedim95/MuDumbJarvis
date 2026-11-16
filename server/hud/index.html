@@ -669,8 +669,20 @@ addEventListener("keydown",e=>{
 let chatSending=false;
 async function sendChat(){
   const inp=$("chatInput"); const text=inp.value.trim(); if(!text)return;
+  if(chatSending||window.JarvisTasks?.snapshot().submitting)return;
+  if(document.body.classList.contains("ai-minimal")&&/^@ceo(?:\s|$)/i.test(text)){
+    const objective=text.replace(/^@ceo\s*/i,"").trim();
+    if(!objective){addMsg("sys","Write your objective after @ceo to send it to the Paperclip CEO.");return;}
+    chatSending=true;$("sendBtn").disabled=true;addMsg("you",text);
+    try{
+      const task=await window.JarvisTasks.submitObjective(objective);
+      if(!task)throw new Error(window.JarvisTasks.snapshot().error||"Objective submission was not confirmed. Retry the same text.");
+      addMsg("sys",task.identifier+" sent to the Paperclip CEO. Its agent window follows the real task and result.");
+    }catch(err){addMsg("sys","Unable to submit the objective: "+err.message);}
+    finally{chatSending=false;$("sendBtn").disabled=false;}
+    return;
+  }
   if(["task","objective"].includes($("commandMode").value))return window.JarvisTasks.submit(text);
-  if(chatSending)return;
   chatSending=true;$("sendBtn").disabled=true;
   inp.value=""; addMsg("you",text); setState("thinking","PROCESSING");
   try{
@@ -932,7 +944,7 @@ if(document.body.classList.contains("ai-minimal")){
   setState("standby","JARVIS","");
 }else bootSequence(new URLSearchParams(location.search).get("boot")==="full");
 
-addMsg("sys",document.body.classList.contains("ai-minimal")?"What would you like to do?":"Jarvis HUD online. Click the ring or press Space to talk.");
+addMsg("sys",document.body.classList.contains("ai-minimal")?"Talk to me, or start an objective with @ceo.":"Jarvis HUD online. Click the ring or press Space to talk.");
 </script>
 <script src="monitor.js"></script>
 <script src="tasks.js"></script>

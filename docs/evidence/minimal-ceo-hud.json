@@ -1,0 +1,94 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T11:36:58.469Z",
+  "verification_only": true,
+  "task_id": "304e0e62-15be-4b8a-b89b-98444679a57c",
+  "identifier": "JAR-50",
+  "assignee_agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "assignee_name": "JARVIS-CEO",
+  "top_level_objective": true,
+  "request_id": "d6a60df8-5ed9-42e3-9108-084f6a610b12",
+  "submitted_via": "Default minimal chat input with @ceo prefix",
+  "task_statuses_observed": [
+    "in_progress",
+    "done"
+  ],
+  "native_run_ids": [
+    "4ad81f23-dfc2-4b85-8de4-c7462a537ccb"
+  ],
+  "verified_tool_event_id": "csi-be5706fc0e2744ed20d6f8a1",
+  "verified_tool_run_id": "4ad81f23-dfc2-4b85-8de4-c7462a537ccb",
+  "models_retrieved": [
+    {
+      "name": "jarvis-hermes-qwen24:7b",
+      "size_bytes": 4505856194,
+      "size_gib": 4.2
+    },
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size_bytes": 2953840525,
+      "size_gib": 2.75
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size_bytes": 2953840466,
+      "size_gib": 2.75
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size_bytes": 4683075812,
+      "size_gib": 4.36
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size_bytes": 4505856135,
+      "size_gib": 4.2
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size_bytes": 4505855004,
+      "size_gib": 4.2
+    },
+    {
+      "name": "ministral-3:3b",
+      "size_bytes": 2953840808,
+      "size_gib": 2.75
+    },
+    {
+      "name": "granite-code:3b",
+      "size_bytes": 1997354777,
+      "size_gib": 1.86
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size_bytes": 274302450,
+      "size_gib": 0.26
+    },
+    {
+      "name": "llama3.2:3b",
+      "size_bytes": 2019393189,
+      "size_gib": 1.88
+    }
+  ],
+  "artifact": {
+    "id": "9c4fc0eb-3b37-4b3b-b823-8516ff5a0f88",
+    "sha256": "76520f20020472cc859fce3a58c3e14e010b4a70bea0c7104e426288806e8aac",
+    "bytes": 1178
+  },
+  "genuine_partial_tool_observed_before_completion": true,
+  "automatic_agent_identity_visible": true,
+  "actual_result_visible": true,
+  "popup_and_task_restored_after_refresh": true,
+  "default_mode_remained_chat": true,
+  "send_label_remained_send": true,
+  "operator_controls_visible": false,
+  "created_once": true,
+  "task_posts_this_check": 0,
+  "direct_chat_posts": 0,
+  "new_employees": 0,
+  "paused_workers_unchanged": true,
+  "events_observed": 25,
+  "event_poll_requests": 5,
+  "browser_errors": [],
+  "execution_verification": "Native task, succeeded run, signed tool event and artifact correlated. Actual Codex provider trace must be independently checked in the Hermes runtime log."
+}

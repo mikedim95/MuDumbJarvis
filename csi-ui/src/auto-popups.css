@@ -39,6 +39,21 @@
 .csi-auto-chat-activity pre { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #b1cbd7; font: 11px/1.55 var(--cy-font-mono); }
 .csi-auto-chat-activity small { display: block; color: #92adba; line-height: 1.6; }
 .csi-auto-chat-activity p { color: #c0d7df; margin: 6px 0; overflow-wrap: anywhere; }
+.csi-objective { color: #b8d2dc; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.csi-objective-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #78e5ed; }
+.csi-objective-heading > strong { font: 600 13px var(--cy-font-mono); }
+.csi-objective-title { margin: 7px 0 12px; color: #d1e8ef; }
+.csi-objective-executor { display: grid; gap: 2px; border-left: 2px solid #4bc9cf; padding: 3px 9px; margin: 0 0 12px; }
+.csi-objective-executor > strong { color: #c5f5f1; font-size: 13px; }
+.csi-objective small { display: block; color: #8faab8; font-size: 10px; }
+.csi-objective-worker { margin: 5px 0; }
+.csi-objective-children { margin: 8px 0 12px; padding-left: 16px; color: #a6c8d6; }
+.csi-objective section { margin-top: 12px; }
+.csi-objective pre { color: #bad9e4; white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; font: 11px/1.6 var(--cy-font-mono); }
+.csi-objective-response { border-top: 1px solid #235766; padding-top: 10px; }
+.csi-objective-artifacts { display: grid; gap: 6px; }
+.csi-objective-artifacts a { color: #78e5ed; }
+.csi-objective-progress article { border-left: 1px solid #235766; padding-left: 9px; margin: 8px 0; }
 @media (max-width: 679px) {
   .csi-automatic .csi-auto-stage { top: 57px; bottom: 118px; }
   .csi-automatic .csi-window-content { padding: 13px; }

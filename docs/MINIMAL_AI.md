@@ -9,6 +9,37 @@ The operator interface is still available at `/hud/?layout=operations`.
 That explicit view contains the existing task history, approvals, monitoring,
 and CSI workspace. It is separate from the default conversation screen.
 
+## Interacting with Paperclip agents
+
+Use the same input with a CEO address:
+
+```text
+@ceo Inspect the local Ollama installation and report the installed model names and sizes.
+```
+
+That creates one persistent objective through the existing authenticated
+Paperclip integration and assigns it to the configured CEO. The agent window
+opens automatically with the native task identifier, assigned employee, status,
+published updates and final result. It restores its task reference after refresh
+and reloads the record from Paperclip. An uncertain submission keeps its request
+ID, so retry the same objective to avoid creating a duplicate.
+
+Messages without `@ceo` remain direct Codex conversation and do not create tasks.
+The single input stays in chat mode; no dashboard or mode selector is needed.
+The current CEO demo has read-only inventory/report authority. Research and
+Software employees remain paused; this UI connection does not enable delegation
+or resume the unfinished Phase 14 workflows.
+
+Verified objective **JAR-50** (`304e0e62-15be-4b8a-b89b-98444679a57c`)
+completed through this input in **38.836 seconds**, using Codex and actual
+Hermes tools. Paperclip run `4ad81f23-dfc2-4b85-8de4-c7462a537ccb` links to
+Hermes run `run_778c760746ba493a9e1169f35d90bc40`. The inventory matches all
+ten live Ollama models; the native report and agent window remained available
+after browser refresh and HUD service recreation. The first check created one
+objective; later checks observed the saved receipt and created none. No worker
+was resumed and no employee was hired. Evidence is in
+`docs/evidence/minimal-ceo-hud.json` and `minimal-ceo-execution.json`.
+
 ## Codex direct chat
 
 Direct chat now targets the existing dedicated Hermes profile
@@ -68,6 +99,12 @@ local inference silently. The original login file remains sensitive material.
 
 ```sh
 python3 deploy/check_minimal_codex.py
+
+# One real CEO objective from the same minimal input. An existing private
+# receipt means observe only; --verify-only never creates a new objective.
+python3 deploy/check_minimal_ceo.py
+python3 deploy/check_minimal_ceo.py --verify-only
+python3 deploy/verify_minimal_ceo.py
 ```
 
 This check exercises actual authenticated HUD chat and a real tool-triggered
