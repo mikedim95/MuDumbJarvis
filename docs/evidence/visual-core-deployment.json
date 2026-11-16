@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T08:15:23.796782+00:00",
+  "scope": "Visual HUD change only; prior automation remains stopped",
+  "containers_changed": [
+    "jarvis-hud"
+  ],
+  "other_running_containers_unchanged": 19,
+  "backend_base_image": "sha256:806cfa1086dcc21e6b6f53526acf2e8437fa9390b87223da58241ffe2de09768",
+  "deployed_hud_image": "sha256:64b098fd38ef5f0b154a14ccb9e942dc1011264d0e0044b681fbad0703778cfd",
+  "agents_remain_paused": [
+    {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS-01",
+      "status": "paused"
+    },
+    {
+      "id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "name": "JARVIS-DEV-01",
+      "status": "paused"
+    },
+    {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS-CEO",
+      "status": "paused"
+    }
+  ],
+  "runtime_timer": "inactive",
+  "no_model_or_protected_service_changes": true,
+  "asset_sha256": "89a9448ba6139ccf6a5bd22efbce73746d140b5d89464fa4042ad559b8953d60",
+  "upstream_commit": "a1fba5dc0687ec8145acd83fe316103272863356",
+  "rollback_tag": "jarvis-command-center:hud-before-particle-core"
+}

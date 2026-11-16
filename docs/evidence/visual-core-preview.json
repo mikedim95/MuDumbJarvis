@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T08:09:02.503Z",
+  "variant": "preview",
+  "source": "Authenticated HUD with source frontend preview; real read-only FastAPI/Paperclip APIs",
+  "core": {
+    "renderer": "webgl2",
+    "arrangement": "ring",
+    "state": "standby",
+    "frame": 189,
+    "particles": 6400,
+    "reducedMotion": false,
+    "hidden": false,
+    "motionTime": 11.744200000000014,
+    "audioEnergy": {
+      "average": 0,
+      "low": 0,
+      "mid": 0,
+      "high": 0,
+      "transient": 0
+    },
+    "disposed": false
+  },
+  "animation_changes_verified": true,
+  "real_audio_analysis_verified": {
+    "average": 0.6737202053769605,
+    "low": 0.6737202053769605,
+    "mid": 0.6249793388416974,
+    "high": 0.1300011594235437,
+    "transient": 0.7630722413178782
+  },
+  "direct_state_reactivity": true,
+  "reduced_motion_verified": true,
+  "mobile_layout_verified": true,
+  "persisted_result_and_artifact_verified": {
+    "issue": "27b20fae-a51b-43ab-9f36-514199fab977",
+    "artifact": "ee2e4a7e-3ddf-4e61-8a5a-55c466742953",
+    "sha256": "b94cbd86051a7c5cf7034971fb14f6a4c30d951f7f0ad07063a4f88955e6ad61"
+  },
+  "history_after_reload": true,
+  "unauthenticated_api_denied": true,
+  "backend_mutations": [],
+  "no_agent_inference_requested": true,
+  "page_errors": [],
+  "shader_errors": [],
+  "controlled_fixtures": "Browser-only speaking/thinking signals and a silent oscillator; not represented as agent execution."
+}

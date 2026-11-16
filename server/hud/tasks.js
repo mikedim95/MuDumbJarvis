@@ -9,6 +9,12 @@
   try { pending = JSON.parse(localStorage.getItem('jarvis-task-pending') || 'null'); } catch {}
   const error = message => { el('taskError').textContent = message; };
   const persistent = () => mode.value === 'task' || mode.value === 'objective';
+  function visualState(task) {
+    const active = item => Boolean(item.executionRunId) || (item.runs || []).some(r => r.status === 'running') || (item.children || []).some(active);
+    // Presentation snapshot only. Paperclip remains the source of every status.
+    window.JarvisTaskVisualState = task ? {identifier: task.identifier, status: task.status, active: active(task)} : null;
+    window.dispatchEvent(new CustomEvent('jarvis-task-visual-state', {detail: window.JarvisTaskVisualState}));
+  }
   const agentName = id => {
     const agent = agents.find(item => item.id === id);
     return agent ? agent.name + (agent.role ? ' (' + agent.role + ')' : '') : (id || 'unassigned');
@@ -58,6 +64,7 @@
     const target = selected;
     const task = await api('tasks/' + encodeURIComponent(target));
     if (selected !== target) return;
+    visualState(task);
     const lines = [task.identifier + ' · ' + task.status, 'Paperclip ID: ' + task.id,
       'Assigned to: ' + agentName(task.assigneeAgentId)];
     if (task.parentId) {
@@ -116,6 +123,7 @@
       if (!pending) error('');
       if (mode.value === 'objective' && !ceoId) error('The Paperclip CEO is not configured. Persistent task and Direct chat remain available.');
     } catch (err) {
+      visualState(null);
       el('taskConnection').textContent = 'Paperclip connection failed — displayed data may be stale.';
       error(err.message);
     } finally {
@@ -157,6 +165,7 @@
 
   function changeMode() {
     const isPersistent = persistent();
+    visualState(null);
     localStorage.setItem('jarvis-command-mode', mode.value);
     for (const id of ['taskPanel', 'taskAgentLabel', 'taskRefresh']) el(id).hidden = !isPersistent;
     el('feed').hidden = isPersistent; el('clearBtn').hidden = isPersistent;

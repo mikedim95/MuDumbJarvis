@@ -1,0 +1,7 @@
+# Apply only the verified frontend to an existing JARVIS image. This avoids
+# deploying unrelated in-progress backend/agent changes in a dirty checkout.
+ARG HUD_BASE=jarvis-command-center:hud
+FROM ${HUD_BASE}
+COPY --chown=1000:1000 server/hud/index.html /app/server/hud/index.html
+COPY --chown=1000:1000 server/hud/tasks.js /app/server/hud/tasks.js
+COPY --chown=1000:1000 server/hud/core /app/server/hud/core

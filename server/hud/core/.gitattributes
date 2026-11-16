@@ -1,0 +1,2 @@
+# Three.js retains multiline GLSL strings inside the generated JS bundle.
+visual-core.js -whitespace

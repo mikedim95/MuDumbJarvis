@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JARVIS">
 <meta name="theme-color" content="#050b14">
+<script src="core/visual-core.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -54,7 +55,10 @@ header .sub{font-size:12px; letter-spacing:3px; color:var(--txt-dim)}
 .dot.off{background:var(--red); box-shadow:0 0 6px var(--red)}
 #center{display:flex; flex-direction:column; align-items:center; justify-content:flex-start; position:relative; overflow:hidden}
 #reactorWrap{position:relative; width:min(46vh,440px); height:min(46vh,440px); cursor:pointer; flex-shrink:0}
-#reactor{width:100%; height:100%}
+#reactor{display:block; width:100%; height:100%; pointer-events:none}
+#reactorWrap:focus-visible{outline:1px solid var(--cyan-dim);outline-offset:-12px;border-radius:50%}
+#reactorWrap::before{content:"";position:absolute;inset:14%;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle,transparent 44%,#00e5ff08 60%,transparent 73%);filter:blur(12px)}
 #coreState{
   position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   pointer-events:none; font-family:'Orbitron';
@@ -237,6 +241,10 @@ body.booted header{animation:panelIn .4s backwards}
   #coreState .st{font-size:12px; letter-spacing:4px}
   #coreState .hint{font-size:8px}
   #feed{max-height:34dvh; min-height:90px}
+  #commandModes{flex-wrap:wrap}
+  #taskAgentLabel{display:flex;align-items:center;gap:6px;flex:1;min-width:160px}
+  #taskAgent{flex:1;min-width:0;width:0}
+  #taskPanel{flex:none;max-height:48dvh;min-height:160px}
   .col{order:2; overflow:visible; flex-shrink:0}
   .col:last-of-type{order:3}
   footer{order:4; flex-shrink:0; padding:6px 14px}
@@ -315,9 +323,9 @@ footer{
   <!-- CENTER -->
   <div id="center">
     <div id="approvals"></div>
-    <div id="reactorWrap" title="Click to talk">
-      <canvas id="reactor"></canvas>
-      <div id="coreState"><div class="st" id="stateLabel">STANDBY</div><div class="hint" id="stateHint">CLICK RING OR SPACE TO TALK</div></div>
+    <div id="reactorWrap" title="Click to talk" role="button" tabindex="0" aria-label="Activate voice input">
+      <canvas id="reactor" aria-hidden="true"></canvas>
+      <div id="coreState" role="status" aria-live="polite"><div class="st" id="stateLabel">STANDBY</div><div class="hint" id="stateHint">ENTER AN OBJECTIVE BELOW</div></div>
     </div>
     <div id="feed"></div>
     <div id="commandModes">
@@ -419,61 +427,16 @@ const feed=$("feed");
 setInterval(()=>{const d=new Date();$("clock").textContent=d.toTimeString().slice(0,8)},500);
 
 /* ============================== reactor ============================ */
-const cv=$("reactor"), ctx=cv.getContext("2d");
-function sizeCanvas(){const r=cv.parentElement.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio}
-sizeCanvas(); addEventListener("resize",sizeCanvas);
-let rot=0;
-const STATE_STYLE={
-  standby:{speed:.15,color:"#00e5ff",glow:18,pulse:0},
-  listening:{speed:.5,color:"#19f0d8",glow:30,pulse:1},
-  thinking:{speed:1.6,color:"#ffb300",glow:26,pulse:.4},
-  tool:{speed:2.4,color:"#ffb300",glow:32,pulse:.6},
-  speaking:{speed:.7,color:"#00e5ff",glow:34,pulse:.8},
-  error:{speed:.05,color:"#ff4d5e",glow:22,pulse:0},
-};
-function drawRing(cx,cy,r,w,color,alpha,dash,offset){
-  ctx.beginPath(); ctx.strokeStyle=color; ctx.globalAlpha=alpha; ctx.lineWidth=w;
-  if(dash)ctx.setLineDash(dash); else ctx.setLineDash([]);
-  ctx.lineDashOffset=offset||0;
-  ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1; ctx.setLineDash([]);
-}
-function frame(t){
-  const s=STATE_STYLE[state]||STATE_STYLE.standby;
-  rot+=s.speed;
-  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
-  const base=Math.min(W,H)*0.40;
-  ctx.clearRect(0,0,W,H);
-  ctx.shadowColor=s.color; ctx.shadowBlur=s.glow*devicePixelRatio;
-  const pulse=1+Math.sin(t/300)*0.012*(1+s.pulse*3)+(state==="listening"?level*0.10:0);
-  drawRing(cx,cy,base*pulse,2*devicePixelRatio,s.color,.9);
-  drawRing(cx,cy,base*.86,1.2*devicePixelRatio,s.color,.45,[40,18],rot*2);
-  drawRing(cx,cy,base*.72,5*devicePixelRatio,s.color,.25,[4,10],-rot*3);
-  drawRing(cx,cy,base*.58,1.5*devicePixelRatio,s.color,.6,[90,40],rot*1.2);
-  // ticks
-  ctx.shadowBlur=0;
-  for(let i=0;i<60;i++){
-    const a=(i/60)*Math.PI*2+rot/180;
-    const r1=base*1.06,r2=base*(i%5===0?1.12:1.09);
-    ctx.beginPath(); ctx.strokeStyle=s.color; ctx.globalAlpha=i%5===0?.8:.3;
-    ctx.lineWidth=devicePixelRatio;
-    ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
-    ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2); ctx.stroke();
-  }
-  ctx.globalAlpha=1;
-  // core
-  ctx.shadowColor=s.color; ctx.shadowBlur=40*devicePixelRatio;
-  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,base*.42);
-  g.addColorStop(0,s.color+"55"); g.addColorStop(1,"transparent");
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,base*.42,0,Math.PI*2); ctx.fill();
-  ctx.shadowBlur=0;
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-
+let directStateLabel="STANDBY", directStateHint="CLICK RING OR SPACE TO TALK";
+window.JarvisCoreSignals={read:()=>({state,level:capturing?level:0,playing:activeSources.length>0,
+  label:directStateLabel,hint:directStateHint})};
 function setState(st,label,hint){
   state=st;
+  directStateLabel=label;
+  if(hint!==undefined)directStateHint=hint;
   $("stateLabel").textContent=label;
   if(hint!==undefined)$("stateHint").textContent=hint;
+  window.dispatchEvent(new Event("jarvis-core-state"));
 }
 
 /* ============================== feed =============================== */
@@ -579,9 +542,10 @@ function playChunk(buf){
   for(let i=0;i<i16.length;i++)f32[i]=i16[i]/32768;
   const ab=audioCtx.createBuffer(1,f32.length,16000); ab.copyToChannel(f32,0);
   const src=audioCtx.createBufferSource(); src.buffer=ab; src.connect(audioCtx.destination);
+  const detachVisual=window.JarvisVisualCore?.attachAudio("output",audioCtx,src);
   const t=Math.max(audioCtx.currentTime+0.06,playhead);
   src.start(t); playhead=t+ab.duration;
-  activeSources.push(src); src.onended=()=>{activeSources=activeSources.filter(x=>x!==src)};
+  activeSources.push(src); src.onended=()=>{detachVisual?.();activeSources=activeSources.filter(x=>x!==src)};
   audioArrived=true;
 }
 function stopPlayback(){ activeSources.forEach(s=>{try{s.stop()}catch{}}); activeSources=[]; playhead=0; }
@@ -632,6 +596,7 @@ async function initMic(){
       if(capturing)$("levelBar").style.width=(level*100).toFixed(0)+"%";
     };
     srcNode.connect(workletNode);
+    window.JarvisVisualCore?.attachAudio("input",audioCtx,srcNode);
   }
   $("micDot").className="dot on"; $("micState").textContent="ready";
 }
@@ -656,6 +621,7 @@ async function toggleTalk(){
 }
 $("talkBtn").onclick=toggleTalk;
 $("reactorWrap").onclick=toggleTalk;
+$("reactorWrap").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();toggleTalk()}});
 $("stopBtn").onclick=stopRun;
 
 /* ---- pop-up viewer ---- */
