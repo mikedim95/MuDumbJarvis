@@ -1,0 +1,8 @@
+# AI-first view and safe Codex binding over the verified command-center image.
+ARG HUD_BASE=jarvis-command-center:hud-before-minimal-ai
+FROM ${HUD_BASE}
+COPY --chown=1000:1000 server/server.py /app/server/server.py
+COPY --chown=1000:1000 server/hud/index.html /app/server/hud/index.html
+COPY --chown=1000:1000 server/hud/tasks.js /app/server/hud/tasks.js
+COPY --chown=1000:1000 server/hud/ai-minimal.css /app/server/hud/ai-minimal.css
+COPY --chown=1000:1000 server/hud/csi /app/server/hud/csi

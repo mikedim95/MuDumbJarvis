@@ -1,5 +1,11 @@
 # Direct chat provider binding and error handling
 
+**Historical local-provider repair:** the user subsequently requested Codex for
+direct chat. The active configuration is now `openai-codex / gpt-6.1-sol`,
+enforced on every request and validated against the completed runtime. See
+[current minimal AI configuration](MINIMAL_AI.md). Do not apply the local model
+binding below to the active demo. The safe error and retry behavior remains.
+
 The reported `Hermes stream error: {"session_id": ...}` was a failed runtime
 envelope, not an assistant reply. Two provider identities had diverged:
 
@@ -89,7 +95,7 @@ commit, which leaves earlier unfinished Phase 14 changes outside this repair.
 The unrelated pre-existing `/v1/skills` compatibility error is not part of
 this fix. It does not route chat or provide inference.
 
-When resuming earlier model-selection work, preserve the direct-chat profile's
+For the historical local configuration, preserve the direct-chat profile's
 bare `custom` identity. Changing it back to a named provider can reintroduce the
 confirmed Sessions API lock mismatch in this installed version. Worker
 `/v1/runs` adapters and the Codex CEO use separate profiles and are unchanged.

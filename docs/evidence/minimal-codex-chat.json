@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T11:24:39.153Z",
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "real_replies": [
+    {
+      "input": "Reply exactly CODEX_CHAT_READY.",
+      "reply": "CODEX_CHAT_READY",
+      "run_id": "run_adde6201dadd477795c3bfb40ae9b191",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "seconds": 2.612,
+      "request_id": "c6a0278e2703"
+    },
+    {
+      "input": "Repeat your previous answer exactly.",
+      "reply": "CODEX_CHAT_READY",
+      "run_id": "run_dca94d64ed234d8190c95be6fc7e2465",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "seconds": 2.636,
+      "request_id": "790a846dd33e"
+    },
+    {
+      "input": "Use your available local_ollama_models tool to retrieve the installed model names and sizes. List the returned model names. This is only a metadata read; use Codex for inference.",
+      "reply": "jarvis-hermes-qwen24:7b — 4.2 GiB\njarvis-hermes-aigoat24:3b — 2.75 GiB\njarvis-hermes:3b — 2.75 GiB\npentagi-basilisk:7b — 4.36 GiB\npentagi-whiterabbitneo:7b — 4.2 GiB\nWhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest — 4.2 GiB\nministral-3:3b — 2.75 GiB\ngranite-code:3b — 1.86 GiB\nnomic-embed-text:latest — 0.26 GiB\nllama3.2:3b — 1.88 GiB\n\nMetadata read only; inference remains on Codex.",
+      "run_id": "run_4ced4d5bede14f56a0b6c020db4ffebd",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "seconds": 10.707,
+      "request_id": "ae23692ed0ba"
+    }
+  ],
+  "manual_dashboard_controls_visible": false,
+  "old_view_preferences_overridden": true,
+  "ordinary_chat_has_no_popups": true,
+  "agent_tool_popup_triggered": true,
+  "trigger_request_id": "ae23692ed0ba",
+  "source": "Real authenticated HUD chat and backend WebSocket tool event",
+  "paperclip_tasks_created": 0,
+  "history_unchanged": true,
+  "mobile_input_visible": true,
+  "local_inference_accepted": false,
+  "browser_errors": []
+}

@@ -3,6 +3,7 @@ import {AnimatePresence,MotionConfig} from 'motion/react';
 import CSIWindow from './CSIWindow.jsx';
 import {PANELS,clampRect,defaultRect,readPreferences,panelFor} from './state.mjs';
 import {Identity,Files,Warnings,OperationLog,Links,CaseTimeline,Network,Metadata,Decryption,AgentChannel,Empty} from './panels.jsx';
+import AutoPopups from './AutoPopups.jsx';
 
 const store={get:key=>{try{return localStorage.getItem(key);}catch{return null;}},set:(key,value)=>{try{localStorage.setItem(key,value);}catch{}}};
 const defaultBridge=()=>window.JarvisTasks?.snapshot()||{tasks:[],agents:[],selected:null,submitting:false};
@@ -166,7 +167,7 @@ function Workspace({onClose}){
   <div className="csi-footer"><span>Paperclip is authoritative · public plans / tool evidence / saved results</span><span>{data?.limits.truncated?'Display limit reached; full history remains in Paperclip.':'3 s polling · '+(compact?'compact panel view':'drag / resize / minimize')} · no synthetic findings</span></div>
  </section></MotionConfig>;
 }
-export default function App(){
+function OperationsApp(){
  const [open,setOpen]=useState(()=>store.get('jarvis-csi-open')==='true');
  useEffect(()=>{
   const launch=()=>setOpen(true),button=document.getElementById('csiLaunch');
@@ -175,4 +176,7 @@ export default function App(){
  },[]);
  useEffect(()=>{store.set('jarvis-csi-open',String(open));},[open]);
  return open?<Workspace onClose={()=>{setOpen(false);document.getElementById('csiLaunch')?.focus();}}/>:null;
+}
+export default function App(){
+ return document.body.classList.contains('ai-minimal')?<AutoPopups/>:<OperationsApp/>;
 }

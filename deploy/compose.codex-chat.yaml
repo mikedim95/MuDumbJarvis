@@ -1,0 +1,14 @@
+# User-selected Codex direct chat. CEO and chat retain separate profiles/sessions.
+services:
+  jarvis:
+    environment:
+      JARVIS_CHAT_PROVIDER: openai-codex
+      JARVIS_CHAT_MODEL: gpt-6.1-sol
+  hermes:
+    environment:
+      OPENAI_API_KEY: ''
+      HERMES_PAPERCLIP_AGENT_KEY: ''
+      JARVIS_EXECUTION_PROOF_KEY: ''
+      JARVIS_RUNTIME_MODEL: gpt-6.1-sol
+      JARVIS_INFERENCE_CONFIGURATION: ''
+    networks: [agent-private, default]

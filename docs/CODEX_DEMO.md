@@ -1,5 +1,9 @@
 # Codex-powered CEO demo
 
+Direct chat now also uses Codex in its separate Hermes profile, with a minimal
+AI-only default screen and agent-triggered popups. See [current chat and UI
+configuration](MINIMAL_AI.md). This document records the separate CEO demo.
+
 The user explicitly requested Codex in place of local inference for a demo.
 The existing CEO uses `gpt-6.1-sol`, with Hermes' normal `openai-codex` provider
 and its existing server-side Codex login. This is a separate model session with
@@ -19,8 +23,9 @@ timer remains stopped. Native manual pause holds protect JAR-29, JAR-32, and
 JAR-44 and their descendants. Their existing failures and reconciliation holds
 are not repaired, retried, or counted as successful Phase 14 work.
 
-Local Ollama's 24-thread, single-slot configuration, models, direct Hermes chat,
-AIGoat, and PentAGI are preserved. The demo's inventory query reads Ollama
+Local Ollama's 24-thread, single-slot configuration, models, AIGoat, and PentAGI
+are preserved. Direct chat was subsequently switched to Codex by explicit user
+request. The demo's inventory query reads Ollama
 metadata; its LLM generation goes to Codex. The HUD labels the CEO provider
 separately from the local resource panel. Cloud response time does not measure
 local inference performance.
@@ -42,17 +47,18 @@ the existing server login via Hermes' credential-store helper, and stages the
 signed model selection. Credentials never reach the frontend or Git. No
 workstation login is copied and the source Codex login is not changed.
 
-Restart only the two changed services, retaining the demo overlay:
+Restart only the relevant services, retaining both current demo overlays:
 
 ```sh
 docker compose --env-file deploy/.env --env-file deploy/codex-demo.env \
   -f deploy/compose.yaml -f deploy/compose.codex-demo.yaml \
+  -f deploy/compose.codex-chat.yaml \
   up -d --no-deps jarvis hermes-ceo
 docker logs --tail 100 jarvis-hermes-ceo
 docker logs --tail 100 jarvis-hud
 ```
 
-The overlay gives only the CEO outbound connectivity for the authorized cloud
+The CEO overlay gives its runtime outbound connectivity for the authorized cloud
 provider. Its API remains behind the existing authenticated TLS gateway. The
 native agent still uses `hermes_gateway` with Paperclip-managed secret references.
 Its max concurrent runs and Hermes gateway limit remain one. There is no local

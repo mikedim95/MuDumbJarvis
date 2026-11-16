@@ -173,7 +173,7 @@
     localStorage.setItem('jarvis-command-mode', mode.value);
     for (const id of ['taskPanel', 'taskAgentLabel', 'taskRefresh']) el(id).hidden = !isPersistent;
     el('feed').hidden = isPersistent; el('clearBtn').hidden = isPersistent;
-    el('chatInput').placeholder = mode.value === 'objective' ? 'Give the CEO one objective to plan, execute and review…' :
+    el('chatInput').placeholder = document.body.classList.contains('ai-minimal') ? 'Talk to JARVIS…' : mode.value === 'objective' ? 'Give the CEO one objective to plan, execute and review…' :
       (isPersistent ? 'Submit a persistent task to the selected agent…' : 'Type to Hermes… (/new resets your conversation)');
     el('sendBtn').textContent = mode.value === 'objective' ? 'SEND OBJECTIVE' : (isPersistent ? 'SEND TASK' : 'SEND');
     if (isPersistent) refresh(true);
@@ -189,9 +189,9 @@
       return submit(text);
     }
   };
-  mode.value = pending ? (pending.objective ? 'objective' : 'task') : (localStorage.getItem('jarvis-command-mode') || 'objective');
+  mode.value = document.body.classList.contains('ai-minimal') ? 'chat' : pending ? (pending.objective ? 'objective' : 'task') : (localStorage.getItem('jarvis-command-mode') || 'objective');
   if (!['chat', 'task', 'objective'].includes(mode.value)) mode.value = 'objective';
-  if (pending) el('chatInput').value = pending.input;
+  if (pending && persistent()) el('chatInput').value = pending.input;
   mode.onchange = changeMode;
   el('taskAgent').onchange = () => { if (mode.value === 'task') localStorage.setItem('jarvis-task-agent', el('taskAgent').value); };
   el('taskRefresh').onclick = () => { error(''); refresh(true); };

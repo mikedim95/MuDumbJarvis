@@ -1,0 +1,45 @@
+/* An event-driven layer, not another dashboard. The conversation remains usable. */
+.csi-workspace.csi-automatic {
+  z-index: 110;
+  pointer-events: none;
+  background: none;
+  display: block;
+  isolation: isolate;
+}
+.csi-automatic .csi-auto-stage {
+  position: absolute;
+  top: 65px;
+  right: 0;
+  bottom: 110px;
+  left: 0;
+  min-height: 0;
+  pointer-events: none;
+  background: none;
+}
+.csi-automatic .csi-auto-stage::before,
+.csi-automatic .csi-auto-stage::after { display: none; }
+.csi-automatic [data-csi-minimize],
+.csi-automatic .csi-window-updated,
+.csi-automatic button.csi-action,
+.csi-automatic .react-flow__controls { display: none; }
+.csi-automatic .csi-window-handle { flex-basis: 38px; }
+.csi-automatic .csi-window-meta { flex-basis: 25px; }
+.csi-automatic .csi-window-controls button { width: 24px; height: 24px; }
+.csi-automatic .csi-window-content { padding: 12px; }
+.csi-automatic .csi-agent-card .cy-profile__stats { grid-template-columns: 1fr; gap: 7px; text-align: left; }
+.csi-automatic .csi-agent-card .cy-profile__stats div { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 0; }
+.csi-automatic .csi-agent-card .cy-profile__stats dd { margin: 0; }
+.csi-automatic .csi-agent-card > small,
+.csi-automatic .csi-event > small { display: none; }
+.csi-automatic .csi-label select { display: none; }
+.csi-automatic a.csi-action { border: 0; padding: 0; background: none; font-size: 10px; }
+.csi-auto-chat-activity ul { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 11px; }
+.csi-auto-chat-activity li { border-left: 1px solid #3d8c9b; padding-left: 10px; }
+.csi-auto-chat-activity strong { display: block; color: #c4edf0; font-size: 12px; }
+.csi-auto-chat-activity pre { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #b1cbd7; font: 11px/1.55 var(--cy-font-mono); }
+.csi-auto-chat-activity small { display: block; color: #92adba; line-height: 1.6; }
+.csi-auto-chat-activity p { color: #c0d7df; margin: 6px 0; overflow-wrap: anywhere; }
+@media (max-width: 679px) {
+  .csi-automatic .csi-auto-stage { top: 57px; bottom: 118px; }
+  .csi-automatic .csi-window-content { padding: 13px; }
+}

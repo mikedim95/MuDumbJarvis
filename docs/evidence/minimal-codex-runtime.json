@@ -1,0 +1,154 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T11:25:29.013464+00:00",
+  "runtime_runs": [
+    {
+      "run_id": "run_adde6201dadd477795c3bfb40ae9b191",
+      "status": "completed",
+      "session_id": "api_1794464162_4c830cc5",
+      "created_at": 1794828255.7879071,
+      "usage": {
+        "input_tokens": 5139,
+        "output_tokens": 8,
+        "runtime": {
+          "model": "gpt-6.1-sol",
+          "model_lock": "confirmed",
+          "provider": "openai-codex",
+          "requested": {
+            "model": "gpt-6.1-sol",
+            "provider": "openai-codex"
+          },
+          "route_source": "raw_request"
+        },
+        "total_tokens": 5147
+      }
+    },
+    {
+      "run_id": "run_dca94d64ed234d8190c95be6fc7e2465",
+      "status": "completed",
+      "session_id": "api_1794464162_4c830cc5",
+      "created_at": 1794828258.353575,
+      "usage": {
+        "input_tokens": 5159,
+        "output_tokens": 8,
+        "runtime": {
+          "model": "gpt-6.1-sol",
+          "model_lock": "confirmed",
+          "provider": "openai-codex",
+          "requested": {
+            "model": "gpt-6.1-sol",
+            "provider": "openai-codex"
+          },
+          "route_source": "raw_request"
+        },
+        "total_tokens": 5167
+      }
+    },
+    {
+      "run_id": "run_4ced4d5bede14f56a0b6c020db4ffebd",
+      "status": "completed",
+      "session_id": "api_1794464162_4c830cc5",
+      "created_at": 1794828261.1707838,
+      "usage": {
+        "input_tokens": 11680,
+        "output_tokens": 208,
+        "runtime": {
+          "model": "gpt-6.1-sol",
+          "model_lock": "confirmed",
+          "provider": "openai-codex",
+          "requested": {
+            "model": "gpt-6.1-sol",
+            "provider": "openai-codex"
+          },
+          "route_source": "raw_request"
+        },
+        "total_tokens": 11888
+      }
+    }
+  ],
+  "original_direct_session_preserved": true,
+  "direct_provider": "openai-codex",
+  "direct_model": "gpt-6.1-sol",
+  "local_fallback": false,
+  "ceo_profile_separate": true,
+  "ceo_provider": "openai-codex",
+  "chat_paperclip_authority_removed": true,
+  "actual_inventory_tool_timestamp": 1794828264.970538,
+  "inventory_matches_live_ollama_api": true,
+  "models": [
+    {
+      "name": "jarvis-hermes-qwen24:7b",
+      "size_bytes": 4505856194
+    },
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size_bytes": 2953840525
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size_bytes": 2953840466
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size_bytes": 4683075812
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size_bytes": 4505856135
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size_bytes": 4505855004
+    },
+    {
+      "name": "ministral-3:3b",
+      "size_bytes": 2953840808
+    },
+    {
+      "name": "granite-code:3b",
+      "size_bytes": 1997354777
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size_bytes": 274302450
+    },
+    {
+      "name": "llama3.2:3b",
+      "size_bytes": 2019393189
+    }
+  ],
+  "employees": [
+    {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS-01",
+      "status": "paused"
+    },
+    {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS-CEO",
+      "status": "idle"
+    },
+    {
+      "id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "name": "JARVIS-DEV-01",
+      "status": "paused"
+    }
+  ],
+  "worker_timer": "inactive",
+  "old_objective_holds": [
+    "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+    "48560754-910f-4521-b5c9-ad4078efef24",
+    "eeb52003-acef-4a34-98cf-45ffe585919e"
+  ],
+  "protected_container_ids_unchanged": [
+    "pentagi",
+    "pentagi-terminal-4",
+    "aigoat-backend-1",
+    "aigoat-ollama-1",
+    "aigoat-frontend-1",
+    "ollama"
+  ],
+  "backend_selected_source_tests": 338,
+  "frontend_tests": 5,
+  "unauthenticated_no_origin_socket": "403 rejected in actual deployed service"
+}

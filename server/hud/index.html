@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#050b14">
 <script src="core/visual-core.js" defer></script>
 <link rel="stylesheet" href="csi/csi-workspace.css">
+<link rel="stylesheet" href="ai-minimal.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -266,7 +267,8 @@ footer{
 .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--cyan-dim),var(--cyan)); width:0%; transition:width .4s}
 </style>
 </head>
-<body>
+<body class="ai-minimal">
+<script>if(new URLSearchParams(location.search).get("layout")==="operations")document.body.classList.remove("ai-minimal");</script>
 <div id="pinGate" style="display:none; position:fixed; inset:0; z-index:200; background:#020509f2;
   flex-direction:column; align-items:center; justify-content:center; gap:14px">
   <div style="font-family:'Orbitron'; font-size:18px; letter-spacing:8px; color:var(--cyan); text-shadow:0 0 20px #00e5ff88">ACCESS CODE</div>
@@ -283,6 +285,7 @@ footer{
 <div id="grid">
   <header>
     <h1>J.A.R.V.I.S</h1>
+    <div id="aiProvider" role="status">Connecting…</div>
     <div class="sub">HERMES AGENT INTERFACE &nbsp;//&nbsp; <span id="connState">LINK DOWN</span></div>
     <div id="clock">--:--:--</div>
   </header>
@@ -498,7 +501,11 @@ function connect(){
   ws.onmessage=ev=>{
     if(ev.data instanceof ArrayBuffer){playChunk(ev.data);return}
     let e; try{e=JSON.parse(ev.data)}catch{return}
-    if(e.type==="summon_panel"){ summonPanel(e); }
+    if(e.type==="chat_activity"){
+      if(e.kind==="tool")setState("tool","WORKING");
+      window.dispatchEvent(new CustomEvent("jarvis-ai-activity",{detail:e}));
+    }
+    else if(e.type==="summon_panel"){ summonPanel(e); }
     else if(e.type==="dismiss_panels"){ dismissAllPanels(); }
     else if(e.type==="partial_transcript"){ showLive(e.text); }
     else if(e.type==="transcript"){ clearLive(); if(e.text)addMsg("you",e.text); }
@@ -622,8 +629,12 @@ async function toggleTalk(){
   setState("listening","LISTENING","CLICK AGAIN TO SEND");
 }
 $("talkBtn").onclick=toggleTalk;
-$("reactorWrap").onclick=toggleTalk;
-$("reactorWrap").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();toggleTalk()}});
+$("reactorWrap").onclick=()=>{if(!document.body.classList.contains("ai-minimal"))toggleTalk()};
+$("reactorWrap").addEventListener("keydown",e=>{if(e.key==="Enter"&&!document.body.classList.contains("ai-minimal")){e.preventDefault();toggleTalk()}});
+if(document.body.classList.contains("ai-minimal")){
+  $("reactorWrap").setAttribute("role","img");$("reactorWrap").setAttribute("aria-label","JARVIS AI core");
+  $("reactorWrap").tabIndex=-1;$("reactorWrap").title="";
+}
 $("stopBtn").onclick=stopRun;
 
 /* ---- pop-up viewer ---- */
@@ -642,12 +653,14 @@ $("viewerPop").onclick=()=>{window.open($("viewerIframe").src,"_blank");closeVie
 $("viewer").addEventListener("click",e=>{if(e.target.id==="viewer")closeView()});
 addEventListener("keydown",e=>{
   if(e.key!=="Escape")return;
+  if(document.body.classList.contains("ai-minimal"))return;
   if(document.getElementById("csiWorkspace"))return;
   if(document.querySelector(".holo:not(.dismiss)"))dismissAllPanels();
   else if($("viewer").classList.contains("open"))closeView();
   else stopRun();
 });
 addEventListener("keydown",e=>{
+  if(document.body.classList.contains("ai-minimal"))return;
   if(document.getElementById("csiWorkspace"))return;
   if(e.code==="Space"&&!document.activeElement.matches("input,textarea,select,button")){e.preventDefault();toggleTalk()}
 });
@@ -666,6 +679,7 @@ async function sendChat(){
     const j=await r.json();
     if(!r.ok)throw new Error((j.error||"Direct chat is unavailable.")+(j.reference?" Reference: "+j.reference:""));
     (j.tools||[]).forEach(t=>addActivity("",t.name,t.preview));
+    if(j.runtime?.provider){showBrain(j.runtime);}
     addMsg("jarvis",j.text||"(no reply)");
     if(/^\/(new|reset|clear)\b/i.test(text)){     // slash reset → also clear the visible feed
       setTimeout(()=>{feed.innerHTML="";addMsg("sys","conversation reset");},800);
@@ -723,12 +737,16 @@ async function refreshMachines(){
   }catch{ $("machinesList").innerHTML="<div class='kv'><span>unavailable</span></div>"; }
 }
 const fmtK=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":String(n||0);
+function showBrain(runtime){
+  $("loadoutBrain").textContent=[runtime.provider||"unknown",runtime.model].filter(Boolean).join(" · ");
+  $("aiProvider").textContent=[runtime.provider==="openai-codex"?"Codex":runtime.provider,runtime.model].filter(Boolean).join(" · ");
+}
 async function refreshUsage(){
   try{
     const r=await fetch("/api/usage"); const j=await r.json();
     const runtime=j.runtime;
     if(runtime){
-      $("loadoutBrain").textContent=runtime.provider||"unknown";
+      showBrain(runtime);
       $("loadoutStt").textContent=runtime.voice_enabled?(runtime.stt_model||"—"):"disabled";
       $("loadoutTts").textContent=runtime.voice_enabled?(runtime.tts_model||"—"):"disabled";
       $("loadoutFallback").textContent=runtime.fallback_provider||"disabled";
@@ -750,10 +768,13 @@ async function refreshUsage(){
     }
   }catch{}
 }
-refreshHealth();refreshSkills();refreshJobs();refreshMachines();refreshUsage();
+refreshUsage();
 setInterval(refreshUsage,60000);
-setInterval(refreshHealth,15000); setInterval(refreshJobs,60000); setInterval(refreshMachines,10000);
-setInterval(refreshSkills,120000);
+if(!document.body.classList.contains("ai-minimal")){
+  refreshHealth();refreshSkills();refreshJobs();refreshMachines();
+  setInterval(refreshHealth,15000); setInterval(refreshJobs,60000); setInterval(refreshMachines,10000);
+  setInterval(refreshSkills,120000);
+}
 
 /* ====================== holographic media panels ==================== */
 function holoWhoosh(up=true){
@@ -902,12 +923,16 @@ async function bootSequence(full){
   bootRunning=false;
 }
 addEventListener("keydown",e=>{
+  if(document.body.classList.contains("ai-minimal"))return;
   if(document.getElementById("csiWorkspace"))return;
   if((e.key==="b"||e.key==="B")&&!document.activeElement.matches("input,textarea,select,[contenteditable=true]"))bootSequence(true);
 });
-bootSequence(new URLSearchParams(location.search).get("boot")==="full");
+if(document.body.classList.contains("ai-minimal")){
+  $("boot").classList.add("done");document.body.classList.add("booted");
+  setState("standby","JARVIS","");
+}else bootSequence(new URLSearchParams(location.search).get("boot")==="full");
 
-addMsg("sys","Jarvis HUD online. Click the ring or press Space to talk.");
+addMsg("sys",document.body.classList.contains("ai-minimal")?"What would you like to do?":"Jarvis HUD online. Click the ring or press Space to talk.");
 </script>
 <script src="monitor.js"></script>
 <script src="tasks.js"></script>

@@ -237,10 +237,19 @@ class HermesAPI:
 
     def chat_stream_events(self, session_id: str, input_text: str, timeout: float) -> Iterator[tuple[str, str]]:
         """Yield ("run"|"text"|"tool"|"approval"|"final", value) from a session turn."""
+        payload = {"input": input_text}
+        provider = os.environ.get("JARVIS_CHAT_PROVIDER", "").strip()
+        model = os.environ.get("JARVIS_CHAT_MODEL", "").strip()
+        if provider or model:
+            if not provider or not model:
+                raise HermesChatError("Direct chat model configuration is incomplete.", "chat_configuration_error")
+            # Operator-controlled binding overrides stale per-session locks.
+            # It changes the route, preserving the existing conversation.
+            payload.update(provider=provider, model=model, require_model_lock=True)
         resp = requests.post(
             f"{self.base}/api/sessions/{session_id}/chat/stream",
             headers={**self.headers(), "Accept": "text/event-stream"},
-            json={"input": input_text}, stream=True, timeout=(10, timeout),
+            json=payload, stream=True, timeout=(10, timeout),
         )
         if resp.status_code >= 400:
             status = resp.status_code
@@ -289,9 +298,12 @@ class HermesAPI:
             elif "approval" in ev:
                 yield ("approval", json.dumps(data)[:2000])
             elif ev == "assistant.completed":
+                runtime = data.get("runtime") if isinstance(data.get("runtime"), dict) else {}
                 yield ("final", json.dumps({
                     "content": data.get("content") or "",
                     "interrupted": bool(data.get("interrupted")),
+                    "runtime": {key: runtime.get(key) for key in ("provider", "model", "route_source", "model_lock")
+                                if isinstance(runtime.get(key), str)},
                 }))
             elif ev in ("run.failed", "error"):
                 runtime = data.get("runtime") if isinstance(data.get("runtime"), dict) else {}
@@ -745,18 +757,18 @@ async def health() -> dict:
 
 
 def _ws_allowed(ws: WebSocket) -> bool:
-    """Browsers send Origin (+cookie); native clients (PTT, tests) send neither."""
+    """Authenticate all clients; additionally check browser origins."""
     origin = ws.headers.get("origin")
-    if not origin:
-        return True  # non-browser client on the LAN (Python PTT, e2e tests)
-    from urllib.parse import urlparse
-    host = (urlparse(origin).hostname or "").lower()
-    if host not in ALLOWED_ORIGIN_HOSTS:
-        return False
+    if origin:
+        from urllib.parse import urlparse
+        host = (urlparse(origin).hostname or "").lower()
+        if host not in ALLOWED_ORIGIN_HOSTS:
+            return False
     token = hud_token()
     if not token:
         return True
-    return ws.cookies.get("jarvis_token") == token or ws.query_params.get("token") == token
+    return (ws.headers.get("x-jarvis-token") == token or ws.cookies.get("jarvis_token") == token
+            or ws.query_params.get("token") == token)
 
 
 # --------------------------------------------------------------- HUD + proxy
@@ -806,7 +818,14 @@ async def hud_chat(request: Request) -> JSONResponse:
     conversation = body.get("conversation") or (CFG.get("hermes") or {}).get("conversation", "jarvis-main")
     if not text:
         return JSONResponse({"error": "empty input"}, status_code=400)
-    out: dict = {"text": "", "tools": [], "run_id": None}
+    reference = uuid.uuid4().hex[:12]
+    loop = asyncio.get_running_loop()
+    out: dict = {"text": "", "tools": [], "run_id": None, "request_id": reference}
+
+    def activity(kind: str, **fields) -> None:
+        if WS_CLIENTS and loop.is_running():
+            asyncio.run_coroutine_threadsafe(broadcast_chat_activity({"type": "chat_activity", "kind": kind,
+                "conversation": conversation, "request_id": reference, **fields}), loop)
 
     def run_sync() -> None:
         timeout = float((CFG.get("hermes") or {}).get("timeout", 240))
@@ -818,12 +837,21 @@ async def hud_chat(request: Request) -> JSONResponse:
                 if kind == "text":
                     parts.append(value)
                 elif kind == "tool":
-                    out["tools"].append(json.loads(value))
+                    tool = json.loads(value)
+                    out["tools"].append(tool)
+                    activity("tool", tool=tool)
                 elif kind == "run":
                     out["run_id"] = value
                 elif kind == "final":
                     info = json.loads(value)
                     completed = not info.get("interrupted", False)
+                    actual = info.get("runtime") or {}
+                    expected_provider = os.environ.get("JARVIS_CHAT_PROVIDER", "").strip()
+                    expected_model = os.environ.get("JARVIS_CHAT_MODEL", "").strip()
+                    if expected_provider and (actual.get("provider") != expected_provider or actual.get("model") != expected_model):
+                        raise HermesChatError("The chat service did not confirm the configured Codex model. No reply was accepted.",
+                                              "chat_provider_mismatch")
+                    out["runtime"] = actual
                     if info.get("content"):
                         parts = [info["content"]]
             if not completed or not "".join(parts).strip():
@@ -842,13 +870,15 @@ async def hud_chat(request: Request) -> JSONResponse:
 
     try:
         await asyncio.to_thread(run_sync)
+        activity("reply", runtime=out.get("runtime", {}), run_id=out.get("run_id"))
         return JSONResponse(out)
     except Exception as exc:
-        reference = uuid.uuid4().hex[:12]
         known = isinstance(exc, HermesChatError)
         LOGGER.error("Direct chat failed reference=%s type=%s diagnostic=%s", reference,
                      type(exc).__name__, json.dumps(exc.diagnostic if known else {}, sort_keys=True))
-        return JSONResponse({"error": str(exc) if known else "Direct chat is temporarily unavailable. Please try again.",
+        message = str(exc) if known else "Direct chat is temporarily unavailable. Please try again."
+        activity("error", message=message, reference=reference)
+        return JSONResponse({"error": message,
                              "error_code": exc.code if known else "hermes_chat_failed", "reference": reference}, status_code=502)
 
 
@@ -875,7 +905,8 @@ async def usage() -> JSONResponse:
         },
         "elevenlabs": None,
         "runtime": {
-            "provider": (CFG.get("llm") or {}).get("provider", "unknown"),
+            "provider": os.environ.get("JARVIS_CHAT_PROVIDER") or (CFG.get("llm") or {}).get("provider", "unknown"),
+            "model": os.environ.get("JARVIS_CHAT_MODEL") or (CFG.get("llm") or {}).get("model"),
             "voice_enabled": (CFG.get("voice") or {}).get("enabled", True),
             "stt_model": (CFG.get("stt") or {}).get("model"),
             "tts_model": (CFG.get("voice") or {}).get("model"),
@@ -921,6 +952,15 @@ async def usage() -> JSONResponse:
 
 
 WS_CLIENTS: set = set()
+
+
+async def broadcast_chat_activity(payload: dict) -> None:
+    """Reuse the authenticated HUD socket for actual chat tool/error events."""
+    for client in list(WS_CLIENTS):
+        try:
+            await client.send_json(payload)
+        except Exception:
+            WS_CLIENTS.discard(client)
 
 
 @app.post("/api/summon")

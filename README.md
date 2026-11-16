@@ -2,14 +2,14 @@
 
 **Unfinished Phase 14 work remains paused.** See the [remaining work and handoff](docs/REMAINING_WORK.md). The separately authorized [particle core](docs/VISUAL_CORE.md) is live; the [Codex CEO demo](docs/CODEX_DEMO.md) uses cloud inference through the existing Hermes runtime while old objectives and local workers remain paused.
 
-Open **CSI LIVE WORKSPACE** in the HUD's Views panel for floating agent,
-evidence, warning, graph, timeline, and operation-log windows. They follow real
-Paperclip records, retain layout after refresh, and include a persistent CEO
-uplink and agent response channel. See [CSI architecture, controls, tests and rollback](docs/CSI_WINDOWS.md).
-
-Direct chat keeps its original local Hermes session, separately from CEO tasks.
-See [provider binding and safe chat errors](docs/DIRECT_CHAT_FIX.md) for the
-installed-version compatibility repair and the real browser regression test.
+The default HUD now shows only the reactive core, conversation, and one input.
+Direct chat uses **Codex / gpt-6.1-sol**, through its existing Hermes session,
+separately from CEO tasks. Every reply must confirm that actual provider and
+model; local fallback is disabled. Real agent tool activity and errors open
+small floating panels automatically. Ordinary conversation opens no dashboard.
+See [minimal AI view, startup, verification and rollback](docs/MINIMAL_AI.md).
+The previous [CSI operations workspace](docs/CSI_WINDOWS.md) remains available
+to operators at `/hud/?layout=operations`.
 
 ## Local command-center deployment
 
@@ -53,7 +53,9 @@ primary-source tools; Software executes through Hermes SSH in a private,
 non-root container with no host mounts or external route. Unrestricted host
 access and external actions are unavailable. Other roles remain reusable
 capability templates and require human approval before hiring.
-No cloud LLM or voice subscription is configured for this deployment.
+The explicitly authorized demo uses Codex cloud inference for direct chat and
+the CEO. Paused workers retain their local inference configuration. No voice
+subscription is configured.
 
 See [dynamic staffing](docs/DYNAMIC_AGENTS.md) and
 [runtime isolation, verification and rollback](docs/RUNTIME_ISOLATION.md).
@@ -71,7 +73,9 @@ JARVIS-only 24-thread 7B profile, provenance and rollback. Earlier measured
 Mistral results above describe the preserved baseline rather than current
 Phase 14 acceptance.
 
-With Docker/Compose installed and the existing `ollama` container running with
+For the current Codex/minimal UI demo, use the overlay startup command in
+[MINIMAL_AI.md](docs/MINIMAL_AI.md). The following describes the original local
+baseline. With Docker/Compose installed and the existing `ollama` container running with
 `ministral-3:3b`, start from this directory:
 
 ```sh
@@ -79,7 +83,8 @@ With Docker/Compose installed and the existing `ollama` container running with
 ```
 
 Open http://localhost:8765/hud/ and unlock with `JARVIS_HUD_TOKEN` from
-`deploy/.env`. Choose **CEO objective** and submit one objective. The CEO
+`deploy/.env`. The default screen is direct Codex chat. In the operator layout,
+choose **CEO objective** and submit one objective. The CEO
 chooses direct work or a scoped assignment to the existing worker, and the HUD
 shows Paperclip's plan, hierarchy, progress and final result. **Persistent task**
 remains available to assign a task directly to **JARVIS-01**. Choose **Direct

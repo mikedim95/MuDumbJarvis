@@ -7,7 +7,9 @@ Written: 2026-11-16. Last implementation evidence: 2026-11-13.
 This note is not permission to retry those objectives or continue Phase 14.
 
 Subsequent explicit authorization on November 16 covers the floating particle
-core and a separate Codex-powered CEO demo. The particle core is deployed in
+core, a separate Codex-powered CEO demo, and the subsequently authorized minimal
+Codex direct-chat view with automatic agent popups (see [MINIMAL_AI.md](MINIMAL_AI.md)).
+The particle core is deployed in
 commit `41a57fe`. The Codex demo reuses only the CEO; Research and Software stay
 paused, the staffing timer stays stopped, and native pause holds preserve the
 three unfinished CEO objectives. See [Codex demo](CODEX_DEMO.md). This separate
