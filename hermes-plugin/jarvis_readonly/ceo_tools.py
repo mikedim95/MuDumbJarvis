@@ -167,6 +167,8 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                 turn['run'])
             reporting.check_budget(deadline)
         context_hash = hashlib.sha256(text.encode()).hexdigest()
+        turn['preflight_context_text'] = text
+        turn['preflight_context_sha256'] = context_hash
         from hermes_constants import get_hermes_home
         record = {'timestamp': time.time(), 'source': 'hermes_pre_llm_call',
             'action': 'verified_child_results_delivered' if verified else 'objective_state_delivered',

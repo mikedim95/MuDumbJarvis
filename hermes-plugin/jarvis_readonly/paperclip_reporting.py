@@ -130,6 +130,10 @@ def begin(session_id='', turn_id='', **kwargs):
             'inventory_verified': False, 'started_at': time.time()}
         if ceo:
             turn['needs_report'] = bool(re.search(r'\breport\b', description))
+        if ceo or os.environ.get('JARVIS_PROFILE'):
+            from . import inference_policy, profile_registry
+            base_model = profile_registry.profile(os.environ['JARVIS_PROFILE'])['model'] if os.environ.get('JARVIS_PROFILE') else profile_registry.catalog()['model']
+            turn['runtime_model'], turn['inference_configuration'] = inference_policy.runtime_selection(me, base_model)
         if os.environ.get('JARVIS_PROFILE'):
             turn['needs_tests'] = bool(re.search(r'\btests?\b|unittest|pytest', description))
         with _lock:
@@ -264,8 +268,85 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
     api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
 
 
+def observe_model_context(session_id='', request_messages=None, model='', api_request_id='', **kwargs):
+    """Observe the real provider payload without modifying it or logging secrets.
+
+    A preflight log means context was prepared. This separate record confirms
+    whether its complete bytes survived Hermes' user-context injection/spill.
+    """
+    try:
+        turn = current_turn()
+        context = turn.get('preflight_context_text')
+        if session_id != turn['session'] or not context:
+            return
+        parts = []
+        for message in request_messages or []:
+            if not isinstance(message, dict):
+                continue
+            content = message.get('content', '')
+            if isinstance(content, str):
+                parts.append(content)
+            elif isinstance(content, list):
+                parts.extend(p['text'] for p in content if isinstance(p, dict) and isinstance(p.get('text'), str))
+        present = any(context in part for part in parts)
+        record = {'timestamp': time.time(), 'source': 'hermes_pre_api_request',
+            'issue_id': turn['issue'], 'paperclip_run_id': turn['run'], 'session_id': session_id,
+            'api_request_id': api_request_id, 'model': model,
+            'context_sha256': turn['preflight_context_sha256'], 'context_chars': len(context),
+            'complete_context_present': present,
+            'approx_input_tokens': kwargs.get('approx_input_tokens'),
+            'request_char_count': kwargs.get('request_char_count'),
+            'tool_count': kwargs.get('tool_count'), 'max_tokens': kwargs.get('max_tokens')}
+        from urllib.parse import urlsplit
+        record['provider'] = kwargs.get('provider')
+        record['endpoint_host'] = urlsplit(str(kwargs.get('base_url') or '')).hostname
+        request = kwargs.get('request')
+        if isinstance(request, dict):
+            # Installed Hermes supplies {method, body}, not bare api_kwargs.
+            if isinstance(request.get('body'), dict):
+                request = request['body']
+            extra = request.get('extra_body')
+            extra = extra if isinstance(extra, dict) else {}
+            record['request_max_tokens'] = request.get('max_tokens') or extra.get('max_tokens')
+            record['available_function_names'] = []
+            for tool in request.get('tools', []):
+                if not isinstance(tool, dict):
+                    continue
+                function = tool.get('function') if isinstance(tool.get('function'), dict) else tool
+                if isinstance(function.get('name'), str):
+                    record['available_function_names'].append(function['name'])
+            choice = request.get('tool_choice')
+            record['tool_choice'] = choice if isinstance(choice, str) else None
+        from hermes_constants import get_hermes_home
+        log = get_hermes_home() / 'logs/model-context.jsonl'
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open('a') as stream:
+            stream.write(json.dumps(record) + '\n')
+        if present:
+            turn['observed_context_sha256'] = turn['preflight_context_sha256']
+    except Exception:
+        return  # This supported observer never changes inference or task state.
+
+
+def guard_codex_demo(tool_name='', args=None, **kwargs):
+    if os.environ.get('JARVIS_AGENT_ROLE') != 'ceo':
+        return None
+    try:
+        turn = current_turn()
+        from . import inference_policy
+        if inference_policy.demo_tool_allowed(turn.get('inference_configuration'), tool_name, args or {}):
+            return None
+        return {'action': 'block', 'message':
+            'This operator-authorized Codex demo permits scoped Paperclip reads, self planning and internal report artifacts. '
+            'Hiring, delegation, approvals and host/external actions remain unavailable. Report the scope limit honestly.'}
+    except Exception:
+        return {'action': 'block', 'message': 'An authenticated Paperclip turn is required before using CEO tools.'}
+
+
 def register(ctx):
     ctx.register_hook('pre_llm_call', begin)
+    ctx.register_hook('pre_tool_call', guard_codex_demo)
+    ctx.register_hook('pre_api_request', observe_model_context)
     ctx.register_hook('post_llm_call', response)
     ctx.register_hook('post_tool_call', tool_result)
     ctx.register_hook('on_session_end', finish)

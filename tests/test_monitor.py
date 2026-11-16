@@ -215,3 +215,18 @@ def test_dashboard_omits_credentials_preserves_real_queue_and_inference_error(mo
         'startedAt': None, 'createdAt': None, 'livenessState': None, 'lastUsefulActionAt': None, 'nextAction': None}]
     assert not data['inference']['available'] and data['agents'][0]['capability']['tools']
     assert 'apiKey' not in r.text and 'adapterConfig' not in r.text
+
+
+def test_monitor_labels_authenticated_codex_employee_separately_from_local_inference(monkeypatch):
+    key = 'private-test-proof-key'
+    monkeypatch.setenv('JARVIS_EXECUTION_PROOF_KEY', key)
+    record = {'version': 2, 'company_id': 'company', 'agent_id': CEO,
+        'provider': 'openai-codex', 'model': 'gpt-6.1-sol',
+        'endpoint': monitor._inference_policy.CODEX_ENDPOINT, 'context_length': 65536,
+        'inference_slots': 1, 'fallback_allowed': False, 'user_authorized': True,
+        'source': 'operator_authorized_codex_demo', 'authority_scope': 'ceo_readonly_demo'}
+    record['signature'] = monitor._inference_policy.signature(record, key)
+    projected = monitor.capability({'id': CEO, 'companyId': 'company',
+        'metadata': {'jarvis': {'inference_configuration': record}}})
+    assert projected['provider'] == 'openai-codex' and projected['model'] == 'gpt-6.1-sol'
+    assert 'signature' not in projected

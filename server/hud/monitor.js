@@ -47,7 +47,7 @@
       const node = card(agent.name + ' · ' + (agent.title || agent.role), [
         'ID: ' + agent.id, 'Reports to: ' + (agent.reportsTo || 'company board'),
         'Availability: ' + agent.status + ' / ' + agent.lifecycleState + (active.length ? ' · native runs: ' + active.length : ' · no live execution'),
-        agent.lifecycleError || '', 'Profile: ' + (c.profile || agent.role), 'Model: ' + (c.model || 'local CEO runtime'),
+        agent.lifecycleError || '', 'Profile: ' + (c.profile || agent.role), 'Inference: ' + (c.provider || 'local_ollama'), 'Model: ' + (c.model || 'CEO runtime'),
         'Tools: ' + (c.tools || []).join(', '), 'Limits: ' + json(c.limits), c.authority || '', c.workspace || '',
         c.dormancy || 'No scheduled employee inference while idle'
       ].filter(Boolean).join('\n'));

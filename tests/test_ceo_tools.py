@@ -1085,3 +1085,45 @@ def test_begin_preflight_uses_actual_post_checkout_status_without_an_extra_issue
     assert snapshot['objective']['status'] == 'in_progress'
     assert plugin.issue['status'] == 'blocked', 'Fixture retains the pre-checkout snapshot deliberately'
     assert sum(call[:2] == ('GET', '/issues/' + ROOT) for call in plugin.calls) == 1
+
+
+@pytest.mark.parametrize('wrapped', [False, True])
+@pytest.mark.parametrize('payload,matched', [('full', True), ('preview', False), ('wrong_session', False)])
+def test_actual_provider_payload_observation_distinguishes_full_context_from_prepared_or_spilled(plugin, tmp_path, payload, matched, wrapped):
+    context = plugin.tools.prepare_turn_context(plugin.turn)
+    plugin.calls.clear()
+    request = {'tools': [{'type': 'function', 'function': {'name': 'paperclip_ceo'}}], 'tool_choice': 'auto',
+        'extra_body': {'max_tokens': 768}}
+    plugin.reporting.observe_model_context(session_id=SESSION if payload != 'wrong_session' else 'other',
+        request_messages=[{'role': 'user', 'content': context if payload == 'full' else context[:500]}],
+        model='local-model', api_request_id='request', approx_input_tokens=123, tool_count=6,
+        request={'method': 'POST', 'body': request} if wrapped else request)
+    assert bool(plugin.turn.get('observed_context_sha256')) == matched
+    assert not plugin.calls, 'An inference observer cannot create tasks or change state'
+    log = tmp_path / 'logs/model-context.jsonl'
+    if payload == 'wrong_session':
+        assert not log.exists()
+    else:
+        row = json.loads(log.read_text())
+        assert row['complete_context_present'] == matched and row['context_chars'] == len(context)
+        assert row['model'] == 'local-model' and 'objective' not in row
+        assert row['approx_input_tokens'] == 123 and row['available_function_names'] == ['paperclip_ceo']
+        assert row['request_max_tokens'] == 768
+
+
+def test_codex_responses_request_observation_reads_the_actual_flat_tool_schema(plugin, tmp_path):
+    context = plugin.tools.prepare_turn_context(plugin.turn)
+    plugin.reporting.observe_model_context(session_id=SESSION, model='gpt-6.1-sol', provider='openai-codex',
+        base_url='https://chatgpt.com/backend-api/codex', request_messages=[{'role':'user','content':context}],
+        request={'method':'POST','body':{'tools':[{'type':'function','name':'paperclip_context','parameters':{}}]}})
+    row=json.loads((tmp_path/'logs/model-context.jsonl').read_text())
+    assert row['complete_context_present'] and row['provider']=='openai-codex'
+    assert row['endpoint_host']=='chatgpt.com' and row['available_function_names']==['paperclip_context']
+
+
+def test_codex_demo_guard_denies_hiring_and_requires_authenticated_scope(plugin, monkeypatch):
+    plugin.turn['inference_configuration'] = {'version': 2}
+    assert plugin.reporting.guard_codex_demo(tool_name='paperclip_context', args={}) is None
+    assert plugin.reporting.guard_codex_demo(tool_name='request_employee', args={})['action'] == 'block'
+    monkeypatch.setattr(plugin.reporting, 'current_turn', lambda: (_ for _ in ()).throw(ValueError()))
+    assert plugin.reporting.guard_codex_demo(tool_name='paperclip_context', args={})['action'] == 'block'

@@ -6,6 +6,7 @@ artifacts are always read from Paperclip; this module never schedules work.
 import asyncio
 import hashlib
 import hmac
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -17,6 +18,12 @@ import httpx
 from fastapi import Depends, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+
+
+_policy_spec = importlib.util.spec_from_file_location('jarvis_monitor_inference', Path(__file__).resolve().parents[1] /
+    'hermes-plugin/jarvis_readonly/inference_policy.py')
+_inference_policy = importlib.util.module_from_spec(_policy_spec)
+_policy_spec.loader.exec_module(_inference_policy)
 
 
 class RetryRequest(BaseModel):
@@ -41,7 +48,18 @@ def catalog():
 def capability(agent):
     meta = ((agent.get('metadata') or {}).get('jarvis') or {})
     item = catalog()['profiles'].get(meta.get('profile'), {})
-    return {**{k: meta.get(k) for k in ('profile', 'model', 'limits', 'workspace', 'profile_sha256', 'provisioned')},
+    model = meta.get('model')
+    provider = 'local_ollama'
+    if meta.get('inference_configuration'):
+        try:
+            record = _inference_policy.validate(meta['inference_configuration'], agent.get('companyId') or
+                os.environ.get('PAPERCLIP_COMPANY_ID'), os.environ.get('JARVIS_EXECUTION_PROOF_KEY', ''))
+            model = record['model']
+            provider = record['provider']
+        except (PermissionError, TypeError, ValueError):
+            model = 'Unverified inference selection'
+    return {**{k: meta.get(k) for k in ('profile', 'limits', 'workspace', 'profile_sha256', 'provisioned')},
+        'model': model, 'provider': provider, 'base_profile_model': meta.get('model'),
         'tools': item.get('tools', []), 'skills': item.get('skills', []),
         'authority': item.get('authority'), 'dormancy': meta.get('dormancy')}
 

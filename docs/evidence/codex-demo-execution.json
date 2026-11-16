@@ -1,0 +1,105 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T08:59:14.788101+00:00",
+  "issue_id": "69c12f12-4670-46de-85a2-695437e80255",
+  "identifier": "JAR-48",
+  "paperclip_run_id": "fb38ce52-a3f3-4c9a-b3a6-2e6bb28605b2",
+  "hermes_run_id": "run_7c4399ad1fb3420c82ec4d1c6eba6249",
+  "native_status": "succeeded",
+  "hermes_status": "completed",
+  "elapsed_seconds": 48.228,
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "actual_provider_endpoint_host": "chatgpt.com",
+  "provider_requests_observed": 5,
+  "full_authenticated_context_in_provider_requests": true,
+  "usage": {
+    "input_tokens": 46965,
+    "output_tokens": 969,
+    "total_tokens": 47934
+  },
+  "actual_tools_verified": [
+    "paperclip_context",
+    "paperclip_ceo:plan:self",
+    "local_ollama_models",
+    "publish_artifact"
+  ],
+  "models": [
+    {
+      "name": "jarvis-hermes-qwen24:7b",
+      "size_bytes": 4505856194,
+      "size_gib": 4.2
+    },
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size_bytes": 2953840525,
+      "size_gib": 2.75
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size_bytes": 2953840466,
+      "size_gib": 2.75
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size_bytes": 4683075812,
+      "size_gib": 4.36
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size_bytes": 4505856135,
+      "size_gib": 4.2
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size_bytes": 4505855004,
+      "size_gib": 4.2
+    },
+    {
+      "name": "ministral-3:3b",
+      "size_bytes": 2953840808,
+      "size_gib": 2.75
+    },
+    {
+      "name": "granite-code:3b",
+      "size_bytes": 1997354777,
+      "size_gib": 1.86
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size_bytes": 274302450,
+      "size_gib": 0.26
+    },
+    {
+      "name": "llama3.2:3b",
+      "size_bytes": 2019393189,
+      "size_gib": 1.88
+    }
+  ],
+  "inventory_matches_live_ollama_api": true,
+  "report_contains_all_exact_inventory_values": true,
+  "artifact": {
+    "id": "83b35c52-39ba-4581-81b8-467d1a18efcf",
+    "originalFilename": "codex-demo-report.md",
+    "sha256": "9bae3410a56af8a061529b4cb8877d439b67ad43b073366fa16790bf09137bbc",
+    "createdByAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+  },
+  "new_employees": 0,
+  "child_tasks": 0,
+  "workers_paused": true,
+  "staffing_timer": "inactive",
+  "old_objectives_held": [
+    "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+    "48560754-910f-4521-b5c9-ad4078efef24",
+    "eeb52003-acef-4a34-98cf-45ffe585919e"
+  ],
+  "changed_containers": [
+    "jarvis-hud",
+    "jarvis-hermes-ceo"
+  ],
+  "unrelated_containers_unchanged": 18,
+  "hud_restart_after_completion": true,
+  "report_read_after_restart": true,
+  "cloud_cost": "Unpriced: Paperclip gateway accounting reports an unknown model; actual provider/model verified from Hermes request observer.",
+  "scope": "Separate authorized Codex demo; not Phase 14 acceptance or a local model performance benchmark"
+}

@@ -1,0 +1,8 @@
+# Explicit demo overlay; only the existing CEO uses cloud inference.
+services:
+  hermes-ceo:
+    environment:
+      JARVIS_RUNTIME_MODEL: ${JARVIS_CODEX_DEMO_MODEL:?Run configure_codex_demo.py --apply first}
+      JARVIS_INFERENCE_CONFIGURATION: ${JARVIS_CODEX_DEMO_CONFIGURATION:?Missing signed demo policy}
+      OPENAI_API_KEY: ''
+    networks: [agent-private, default]

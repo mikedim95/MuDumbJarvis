@@ -1,5 +1,7 @@
 # J.A.R.V.I.S — Voice + HUD for Hermes Agent
 
+**Unfinished Phase 14 work remains paused.** See the [remaining work and handoff](docs/REMAINING_WORK.md). The separately authorized [particle core](docs/VISUAL_CORE.md) is live; the [Codex CEO demo](docs/CODEX_DEMO.md) uses cloud inference through the existing Hermes runtime while old objectives and local workers remain paused.
+
 ## Local command-center deployment
 
 This workspace adds a text-only Linux deployment using the existing FastAPI
@@ -53,6 +55,12 @@ execution provenance alone does not approve generated analysis. The
 signed tool receipts, artifact downloads, execution logs, local resources and
 authenticated approval/cancellation/retry controls. Phase 14 complete multi-role
 objective acceptance remains in progress.
+See the [Phase 14 verification ledger](docs/PHASE14_VERIFICATION.md) for actual
+task IDs, failed attempts and remaining acceptance, and
+[local inference selection](docs/INFERENCE_SELECTION.md) for the current
+JARVIS-only 24-thread 7B profile, provenance and rollback. Earlier measured
+Mistral results above describe the preserved baseline rather than current
+Phase 14 acceptance.
 
 With Docker/Compose installed and the existing `ollama` container running with
 `ministral-3:3b`, start from this directory:

@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T09:02:43.810567+00:00",
+  "full_working_checkout": {
+    "passed": 289,
+    "warnings": 3,
+    "output_private": ".runtime/codex-demo-tests.txt"
+  },
+  "exact_staged_commit_export": {
+    "passed": 272,
+    "warnings": 3,
+    "output_private": ".runtime/codex-demo-commit-tests.txt"
+  },
+  "difference": "Unfinished Phase 14 changes and their tests remain unstaged; only Codex demo dependencies are committed.",
+  "native_adapter_health": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-16T08:48:49.640Z"
+  },
+  "provider_probe": {
+    "status": "passed",
+    "checked_at": "2026-11-16T08:29:31.831715+00:00",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "elapsed_seconds": 7.453,
+    "tools_available": 0,
+    "exact_reply_verified": true,
+    "actual_reply": "CODEX_DEMO_READY",
+    "paperclip_execution": false,
+    "local_ollama_inference": false,
+    "purpose": "Operator cloud-provider connection probe, not an end-to-end task"
+  },
+  "live_verification": [
+    "docs/evidence/codex-demo-hud.json",
+    "docs/evidence/codex-demo-execution.json"
+  ],
+  "hud_image": "sha256:3194eb34a2b47b34e75260742f2ec21bbde9e5671f10352a0f645e657ff84ee9",
+  "ceo_image": "nousresearch/hermes-agent:v0.23.1@sha256:1a355ebc8981a4b72a28f4e47e347ba4f0f172b43dc876e5768d175a07c67b22"
+}

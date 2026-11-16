@@ -1,0 +1,5 @@
+ARG HUD_BASE=jarvis-command-center:hud
+FROM ${HUD_BASE}
+COPY --chown=1000:1000 server/task_monitor.py /app/server/task_monitor.py
+COPY --chown=1000:1000 server/hud/monitor.js /app/server/hud/monitor.js
+COPY --chown=1000:1000 hermes-plugin/jarvis_readonly/inference_policy.py /app/hermes-plugin/jarvis_readonly/inference_policy.py

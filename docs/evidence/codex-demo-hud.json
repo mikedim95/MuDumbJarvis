@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T08:59:46.645Z",
+  "issue_id": "69c12f12-4670-46de-85a2-695437e80255",
+  "identifier": "JAR-48",
+  "objective": "Codex demo: use paperclip_context to read company employees and goals, then local_ollama_models to retrieve actual installed model names and sizes. Work yourself without hiring or delegation. Produce a concise technical inventory report with exact names, size_bytes and size_gib, roster availability, data sources and limits. Publish codex-demo-report.md using publish_artifact; finish with results. Do not benchmark, change configuration or run host commands.",
+  "statuses_observed": [
+    "todo",
+    "in_progress",
+    "done"
+  ],
+  "final_status": "done",
+  "submitted_through": "authenticated JARVIS HUD",
+  "ceo_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "artifact": {
+    "id": "83b35c52-39ba-4581-81b8-467d1a18efcf",
+    "sha256": "9bae3410a56af8a061529b4cb8877d439b67ad43b073366fa16790bf09137bbc",
+    "bytes": 1722
+  },
+  "history_after_refresh": true,
+  "workers_remain_paused": true,
+  "page_errors": [],
+  "verification_only": true,
+  "native_execution_verification": "See codex-demo-execution.json for provider, tool, run and data correlation",
+  "initial_run_observed_at": "2026-11-16T08:50:17.030Z",
+  "verified_after_hud_service_restart": true
+}
