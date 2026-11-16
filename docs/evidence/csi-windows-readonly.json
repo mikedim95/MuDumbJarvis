@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T09:53:40.799Z",
+  "variant": "readonly",
+  "verification_only": false,
+  "task_id": "69c12f12-4670-46de-85a2-695437e80255",
+  "identifier": "JAR-48",
+  "artifact": {
+    "id": "83b35c52-39ba-4581-81b8-467d1a18efcf",
+    "name": "codex-demo-report.md",
+    "sha256": "9bae3410a56af8a061529b4cb8877d439b67ad43b073366fa16790bf09137bbc",
+    "bytes": 1722
+  },
+  "checks": {
+    "auth_required": true,
+    "real_event_source": true,
+    "stable_event_ids": true,
+    "missing_local_voice_honest": true,
+    "requested_libraries_mounted": true,
+    "drag_resize_focus": true,
+    "minimize_restore": true,
+    "geometry_and_close_state_after_refresh": true,
+    "real_failure_visible": true,
+    "browser_only_xss_fixture_safe": true,
+    "browser_only_outage_visible": true,
+    "reduced_motion": true,
+    "mobile_bounds": true,
+    "history_after_refresh": true,
+    "artifact_hash_verified": true,
+    "workers_remain_paused": true
+  },
+  "native_event_count": 13,
+  "native_event_types": [
+    "graph.node_discovered",
+    "task.progress",
+    "evidence.file_recovered",
+    "evidence.metadata",
+    "identity.updated",
+    "timeline.updated"
+  ],
+  "event_poll_requests": 45,
+  "backend_mutations": [],
+  "page_errors": [],
+  "controlled_fixtures": [
+    "Headless-browser-only hostile graph label; never persisted as a real finding",
+    "Headless-browser-only HTTP 503; never a fabricated native task failure"
+  ],
+  "inference_requested": false,
+  "execution_verification": "No inference or new task requested."
+}

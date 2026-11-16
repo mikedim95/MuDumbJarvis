@@ -5,9 +5,11 @@
   const mode = el('commandMode');
   let tasks = [], selected = localStorage.getItem('jarvis-task-selected'), fetching = false, submitting = false;
   let refreshQueued = false, reloadAgents = false, ceoId = null, agents = [];
-  let pending;
+  let pending, lastError = '';
   try { pending = JSON.parse(localStorage.getItem('jarvis-task-pending') || 'null'); } catch {}
-  const error = message => { el('taskError').textContent = message; };
+  const error = message => { lastError = message; el('taskError').textContent = message; };
+  const snapshot = () => ({tasks, selected, agents, ceoId, submitting, error: lastError});
+  const announce = () => window.dispatchEvent(new CustomEvent('jarvis-tasks-updated', {detail: snapshot()}));
   const persistent = () => mode.value === 'task' || mode.value === 'objective';
   function visualState(task) {
     const active = item => Boolean(item.executionRunId) || (item.runs || []).some(r => r.status === 'running') || (item.children || []).some(active);
@@ -128,6 +130,7 @@
       error(err.message);
     } finally {
       fetching = false;
+      announce();
       if (refreshQueued) {
         const agentsRequested = reloadAgents;
         refreshQueued = false; reloadAgents = false;
@@ -158,9 +161,10 @@
       selected = task.id; localStorage.setItem('jarvis-task-selected', selected);
       el('chatInput').value = '';
       await refresh();
+      return task;
     } catch (err) {
       error(err.message + ' The submission ID has been saved; retrying this text in the same mode is safe.');
-    } finally { submitting = false; el('sendBtn').disabled = false; }
+    } finally { submitting = false; el('sendBtn').disabled = false; announce(); }
   }
 
   function changeMode() {
@@ -174,7 +178,17 @@
     el('sendBtn').textContent = mode.value === 'objective' ? 'SEND OBJECTIVE' : (isPersistent ? 'SEND TASK' : 'SEND');
     if (isPersistent) refresh(true);
   }
-  window.JarvisTasks = {submit};
+  window.JarvisTasks = {submit, snapshot,
+    select: async id => {
+      if (!tasks.some(task => task.id === id)) throw new Error('Task is not in the authenticated history.');
+      selected = id; localStorage.setItem('jarvis-task-selected', id); history();
+      window.JarvisMonitor.clear(); await detail(); announce();
+    },
+    submitObjective: async text => {
+      mode.value = 'objective'; changeMode();
+      return submit(text);
+    }
+  };
   mode.value = pending ? (pending.objective ? 'objective' : 'task') : (localStorage.getItem('jarvis-command-mode') || 'objective');
   if (!['chat', 'task', 'objective'].includes(mode.value)) mode.value = 'objective';
   if (pending) el('chatInput').value = pending.input;

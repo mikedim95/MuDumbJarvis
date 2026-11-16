@@ -7,6 +7,7 @@ import threading
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import time
@@ -15,6 +16,7 @@ import urllib.request
 _turns = {}
 _lock = threading.Lock()
 _request_budget = threading.local()
+_logger = logging.getLogger(__name__)
 _scope = re.compile(r'^paperclip:company:([0-9a-f-]{36}):agent:([0-9a-f-]{36}):issue:([0-9a-f-]{36})$')
 
 
@@ -181,21 +183,64 @@ def tool_result(tool_name='', result='', task_id='', turn_id='', **kwargs):
         return
     try:
         data = json.loads(result) if isinstance(result, str) else result
-        if data.get('source') != 'Ollama /api/tags' or not isinstance(data.get('models'), list):
+        if (not isinstance(data, dict) or data.get('source') != 'Ollama /api/tags' or
+                data.get('error') or data.get('isError') or not isinstance(data.get('models'), list) or
+                any(not isinstance(m, dict) or not isinstance(m.get('name'), str) or not m['name'].strip() or
+                    type(m.get('size_bytes')) is not int or m['size_bytes'] < 0 for m in data['models'])):
             return
         with _lock:
             turn = _turns.get((task_id, turn_id))
-            if not turn:
+            match = _scope.fullmatch(task_id)
+            if (not turn or turn.get('session') != task_id or not match or
+                    match.groups() != (turn.get('company'), turn.get('agent'), turn.get('issue'))):
                 return
             turn['inventory_verified'] = True
             turn['inventory'] = data['models']
         from hermes_constants import get_hermes_home
         record = {'timestamp': time.time(), 'issue_id': turn['issue'], 'paperclip_run_id': turn['run'],
                   'session_id': task_id, 'tool': tool_name, 'result': data}
-        with (get_hermes_home() / 'logs' / 'paperclip-tools.jsonl').open('a') as stream:
+        log = get_hermes_home() / 'logs' / 'paperclip-tools.jsonl'
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open('a') as stream:
             stream.write(json.dumps(record) + '\n')
+        if turn.get('ceo') and os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
+            journal_ceo_inventory(turn, data['models'])
     except (ValueError, AttributeError):
         return
+
+
+def journal_ceo_inventory(turn, models):
+    """Publish observed progress; never schedule work or alter task status."""
+    fingerprint = hashlib.sha256(json.dumps(models, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    with _lock:
+        attempted = turn.setdefault('inventory_journal_attempted', set())
+        if fingerprint in attempted:
+            return
+        # A timed-out PATCH may already have committed. Do not retry this
+        # same-turn observation automatically and risk duplicate comments.
+        attempted.add(fingerprint)
+    try:
+        if turn.get('agent') != os.environ.get('JARVIS_PAPERCLIP_AGENT_ID'):
+            raise PermissionError('CEO runtime identity changed')
+        issue = api('GET', '/issues/' + turn['issue'])
+        if (issue.get('id') != turn['issue'] or issue.get('companyId') != turn['company'] or
+                issue.get('projectId') != turn['project'] or issue.get('assigneeAgentId') != turn['agent'] or
+                issue.get('executionRunId') != turn['run'] or issue.get('status') in ('done', 'cancelled')):
+            raise PermissionError('Current native execution no longer owns this objective')
+        proof = sign_evidence({'version': 2, 'kind': 'tool_event', 'company_id': turn['company'],
+            'issue_id': turn['issue'], 'agent_id': turn['agent'], 'paperclip_run_id': turn['run'],
+            'session_id': turn['session'], 'tool': 'local_ollama_models', 'success': True,
+            'models': models, 'model': turn.get('runtime_model'),
+            'inference_configuration': turn.get('inference_configuration')})
+        api('PATCH', '/issues/' + turn['issue'], {'comment': '[JARVIS TOOL EVENT]\nJARVIS_TOOL_EVENT=' +
+            json.dumps(proof, sort_keys=True, separators=(',', ':'))}, turn['run'])
+        turn['inventory_journaled'] = fingerprint
+        turn.pop('inventory_journal_error', None)
+    except Exception as error:
+        message = ('Native inventory progress journal failed (' + type(error).__name__ +
+            '); the actual tool result remains valid. Inspect the native execution before retrying.')
+        turn['inventory_journal_error'] = message
+        _logger.error(message)
 
 
 def finish(session_id='', turn_id='', completed=False, failed=False, interrupted=False, turn_exit_reason='', **kwargs):

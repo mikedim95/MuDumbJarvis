@@ -2,6 +2,11 @@
 
 **Unfinished Phase 14 work remains paused.** See the [remaining work and handoff](docs/REMAINING_WORK.md). The separately authorized [particle core](docs/VISUAL_CORE.md) is live; the [Codex CEO demo](docs/CODEX_DEMO.md) uses cloud inference through the existing Hermes runtime while old objectives and local workers remain paused.
 
+Open **CSI LIVE WORKSPACE** in the HUD's Views panel for floating agent,
+evidence, warning, graph, timeline, and operation-log windows. They follow real
+Paperclip records, retain layout after refresh, and include a persistent CEO
+uplink and agent response channel. See [CSI architecture, controls, tests and rollback](docs/CSI_WINDOWS.md).
+
 ## Local command-center deployment
 
 This workspace adds a text-only Linux deployment using the existing FastAPI

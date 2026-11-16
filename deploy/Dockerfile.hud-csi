@@ -1,0 +1,8 @@
+# Overlay only CSI presentation code onto the current verified HUD image.
+ARG HUD_BASE=jarvis-command-center:hud-before-csi
+FROM ${HUD_BASE}
+COPY --chown=1000:1000 server/csi_events.py /app/server/csi_events.py
+COPY --chown=1000:1000 server/task_monitor.py /app/server/task_monitor.py
+COPY --chown=1000:1000 server/hud/index.html /app/server/hud/index.html
+COPY --chown=1000:1000 server/hud/tasks.js /app/server/hud/tasks.js
+COPY --chown=1000:1000 server/hud/csi /app/server/hud/csi

@@ -1,0 +1,39 @@
+/*
+ * Cyberdeck UI — design tokens.
+ * Add this once (globally) before using any component.
+ *
+ * Fonts (optional, but the components are designed around them):
+ * <link rel="preconnect" href="https://fonts.googleapis.com">
+ * <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ * <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+ */
+:root {
+  /* Surfaces */
+  --cy-bg: #07050d;
+  --cy-surface: #0d0a17;
+  --cy-surface-2: #151024;
+  --cy-border: rgba(0, 240, 255, 0.18);
+
+  /* Neon accents */
+  --cy-cyan: #00f0ff;
+  --cy-pink: #ff2a6d;
+  --cy-yellow: #fcee0a;
+  --cy-purple: #b967ff;
+  --cy-green: #05ffa1;
+
+  /* Text */
+  --cy-text: #e5e7eb;
+  --cy-muted: #9ca3af;
+  --cy-dim: #6b7280;
+
+  /* Typography */
+  --cy-font-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+  --cy-font-body: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+  --cy-font-mono: 'Share Tech Mono', ui-monospace, monospace;
+
+  /* Shape & motion */
+  --cy-cut: 14px; /* size of clipped corners */
+  --cy-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --cy-glow-cyan: 0 0 6px rgba(0, 240, 255, 0.6), 0 0 18px rgba(0, 240, 255, 0.35);
+  --cy-glow-pink: 0 0 6px rgba(255, 42, 109, 0.6), 0 0 18px rgba(255, 42, 109, 0.35);
+}

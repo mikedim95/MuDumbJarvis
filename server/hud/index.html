@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="JARVIS">
 <meta name="theme-color" content="#050b14">
 <script src="core/visual-core.js" defer></script>
+<link rel="stylesheet" href="csi/csi-workspace.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -308,6 +309,7 @@ footer{
       <div class="kv"><span>Brain</span><b id="mBrain">—</b></div>
     </div>
     <div class="panel"><h2><span>VIEWS</span><span class="num">04</span></h2>
+      <button class="btn viewBtn" id="csiLaunch" type="button">◈ CSI LIVE WORKSPACE</button>
       <button class="btn viewBtn" onclick="openView('KANBAN','/kanban')">▸ KANBAN BOARD</button>
       <button class="btn viewBtn" onclick="openView('HERMES DASHBOARD','/')">▸ HERMES DASHBOARD</button>
       <button class="btn viewBtn" onclick="openView('CHAT','/chat')">▸ DASHBOARD CHAT</button>
@@ -640,11 +642,13 @@ $("viewerPop").onclick=()=>{window.open($("viewerIframe").src,"_blank");closeVie
 $("viewer").addEventListener("click",e=>{if(e.target.id==="viewer")closeView()});
 addEventListener("keydown",e=>{
   if(e.key!=="Escape")return;
+  if(document.getElementById("csiWorkspace"))return;
   if(document.querySelector(".holo:not(.dismiss)"))dismissAllPanels();
   else if($("viewer").classList.contains("open"))closeView();
   else stopRun();
 });
 addEventListener("keydown",e=>{
+  if(document.getElementById("csiWorkspace"))return;
   if(e.code==="Space"&&!document.activeElement.matches("input,textarea,select,button")){e.preventDefault();toggleTalk()}
 });
 
@@ -894,7 +898,8 @@ async function bootSequence(full){
   bootRunning=false;
 }
 addEventListener("keydown",e=>{
-  if((e.key==="b"||e.key==="B")&&document.activeElement!==$("chatInput"))bootSequence(true);
+  if(document.getElementById("csiWorkspace"))return;
+  if((e.key==="b"||e.key==="B")&&!document.activeElement.matches("input,textarea,select,[contenteditable=true]"))bootSequence(true);
 });
 bootSequence(new URLSearchParams(location.search).get("boot")==="full");
 
@@ -902,5 +907,7 @@ addMsg("sys","Jarvis HUD online. Click the ring or press Space to talk.");
 </script>
 <script src="monitor.js"></script>
 <script src="tasks.js"></script>
+<div id="csiRoot"></div>
+<script src="csi/csi-workspace.js" defer></script>
 </body>
 </html>

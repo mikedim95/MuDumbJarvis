@@ -1,0 +1,108 @@
+.cy-profile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem 1.25rem;
+  align-items: center;
+  width: 100%;
+  max-width: 22rem;
+  padding: 1.5rem;
+  border: 1px solid var(--cy-border);
+  background: linear-gradient(135deg, rgba(185, 103, 255, 0.12), transparent 60%), var(--cy-surface);
+  font-family: var(--cy-font-body);
+}
+
+.cy-profile__avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  /* Gradient "border": the hexagon behind the inner hexagon */
+  background: linear-gradient(135deg, var(--cy-cyan), var(--cy-pink));
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
+}
+
+.cy-profile__initials {
+  display: grid;
+  place-items: center;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  background: var(--cy-surface-2);
+  color: #fff;
+  font-family: var(--cy-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  clip-path: inherit;
+}
+
+.cy-profile__status {
+  position: absolute;
+  right: 14%;
+  bottom: 10%;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid var(--cy-surface);
+  border-radius: 50%;
+  background: var(--cy-dim);
+}
+
+.cy-profile__status--online { background: var(--cy-green); box-shadow: 0 0 8px var(--cy-green); }
+.cy-profile__status--away { background: var(--cy-yellow); }
+
+.cy-profile__name {
+  margin: 0;
+  color: #fff;
+  font-family: var(--cy-font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cy-profile__role {
+  margin: 0.25rem 0 0;
+  color: var(--cy-purple);
+  font-family: var(--cy-font-mono);
+  font-size: 0.85rem;
+}
+
+.cy-profile__stats {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1rem;
+  text-align: center;
+}
+
+.cy-profile__stats div + div {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cy-profile__stats dt {
+  color: var(--cy-dim);
+  font-family: var(--cy-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.cy-profile__stats dd {
+  margin: 0.25rem 0 0;
+  color: var(--cy-cyan);
+  font-family: var(--cy-font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.cy-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

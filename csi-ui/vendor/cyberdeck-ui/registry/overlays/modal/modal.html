@@ -1,0 +1,15 @@
+<button class="cy-modal-open" type="button" data-cy-modal-open="cy-upload-modal">Upload shard</button>
+
+<dialog class="cy-modal" id="cy-upload-modal" aria-labelledby="cy-upload-modal-title">
+  <form method="dialog" class="cy-modal__inner">
+    <header class="cy-modal__header">
+      <h2 id="cy-upload-modal-title">Confirm upload</h2>
+      <button class="cy-modal__close" value="cancel" aria-label="Close">✕</button>
+    </header>
+    <p class="cy-modal__body">Push this shard to the public net? Once it's out there, it can't be pulled back.</p>
+    <footer class="cy-modal__actions">
+      <button class="cy-modal__btn" value="cancel">Abort</button>
+      <button class="cy-modal__btn cy-modal__btn--primary" value="confirm">Upload</button>
+    </footer>
+  </form>
+</dialog>

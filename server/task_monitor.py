@@ -210,6 +210,11 @@ def add_routes(router, Paperclip):
                 for r in live if r.get('issueId') in ids],
             'approvals': views, 'inference': model, 'resources': host_metrics()})
 
+    @router.get('/tasks/{task_id}/events')
+    async def task_events(task_id: UUID, p=Depends(client)):
+        from csi_events import build_snapshot
+        return redact(await build_snapshot(p, task_id, evidence, capability))
+
     @router.get('/tasks/{task_id}/monitor')
     async def task_monitor(task_id: UUID, p=Depends(client)):
         issue = await p.issue(task_id)

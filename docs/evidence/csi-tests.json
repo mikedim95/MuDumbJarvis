@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T10:04:52.892358+00:00",
+  "full_worktree_tests": {
+    "passed": 331,
+    "warnings": 3
+  },
+  "exact_selected_commit_tests": {
+    "passed": 314,
+    "warnings": 3
+  },
+  "frontend_tests": {
+    "passed": 5,
+    "scope": [
+      "bounded layout/poisoned preferences",
+      "event routing",
+      "ASCII+C1 terminal escape stripping",
+      "cross-case/cross-author voice attribution"
+    ]
+  },
+  "production_dependency_audit": {
+    "vulnerabilities": 0,
+    "checked_at": "2026-11-16"
+  },
+  "native_adapter_check": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-16T09:52:23.150Z"
+  },
+  "browser_readonly": "csi-windows-readonly.json",
+  "browser_initial_live": "csi-windows-initial-live.json",
+  "browser_after_restart": "csi-windows-live.json",
+  "native_execution": "csi-execution.json",
+  "hud_image": "sha256:ef18e328ea627058728982ec2678b53dbe75116f53b5cea86ae05062e8f1b3b4",
+  "previous_hud_image": "jarvis-command-center:hud-before-csi",
+  "review": "Independent read-only review found no blockers; attribution/C1/warning/focus issues found during development were corrected and browser-checked.",
+  "phase14_resumed": false
+}

@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T09:55:29.046Z",
+  "variant": "live",
+  "verification_only": false,
+  "task_id": "f24886ef-2d89-423f-b18d-20c89786792b",
+  "identifier": "JAR-49",
+  "artifact": {
+    "id": "c00fdfab-69c1-4048-b902-3b34b1434ec4",
+    "name": "csi-demo-inventory.md",
+    "sha256": "ac11386834a322d1011377a3f963d2e7c468aa79206eefa5794c5573ac5c35b9",
+    "bytes": 1360
+  },
+  "checks": {
+    "auth_required": true,
+    "real_event_source": true,
+    "stable_event_ids": true,
+    "actual_runtime_completed": true,
+    "published_response_visible": true,
+    "native_statuses_observed": ["in_progress", "done"],
+    "native_event_count": 25,
+    "created_once": true,
+    "existing_receipt_only": false,
+    "history_after_refresh": true,
+    "artifact_hash_verified": true,
+    "workers_remain_paused": true
+  },
+  "native_event_count": 14,
+  "native_event_types": ["task.progress", "graph.node_discovered", "evidence.file_recovered", "evidence.metadata", "timeline.updated", "identity.updated"],
+  "event_poll_requests": 28,
+  "backend_mutations": [{"method": "POST", "path": "/api/tasks"}],
+  "page_errors": [],
+  "controlled_fixtures": [],
+  "inference_requested": true,
+  "execution_verification": "Correlate this task with native Paperclip run, Hermes provider trace, signed tool output and persisted artifact; UI rendering alone is not execution proof.",
+  "capture_source": "Original automated --live runner stdout, retained separately from subsequent read-only verification runs."
+}

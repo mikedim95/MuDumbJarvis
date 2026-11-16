@@ -1,0 +1,85 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-16T10:05:03.141679+00:00",
+  "identifier": "JAR-49",
+  "task_id": "f24886ef-2d89-423f-b18d-20c89786792b",
+  "paperclip_run_id": "1fa9a582-f22a-4c84-967c-ea06a7966574",
+  "hermes_run_id": "run_f51e76e094384f3986c447d1f89f995c",
+  "native_status": "succeeded",
+  "hermes_status": "completed",
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "provider_requests": 5,
+  "elapsed_seconds": 47.219,
+  "usage": {
+    "input_tokens": 46901,
+    "output_tokens": 872,
+    "total_tokens": 47773
+  },
+  "verified_tool_event_id": "csi-48f8931b47134e00656777a2",
+  "native_tool_comment_id": "79f95102-fa1d-490e-9c56-e95735214ac2",
+  "verified_inventory_published_before_completion": true,
+  "models_match_live_api": true,
+  "model_count": 10,
+  "artifact": {
+    "id": "c00fdfab-69c1-4048-b902-3b34b1434ec4",
+    "issueId": "f24886ef-2d89-423f-b18d-20c89786792b",
+    "originalFilename": "csi-demo-inventory.md",
+    "contentType": "text/plain",
+    "byteSize": 1360,
+    "sha256": "ac11386834a322d1011377a3f963d2e7c468aa79206eefa5794c5573ac5c35b9",
+    "createdByAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "originatingRunId": "1fa9a582-f22a-4c84-967c-ea06a7966574",
+    "createdAt": "2026-11-16T09:54:39.576Z"
+  },
+  "recorded_event_types": [
+    "evidence.file_recovered",
+    "evidence.metadata",
+    "graph.node_discovered",
+    "identity.updated",
+    "task.progress",
+    "timeline.updated"
+  ],
+  "new_employees": 0,
+  "paused_workers_preserved": true,
+  "old_objectives_held": true,
+  "staffing_timer": "inactive",
+  "case_and_evidence_available_after_hud_restart": true,
+  "changed_services": [
+    "jarvis-hud",
+    "nine-labs-app-1"
+  ],
+  "restarted_services": [
+    "jarvis-hermes-ceo"
+  ],
+  "untouched_services": [
+    "jarvis-employee-eb7f0f48854a87e840613483",
+    "jarvis-sandbox-eb7f0f48854a87e840613483",
+    "jarvis-employee-7dacd0a79df1e8dd6a4d74d4",
+    "jarvis-hermes",
+    "jarvis-paperclip",
+    "jarvis-hermes-tls",
+    "pentagi",
+    "pentagi-terminal-4",
+    "pgexporter",
+    "scraper",
+    "pgvector",
+    "juice-shop",
+    "nine-labs-killchain-1",
+    "aigoat-backend-1",
+    "aigoat-ollama-1",
+    "aigoat-frontend-1",
+    "ollama"
+  ],
+  "original_models_and_digests_preserved": true,
+  "unrelated_service_changes_observed": [
+    "nine-labs-app-1"
+  ],
+  "docker_mount_order_only": [
+    "jarvis-employee-eb7f0f48854a87e840613483",
+    "jarvis-paperclip",
+    "pentagi",
+    "nine-labs-killchain-1"
+  ],
+  "limits": "No synthetic identity match, geographic trace or decryption finding. Separate authorized demo; unfinished Phase 14 remains paused."
+}

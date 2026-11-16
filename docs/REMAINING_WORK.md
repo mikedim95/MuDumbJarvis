@@ -13,6 +13,10 @@ paused, the staffing timer stays stopped, and native pause holds preserve the
 three unfinished CEO objectives. See [Codex demo](CODEX_DEMO.md). This separate
 demo does not count toward the unfinished Phase 14 acceptance workflows.
 
+The later November 16 CSI popup request additionally authorizes the floating
+window workspace and its real event projection, using the existing backend.
+It does not resume the stopped orchestration trials. See [CSI workspace](CSI_WINDOWS.md).
+
 ## Locations and recorded stop
 
 - Deployment: `kali@100.101.41.44`, repository

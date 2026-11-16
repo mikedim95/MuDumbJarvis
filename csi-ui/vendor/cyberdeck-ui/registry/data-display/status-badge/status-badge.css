@@ -1,0 +1,42 @@
+.cy-status {
+  --cy-status: 107 114 128; /* RGB channels; set by the modifiers */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid rgb(var(--cy-status) / 0.4);
+  background: rgb(var(--cy-status) / 0.08);
+  color: rgb(var(--cy-status));
+  font-family: var(--cy-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.cy-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--cy-status));
+  box-shadow: 0 0 6px rgb(var(--cy-status));
+}
+
+.cy-status--online { --cy-status: 5 255 161; }
+.cy-status--away { --cy-status: 252 238 10; }
+.cy-status--alert { --cy-status: 255 42 109; }
+
+.cy-status--online::before,
+.cy-status--alert::before {
+  animation: cy-status-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cy-status-pulse {
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cy-status::before {
+    animation: none;
+  }
+}
