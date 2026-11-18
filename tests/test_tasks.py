@@ -15,10 +15,10 @@ CHILD = '55555555-5555-4555-8555-555555555555'
 headers = {'X-Jarvis-Token': server.hud_token()}
 
 
-def transport(monkeypatch, handler, ceo=CEO):
+def transport(monkeypatch, handler, ceo=CEO, *, workforce=False):
     def init(self):
         self.company, self.project, self.agent = 'company', 'project', AGENT
-        self.ceo = ceo
+        self.ceo, self.workforce = ceo, workforce
         self.http = httpx.AsyncClient(base_url='http://paperclip/api/', transport=httpx.MockTransport(handler))
     monkeypatch.setattr(task_api.Paperclip, '__init__', init)
 
@@ -54,7 +54,7 @@ def test_submission_nonce_reaches_authoritative_store_and_replays(monkeypatch):
 
 def test_run_errors_and_comments_are_returned_without_false_completion(monkeypatch):
     def handler(request):
-        if request.url.path == '/api/companies/company/issues':
+        if request.url.path in ('/api/companies/company/issues', '/api/companies/company/routines'):
             return httpx.Response(200, json=[])
         if request.url.path.endswith('/comments'):
             return httpx.Response(200, json=[{'id': 'comment', 'body': 'Actual progress'}])
@@ -161,6 +161,8 @@ def test_task_children_are_authoritative_and_scoped_before_detail_reads(monkeypa
     def handler(request):
         path = request.url.path
         reads.append(path)
+        if path == '/api/companies/company/routines':
+            return httpx.Response(200, json=[])
         if path == '/api/companies/company/issues':
             assert request.url.params['projectId'] == 'project'
             return httpx.Response(200, json=[root, valid, *excluded])
@@ -200,3 +202,81 @@ def test_history_filters_upstream_company_and_project_results(monkeypatch):
         response = client.get('/api/tasks', headers=headers)
     assert response.status_code == 200
     assert [task['id'] for task in response.json()['tasks']] == [ISSUE]
+
+
+def test_project_tree_keeps_descendants_and_separates_mission_schedules(monkeypatch):
+    nested, scheduled, scheduled_child = (str(uuid4()) for _ in range(3))
+    root = {'id': ISSUE, 'companyId': 'company', 'projectId': 'project', 'status': 'in_progress',
+            'assigneeAgentId': CEO}
+    worker = {**root, 'id': CHILD, 'parentId': ISSUE, 'assigneeAgentId': AGENT, 'status': 'done'}
+    routine = {**root, 'id': scheduled, 'originKind': 'routine_execution', 'originId': 'schedule',
+               'description': f'[JARVIS MISSION {ISSUE}]\nRun the local check'}
+    rows = [root, worker, {**worker, 'id': nested, 'parentId': CHILD}, routine,
+            {**worker, 'id': scheduled_child, 'parentId': scheduled},
+            {**routine, 'id': 'general', 'description': '[JARVIS GENERAL WORK]\nUnrelated'},
+            {**routine, 'id': 'other-mission', 'description': f'[JARVIS MISSION {CEO}]\nElsewhere'},
+            {**routine, 'id': 'other-company', 'companyId': 'foreign'},
+            {**routine, 'id': 'other-project', 'projectId': 'elsewhere'},
+            {**worker, 'id': 'outside', 'parentId': 'other-mission'}]
+    allowed = {path for row in (ISSUE, CHILD, nested, scheduled, scheduled_child)
+               for path in (f'/api/issues/{row}/comments', f'/api/issues/{row}/runs')}
+
+    def handler(request):
+        path = request.url.path
+        assert request.method == 'GET'
+        if path == '/api/issues/' + ISSUE:
+            return httpx.Response(200, json=root)
+        if path == '/api/companies/company/issues':
+            assert request.url.params['includeRoutineExecutions'] == 'true'
+            return httpx.Response(200, json=rows)
+        if path == '/api/companies/company/routines':
+            return httpx.Response(200, json=[])
+        assert path in allowed
+        return httpx.Response(200, json=[])
+
+    transport(monkeypatch, handler)
+    with TestClient(server.app) as client:
+        data = client.get('/api/tasks/' + ISSUE, headers=headers).json()
+    assert [row['id'] for row in data['children']] == [CHILD]
+    assert [row['id'] for row in data['children'][0]['children']] == [nested]
+    assert [row['id'] for row in data['scheduled_runs']] == [scheduled]
+    assert data['scheduled_runs'][0]['parentId'] is None
+    assert data['scheduled_runs'][0]['children'][0]['id'] == scheduled_child
+    assert data['status'] == 'in_progress'
+    assert data['brief'] == {'progress': '1 of 1 delegated job complete.', 'result': ''}
+
+
+def test_brief_selects_published_conclusion_and_preserves_whole_sentences():
+    from task_brief import job_brief
+    summary = ('The review is complete.\nPublished readme.txt. The native attachment receipt confirms persistence.\n'
+               '## Interpretation\nThe equipment addresses all three requirements. One field check is still needed.\n'
+               '\nVerified delegated execution data:\n```json\n{"private":true}')
+    job = {'status': 'done', 'assigneeAgentId': AGENT, 'children': [], 'runs': [],
+           'comments': [{'authorAgentId': AGENT, 'body': summary, 'createdAt': '1'},
+                        {'authorAgentId': CEO, 'body': 'Unsupported conclusion', 'createdAt': '2'}]}
+    assert job_brief(job)['result'] == 'The equipment addresses all three requirements. One field check is still needed.'
+    job['comments'][0]['body'] = 'No replacement is justified. ' + 'Long qualification ' * 35 + 'with a caveat.'
+    assert job_brief(job)['result'] == 'No replacement is justified.'
+
+
+def test_blocker_brief_explains_what_failed_without_repeating_or_accepting_rejected_results():
+    from task_brief import job_brief
+    job = {'status': 'blocked', 'assigneeAgentId': AGENT, 'children': [], 'runs': [],
+           'unblockDescriptor': {'action': 'No samples could be verified from accessible sources. Supply a sample.'},
+           'comments': [{'authorAgentId': AGENT, 'body': 'Execution verification failed: Report required.'
+                         '\n\nRuntime response:\nBlocked: No samples could be verified. The source returned no measurements.'}]}
+    assert job_brief(job) == {'progress': job['unblockDescriptor']['action'],
+                              'result': 'The source returned no measurements.'}
+    job['comments'][0]['body'] = 'Execution verification failed.\n\nRuntime response:\nAll measurements were verified.'
+    assert job_brief(job)['result'] == ''
+
+
+def test_active_job_shows_current_updates_and_ignores_an_earlier_completed_run():
+    from task_brief import job_brief
+    job = {'status': 'in_progress', 'assigneeAgentId': AGENT, 'children': [], 'runs': [{'startedAt': '2', 'status': 'running'}],
+           'comments': [{'authorAgentId': AGENT, 'createdAt': '1', 'body': 'Old work passed.'}]}
+    assert job_brief(job) == {'progress': 'A run is active.', 'result': ''}
+    job['comments'].append({'authorAgentId': AGENT, 'createdAt': '3', 'body': 'Checking the second batch.'})
+    assert job_brief(job)['progress'] == 'Checking the second batch.'
+    job['comments'].append({'authorUserId': 'owner', 'createdAt': '4', 'body': '[JARVIS USER MESSAGE request_id=x]\nNew task.'})
+    assert job_brief(job)['progress'] == 'A run is active.'

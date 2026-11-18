@@ -66,7 +66,7 @@
     if (!data.approvals.length) el('approvalList').append(text('div', 'No approval requests for this project.', 'monitor-muted'));
     for (const a of data.approvals) {
       const node = card((a.proposal.name || a.proposal.title || a.type) + ' · ' + a.status,
-        'Approval ID: ' + a.id + '\nTasks: ' + a.issue_ids.join(', ') + '\n' + (a.hiring_reason || a.proposal.summary || a.decisionNote || ''));
+        'Approval ID: ' + a.id + '\nTasks: ' + a.issue_ids.join(', ') + '\n' + (a.hiring_reason || a.proposal.summary || a.proposal.proposal || a.decisionNote || ''));
       if (['pending', 'revision_requested'].includes(a.status)) node.append(button('Review request', () => review(a)));
       el('approvalList').append(node);
     }
@@ -87,6 +87,7 @@
   }
   function controls(current, monitor) {
     el('taskActions').replaceChildren();
+    el('taskActions').dataset.taskId = current.id;
     if (!['done', 'cancelled'].includes(current.status)) el('taskActions').append(button('Cancel task tree', () => action(async () => {
       const preview = await post('tasks/' + current.id + '/cancel-preview');
       const n = preview.totals.affectedIssues;
@@ -155,5 +156,8 @@
       }))); el('runList').append(node);
     }
   }
-  window.JarvisMonitor = {dashboard, show, clear: () => { selected = null; rendered = null; }};
+  window.JarvisMonitor = {dashboard, show, clear: () => {
+    selected = null; rendered = null;
+    el('taskActions').replaceChildren(); el('taskActions').dataset.taskId = '';
+  }};
 })();

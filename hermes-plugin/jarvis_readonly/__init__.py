@@ -71,6 +71,10 @@ def register(ctx):
         employee_tools.register(ctx)
     from . import paperclip_reporting
     paperclip_reporting.register(ctx)
+    from . import general_context_bridge
+    general_context_bridge.register(ctx)
+    from . import administration_bridge
+    administration_bridge.register(ctx)
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
         from . import ceo_tools
         ceo_tools.register(ctx)

@@ -2,7 +2,16 @@
 
 **Unfinished Phase 14 work remains paused.** See the [remaining work and handoff](docs/REMAINING_WORK.md). The separately authorized [particle core](docs/VISUAL_CORE.md) is live; the [Codex CEO demo](docs/CODEX_DEMO.md) uses cloud inference through the existing Hermes runtime while old objectives and local workers remain paused.
 
-The default HUD now shows only the reactive core, conversation, and one input.
+The default HUD has **Chat**, **Projects**, and **General**. Chat handles brief
+conversations with Paperclip context. Projects are missions with their own local
+conversation, knowledge, worker assignments and schedules. Open a project to see
+its delegation tree, job states and brief results. Select a worker in the tree
+or open **General → Agents** to see their projects and cron jobs. General holds standing
+agent directions, shared research, system prompts and routines that continue
+across missions. The former Administrator conversation and its history now live
+in General chat. See [General and mission scopes](docs/GENERAL_WORKSPACE.md).
+See [two modes and project contexts](docs/TWO_MODES.md).
+The following demo notes describe the earlier single-input routing.
 Direct chat uses **Codex / gpt-6.1-sol**, through its existing Hermes session,
 separately from CEO tasks. Every reply must confirm that actual provider and
 model; local fallback is disabled. Real agent tool activity and errors open

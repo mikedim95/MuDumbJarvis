@@ -285,6 +285,11 @@ footer{
 <div id="grid">
   <header>
     <h1>J.A.R.V.I.S</h1>
+    <nav id="appModes" aria-label="Jarvis mode">
+      <button id="directModeBtn" type="button" aria-pressed="true">CHAT</button>
+      <button id="projectsModeBtn" type="button" aria-pressed="false">PROJECTS</button>
+      <button id="generalModeBtn" type="button" aria-pressed="false">GENERAL</button>
+    </nav>
     <div id="aiProvider" role="status">Connecting…</div>
     <div class="sub">HERMES AGENT INTERFACE &nbsp;//&nbsp; <span id="connState">LINK DOWN</span></div>
     <div id="clock">--:--:--</div>
@@ -328,6 +333,82 @@ footer{
   <!-- CENTER -->
   <div id="center">
     <div id="approvals"></div>
+    <button id="generalSidebarToggle" aria-controls="generalNav" aria-expanded="false" type="button">Conversations</button>
+    <aside id="generalNav" aria-label="General sidebar" hidden>
+      <nav aria-label="General tools">
+        <button id="generalContextBtn" type="button" aria-controls="generalContextPanel">Context</button>
+        <button id="generalCronBtn" type="button" aria-controls="cronPanel">Cron jobs</button>
+        <button id="generalAgentsBtn" type="button" aria-controls="agentsPanel">Agents</button>
+      </nav>
+      <div class="conversation-list-heading">
+        <h2>Conversations</h2>
+        <button id="newGeneralChat" type="button" aria-label="New chat" title="New chat"><span aria-hidden="true">＋</span> New chat</button>
+      </div>
+      <div id="generalThreads" aria-label="General conversations"></div>
+      <p id="generalThreadsStatus" role="status"></p>
+    </aside>
+    <div id="workspaceMain">
+    <p id="modeDescription">Brief conversations with your Paperclip context.</p>
+    <p id="modeError" role="alert"></p>
+    <section id="generalContextPanel" aria-labelledby="generalContextHeading" hidden>
+      <h2 id="generalContextHeading">Context</h2>
+      <label class="context-target">View context
+        <select id="generalAgentList" aria-label="Agent or chat"></select>
+      </label>
+      <p id="generalContextStatus" role="status"></p>
+      <pre id="generalContextText"></pre>
+      <details id="administratorInspector">
+        <summary>System prompt</summary>
+        <p id="administratorPromptLabel" role="status"></p>
+        <pre id="administratorPrompt"></pre>
+      </details>
+      <h3>Shared research and general work</h3><ul id="generalKnowledgeList"></ul>
+    </section>
+    <section id="agentsPanel" aria-labelledby="agentsHeading" hidden>
+      <div class="agents-heading">
+        <h2 id="agentsHeading" tabindex="-1">Agents</h2>
+        <p id="agentsActivitySummary" aria-live="polite"></p>
+      </div>
+      <p id="agentsNotice" role="status"></p>
+      <ul id="agentsMap" aria-label="Agent reporting lines and work"></ul>
+    </section>
+    <section id="projectBrowser" aria-labelledby="projectsHeading" hidden>
+      <div class="project-browser-heading"><h2 id="projectsHeading" tabindex="-1">Projects</h2></div>
+      <p id="projectRemovalNotice" role="status" hidden><span id="projectRemovalText"></span> <button id="undoProjectRemoval" type="button">Undo</button></p>
+      <p id="projectListStatus" role="status">Loading projects…</p>
+      <ul id="projectList" aria-label="Projects"></ul>
+      <button id="newProjectBtn" type="button"><span aria-hidden="true">＋</span> NEW PROJECT</button>
+    </section>
+    <section id="projectContext" aria-label="Selected project" hidden>
+      <button id="projectBackBtn" type="button">← Projects</button>
+      <div class="project-heading"><h2 id="projectTitle" tabindex="-1">New project</h2><p id="projectStatus" role="status"></p></div>
+      <button id="projectScheduleBtn" type="button">Cron jobs</button>
+    </section>
+    <section id="administratorPanel" aria-labelledby="administratorHeading" hidden>
+      <h2 id="administratorHeading" tabindex="-1">General chat</h2>
+      <div id="administratorFeed" role="log" aria-label="Conversation" aria-live="polite"></div>
+    </section>
+    <div id="generalComposer" hidden>
+      <p id="administratorStatus" role="status"></p>
+      <form id="administratorForm">
+        <textarea id="administratorInput" rows="1" maxlength="20000" aria-label="General message" placeholder="Message Jarvis…"></textarea>
+        <button id="administratorSend" type="submit" aria-label="Send message" title="Send message">Send</button>
+      </form>
+    </div>
+    <section id="cronPanel" aria-labelledby="cronHeading" hidden>
+      <button id="cronBackBtn" type="button" hidden>← Mission</button>
+      <div class="cron-heading"><div><h2 id="cronHeading">Cron Jobs</h2><p id="cronDescription">Scheduled work, orchestrated by Jarvis.</p></div><button id="newCronBtn" type="button">＋ New job</button></div>
+      <p id="cronStatus" role="status"></p>
+      <form id="cronForm" hidden>
+        <label>Name<input id="cronTitle" required maxlength="200" placeholder="Daily OSINT knowledge"></label>
+        <label>Goal<textarea id="cronGoal" required minlength="10" maxlength="8000" rows="5" placeholder="What should Jarvis and the team work on?"></textarea></label>
+        <div class="cron-fields"><label>Schedule<input id="cronExpression" required value="0 9 * * *" placeholder="0 9 * * *"></label><label>Time zone<input id="cronTimezone" required value="Europe/Athens"></label></div>
+        <p id="cronScopeLabel" class="cron-hint"></p><select id="cronProject" hidden aria-hidden="true"></select>
+        <p class="cron-hint">Five fields: minute, hour, day, month, weekday. <code>0 9 * * *</code> runs daily at 09:00.</p>
+        <div class="cron-actions"><button id="saveCronBtn" type="submit">Save schedule</button><button id="cancelCronBtn" type="button">Cancel</button></div>
+      </form>
+      <div id="cronList" aria-label="Scheduled jobs"></div>
+    </section>
     <div id="reactorWrap" title="Click to talk" role="button" tabindex="0" aria-label="Activate voice input">
       <canvas id="reactor" aria-hidden="true"></canvas>
       <div id="coreState" role="status" aria-live="polite"><div class="st" id="stateLabel">STANDBY</div><div class="hint" id="stateHint">ENTER AN OBJECTIVE BELOW</div></div>
@@ -359,6 +440,7 @@ footer{
       <input id="chatInput" placeholder="Type to Hermes… (/new resets · voice: click the ring)" autocomplete="off">
       <button class="btn" id="sendBtn">SEND</button>
       <button class="btn" id="clearBtn" title="Clear the visible chat (history stays in Hermes)">CLR</button>
+    </div>
     </div>
   </div>
 
@@ -416,6 +498,7 @@ footer{
   </footer>
 </div>
 
+<script src="ceo-input.js"></script>
 <script>
 "use strict";
 /* ============================== state ============================== */
@@ -445,10 +528,17 @@ function setState(st,label,hint){
 }
 
 /* ============================== feed =============================== */
-function addMsg(cls,text){
+function addMsg(cls,text,uiMode=null,projectId=null){
   const d=document.createElement("div"); d.className="msg "+cls; d.textContent=text;
-  feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
-  while(feed.children.length>80)feed.removeChild(feed.firstChild);
+  if(document.body.classList.contains("ai-minimal")){
+    const view=window.JarvisModes?.snapshot();
+    d.dataset.uiMode=uiMode||(view?.isWorkView?'projects':view?.mode)||'direct';
+    if(d.dataset.uiMode==='projects')d.dataset.projectId=projectId??window.JarvisTasks?.snapshot().objectiveId??'';
+  }
+  feed.appendChild(d);
+  window.JarvisModes?.filterMessages();
+  if(!d.hidden)feed.scrollTop=feed.scrollHeight;
+  while(feed.children.length>80)feed.querySelector(':scope > :not(#projectDelegation)').remove();
   return d;
 }
 function addActivity(text,toolName,preview){
@@ -666,43 +756,113 @@ addEventListener("keydown",e=>{
 });
 
 /* ============================== typed chat ========================= */
-let chatSending=false;
+let chatSending=false, chatInputRevision=0;
+const directPendingKey='jarvis-direct-pending-messages';
+let directPending=new Map();
+try{directPending=new Map(JSON.parse(sessionStorage.getItem(directPendingKey)||'[]'));}catch{}
+function saveDirectPending(){
+  if(directPending.size)sessionStorage.setItem(directPendingKey,JSON.stringify([...directPending]));
+  else sessionStorage.removeItem(directPendingKey);
+}
+$("chatInput").addEventListener("input",()=>{chatInputRevision++;});
 async function sendChat(){
-  const inp=$("chatInput"); const text=inp.value.trim(); if(!text)return;
+  const inp=$("chatInput"), draft=inp.value, text=draft.trim(); if(!text)return;
   if(chatSending||window.JarvisTasks?.snapshot().submitting)return;
-  if(document.body.classList.contains("ai-minimal")&&/^@ceo(?:\s|$)/i.test(text)){
-    const objective=text.replace(/^@ceo\s*/i,"").trim();
-    if(!objective){addMsg("sys","Write your objective after @ceo to send it to the Paperclip CEO.");return;}
-    chatSending=true;$("sendBtn").disabled=true;addMsg("you",text);
-    try{
-      const task=await window.JarvisTasks.submitObjective(objective);
-      if(!task)throw new Error(window.JarvisTasks.snapshot().error||"Objective submission was not confirmed. Retry the same text.");
-      addMsg("sys",task.identifier+" sent to the Paperclip CEO. Its agent window follows the real task and result.");
-    }catch(err){addMsg("sys","Unable to submit the objective: "+err.message);}
-    finally{chatSending=false;$("sendBtn").disabled=false;}
+  const minimal=document.body.classList.contains("ai-minimal");
+  const appView=window.JarvisModes?.snapshot();
+  if(minimal&&!appView.isWorkView&&appView.mode!=='direct')return;
+  const objectiveId=window.JarvisTasks?.snapshot().objectiveId;
+  const commandMode=$("commandMode").value, revision=chatInputRevision;
+  const route=minimal?window.JarvisCEOInput.route(text,objectiveId,appView.isWorkView?'projects':appView.mode):null;
+  if(route?.kind==="invalid"){addMsg("sys",route.message);return;}
+  if(route?.kind==="reset"){
+    try{window.JarvisTasks.newObjective();inp.value="";addMsg("sys","Ready for a new objective. Previous work remains in Paperclip.");}
+    catch(err){addMsg("sys",err.message);}
     return;
   }
-  if(["task","objective"].includes($("commandMode").value))return window.JarvisTasks.submit(text);
-  chatSending=true;$("sendBtn").disabled=true;
-  inp.value=""; addMsg("you",text); setState("thinking","PROCESSING");
+  function restoreDraft(){
+    if(inp.value||chatInputRevision!==revision)return;
+    const view=window.JarvisModes?.snapshot();
+    if(minimal){
+      if(view.mode!==appView.mode||view.isWorkView!==appView.isWorkView)return;
+      if(view.isWorkView&&window.JarvisTasks.snapshot().objectiveId!==objectiveId)return;
+    }else if($("commandMode").value!==commandMode)return;
+    inp.value=draft;
+  }
+  inp.value="";inp.focus();
+  if(route&&route.kind!=="direct"){
+    chatSending=true;$("sendBtn").disabled=true;
+    const requestBubble=addMsg("you",text,'projects',route.kind==='new'?'':route.task_id);
+    setState("thinking","PROCESSING");
+    try{
+      if(route.kind==="decision"){
+        const result=await window.JarvisTasks.decide(route.approval_id,route.decision,route.note);
+        if(!result)throw new Error(window.JarvisTasks.snapshot().error||"Decision was not confirmed. Retry the same command.");
+        addMsg("sys","Paperclip approval "+result.id+": "+result.status+".");
+      }else{
+        const task=await (route.kind==="followup"?window.JarvisTasks.followup(route.input):window.JarvisTasks.submitObjective(route.input));
+        if(!task)throw new Error(window.JarvisTasks.snapshot().error||"Submission was not confirmed. Retry the same text.");
+        requestBubble.dataset.projectId=task.id;window.JarvisModes.filterMessages();
+        addMsg("sys",task.identifier+" · "+(route.kind==="followup"&&task.id===route.task_id?"Follow-up recorded for JARVIS.":"Objective assigned to JARVIS."));
+      }
+    }catch(err){restoreDraft();addMsg("sys","Unable to complete the request: "+err.message);}
+    finally{chatSending=false;$("sendBtn").disabled=false;if(state!=="listening")setState("standby","STANDBY");}
+    return;
+  }
+  if(!minimal&&["task","objective"].includes(commandMode)){
+    try{
+      const task=await window.JarvisTasks.submit(text);
+      if(!task)restoreDraft();
+      return task;
+    }catch(err){restoreDraft();addMsg("sys","Unable to submit the task: "+err.message);return;}
+  }
+  const chatText=route?.kind==="direct"?route.input:text;
+  if(minimal&&window.JarvisModes.snapshot().mode!=='direct')window.JarvisModes.setMode('direct');
+  const originRevision=window.JarvisModes?.snapshot().navigationRevision;
+  const requestId=directPending.get(chatText)||crypto.randomUUID();
+  let project=null;
+  chatSending=true;$("sendBtn").disabled=true;$("sendBtn").toggleAttribute('data-direct-pending',true);
+  addMsg("you",text,'direct'); setState("thinking","PROCESSING");
   try{
+    directPending.set(chatText,requestId);saveDirectPending();
     const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({input:text,conversation:CONV})});
+      body:JSON.stringify({input:chatText,conversation:CONV,request_id:requestId,paperclip_task_id:window.JarvisTasks?.snapshot().objectiveId||null,
+        general_context_agent_id:window.JarvisGeneralContext?.selectedAgentId()||null})});
     const j=await r.json();
+    project=window.JarvisModes?.createdProject(j);
+    if(r.ok||project){directPending.delete(chatText);saveDirectPending();}
     if(!r.ok)throw new Error((j.error||"Direct chat is unavailable.")+(j.reference?" Reference: "+j.reference:""));
     (j.tools||[]).forEach(t=>addActivity("",t.name,t.preview));
     if(j.runtime?.provider){showBrain(j.runtime);}
-    addMsg("jarvis",j.text||"(no reply)");
-    if(/^\/(new|reset|clear)\b/i.test(text)){     // slash reset → also clear the visible feed
-      setTimeout(()=>{feed.innerHTML="";addMsg("sys","conversation reset");},800);
+    addMsg("jarvis",j.text||"(no reply)",'direct');
+    if(j.general_context_updates?.length)window.dispatchEvent(new CustomEvent('jarvis-general-context-updated',{detail:j.general_context_updates}));
+    if(!project&&/^\/(new|reset|clear)\s*$/i.test(chatText)){
+      for(const message of [...feed.children])if(!minimal||message.dataset.uiMode==='direct')message.remove();
+      addMsg("sys","conversation reset",'direct');
     }
-  }catch(err){ addMsg("sys","Unable to get a reply: "+err.message); }
-  finally{chatSending=false;$("sendBtn").disabled=false;}
+  }catch(err){ if(!project)restoreDraft();addMsg("sys","Unable to get a reply: "+err.message,'direct'); }
+  finally{chatSending=false;$("sendBtn").disabled=false;$("sendBtn").removeAttribute('data-direct-pending');}
   if(state!=="listening")setState("standby","STANDBY");
+  if(project){
+    const row=addMsg('sys',project.identifier+' · '+project.title+' ','direct');
+    const link=document.createElement('button');link.type='button';link.textContent='Open project';
+    link.onclick=()=>window.JarvisModes.openProject(project.id);row.append(link);
+    const view=window.JarvisModes.snapshot();
+    if(view.mode==='direct'&&view.navigationRevision===originRevision)await window.JarvisModes.openProject(project.id);
+  }
 }
 $("sendBtn").onclick=sendChat;
 $("clearBtn").onclick=()=>{feed.innerHTML="";addMsg("sys","chat cleared (history stays in Hermes — type /new to reset the conversation)");};
 $("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
+window.addEventListener("jarvis-ceo-reply",event=>{
+  const e=event.detail;
+  if(!e||e.task_id!==window.JarvisTasks?.snapshot().objectiveId||typeof e.text!=="string"||typeof e.comment_id!=="string")return;
+  const selected=window.JarvisTasks.snapshot().tasks.find(task=>task.id===e.task_id);
+  if(document.body.classList.contains('ai-minimal')&&selected?.work_scope!=='general'&&!e.projectConversation)return;
+  if([...feed.children].some(message=>message.dataset.ceoCommentId===e.comment_id&&message.dataset.projectId===e.task_id))return;
+  const message=addMsg("jarvis",window.JarvisCEOInput.publishedText(e.text),'projects',e.task_id);
+  message.dataset.ceoCommentId=e.comment_id;
+});
 
 /* ============================== widgets ============================ */
 async function jget(path){const r=await fetch("/api/hermes"+path);if(!r.ok)throw new Error(r.status);return r.json()}
@@ -944,10 +1104,16 @@ if(document.body.classList.contains("ai-minimal")){
   setState("standby","JARVIS","");
 }else bootSequence(new URLSearchParams(location.search).get("boot")==="full");
 
-addMsg("sys",document.body.classList.contains("ai-minimal")?"Talk to me, or start an objective with @ceo.":"Jarvis HUD online. Click the ring or press Space to talk.");
+addMsg("sys",document.body.classList.contains("ai-minimal")?"Ask a question, check your Paperclip work, or have a quick conversation.":"Jarvis HUD online. Click the ring or press Space to talk.");
 </script>
 <script src="monitor.js"></script>
 <script src="tasks.js"></script>
+<script src="modes.js"></script>
+<script src="project-results.js"></script>
+<script src="general-context.js"></script>
+<script src="administrator.js"></script>
+<script src="cron-jobs.js"></script>
+<script src="agents.js"></script>
 <div id="csiRoot"></div>
 <script src="csi/csi-workspace.js" defer></script>
 </body>

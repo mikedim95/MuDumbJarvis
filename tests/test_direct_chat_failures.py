@@ -90,4 +90,4 @@ def test_only_actual_missing_session_recreates_once_and_returns_the_real_reply(m
         response = client.post('/api/chat', json={'input': 'hello','conversation':'jarvis-main'}, headers={'X-Jarvis-Token': server.hud_token()})
     assert response.status_code == 200 and response.json()['text'] == 'READY'
     assert response.json()['run_id'] == 'run_real'
-    assert fake.get_session_id.call_args_list[1].kwargs == {'force_new': True}
+    assert fake.get_session_id.call_args_list[1].kwargs == {'force_new': True, 'stale_id': 'api_missing'}

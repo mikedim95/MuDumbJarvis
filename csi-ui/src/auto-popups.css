@@ -54,7 +54,15 @@
 .csi-objective-artifacts { display: grid; gap: 6px; }
 .csi-objective-artifacts a { color: #78e5ed; }
 .csi-objective-progress article { border-left: 1px solid #235766; padding-left: 9px; margin: 8px 0; }
+.csi-objective-approval { border: 1px solid #9d783e; background: #d5aa3510; padding: 9px; color: #e7d5a8; }
+.csi-objective-approval code { color: #f2db8d; font-size: 10px; overflow-wrap: anywhere; }
 @media (max-width: 679px) {
   .csi-automatic .csi-auto-stage { top: 57px; bottom: 118px; }
   .csi-automatic .csi-window-content { padding: 13px; }
 }
+/* Keep mode navigation and the project selector available above live panels. */
+body.ai-minimal .csi-automatic .csi-auto-stage { top:150px; }
+body.ai-minimal[data-ui-mode="projects"] .csi-automatic .csi-auto-stage { top:260px; }
+/* Automatic panels contain only requests for a human decision. */
+.csi-objective-approval button { padding:9px 14px; border:1px solid #477889; border-radius:5px; color:#bce8e7; background:#103340; cursor:pointer; }
+.csi-objective-approval button:disabled { opacity:.5; cursor:wait; }

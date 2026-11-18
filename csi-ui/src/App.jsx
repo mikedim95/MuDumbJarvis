@@ -100,12 +100,12 @@ function Workspace({onClose}){
  };
  const submit=async e=>{
   e.preventDefault();const text=objective.trim();if(!text||busy||bridge.submitting)return;
-  setBusy(true);setDispatchError('');
+  setBusy(true);setDispatchError('');setObjective('');
   try{
    const task=await window.JarvisTasks?.submitObjective(text);
    if(!task)throw new Error(window.JarvisTasks?.snapshot().error||'Objective submission was not confirmed. Retry the same text.');
-   channelFor.current=task.id;setCaseId(task.id);setObjective('');
-  }catch(e){setDispatchError(e.message);}finally{setBusy(false);}
+   channelFor.current=task.id;setCaseId(task.id);
+  }catch(e){setDispatchError(e.message);setObjective(current=>current||objective);}finally{setBusy(false);}
  };
  const events=data?.events||[],warningCount=events.filter(e=>['analysis.warning','task.failed'].includes(e.type)).length;
  const current=bridge.tasks.find(t=>t.id===caseId),caseStatus=data?.task.status||current?.status||'connecting';
@@ -160,7 +160,7 @@ function Workspace({onClose}){
   <form className="csi-composer" onSubmit={submit}>
    <label className="csi-label" htmlFor="csiObjectiveInput">◉ CEO UPLINK</label>
    <input id="csiObjectiveInput" className="csi-input" value={objective} onChange={e=>setObjective(e.target.value)} maxLength={8000}
-    placeholder="Give the CEO one objective…" autoComplete="off" disabled={busy||bridge.submitting}/>
+    placeholder="Give the CEO one objective…" autoComplete="off"/>
    <button id="csiObjectiveSend" className="cy-modal__btn csi-primary" type="submit" disabled={busy||bridge.submitting||!objective.trim()}>{busy?'DISPATCHING…':'DISPATCH OBJECTIVE ↗'}</button>
    {dispatchError&&<p role="alert" className="csi-error">{dispatchError}</p>}
   </form>

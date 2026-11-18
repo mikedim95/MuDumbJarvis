@@ -19,7 +19,6 @@ from fastapi import Depends, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-
 _policy_spec = importlib.util.spec_from_file_location('jarvis_monitor_inference', Path(__file__).resolve().parents[1] /
     'hermes-plugin/jarvis_readonly/inference_policy.py')
 _inference_policy = importlib.util.module_from_spec(_policy_spec)
@@ -103,6 +102,8 @@ def evidence(comment, issue, runs, company):
                 continue
             expected = hmac.new(key.encode(), json.dumps(unsigned, sort_keys=True, separators=(',', ':')).encode(), hashlib.sha256).hexdigest()
             run = next((r for r in runs if r.get('runId') == run_id), {})
+            employee_runs = [r for r in runs if (r.get('agentId') or issue.get('assigneeAgentId')) == agent]
+            latest = max(employee_runs, key=lambda r: r.get('createdAt') or r.get('startedAt') or '') if employee_runs else {}
             verified = bool(master and scoped and agent == comment.get('authorAgentId') and
                 proof.get('session_id') == session and run and
                 (not run.get('agentId') or run.get('agentId') == agent) and
@@ -116,7 +117,8 @@ def evidence(comment, issue, runs, company):
                 'run_id': run_id, 'run_status': run.get('status'), 'agent_id': agent,
                 'kind': proof.get('kind', 'inventory'), 'task_status': proof.get('task_status'),
                 'completion_verified': bool(verified and proof.get('task_status') == 'done' and
-                    run.get('status') == 'succeeded' and issue.get('status') == 'done'),
+                    run.get('status') == 'succeeded' and issue.get('status') == 'done' and
+                    latest.get('runId') == run_id),
                 'model': proof.get('model'), 'tools': tools, 'artifacts': proof.get('artifacts', []),
                 'source_refs': proof.get('source_refs', []), 'framework_evaluations': proof.get('framework_evaluations', []),
                 'runtime_deliveries': proof.get('runtime_deliveries', []), 'comment_id': comment.get('id')}))
@@ -173,7 +175,8 @@ def add_routes(router, Paperclip):
         if approval.get('companyId') != p.company:
             raise HTTPException(404, 'Approval not found')
         linked = await p.request('GET', f'approvals/{approval_id}/issues')
-        if not linked or any(i.get('companyId') != p.company or i.get('projectId') != p.project for i in linked):
+        if not linked or any(i.get('companyId') != p.company or
+                (not getattr(p, 'workforce', False) and i.get('projectId') != p.project) for i in linked):
             raise HTTPException(404, 'Approval not linked exclusively to General Operations')
         return approval, linked
 
@@ -181,17 +184,19 @@ def add_routes(router, Paperclip):
         body = a.get('payload') or {}
         meta = ((body.get('metadata') or {}).get('jarvis') or {})
         return redact({**{k: a.get(k) for k in ('id', 'type', 'status', 'requestedByAgentId', 'createdAt', 'decidedAt', 'decisionNote')},
-            'proposal': {k: body.get(k) for k in ('name', 'role', 'title', 'summary', 'reason', 'recommendedAction', 'risks', 'scope', 'reportsTo', 'capabilities', 'agentId')},
+            'proposal': {k: body.get(k) for k in ('name', 'role', 'title', 'summary', 'reason', 'proposal', 'execution', 'kind', 'recommendedAction', 'risks', 'scope', 'reportsTo', 'capabilities', 'agentId')},
             'capability': capability({'metadata': {'jarvis': meta}}),
             'hiring_reason': meta.get('hiring_reason'), 'source_issue_id': meta.get('source_issue_id')})
 
     @router.get('/monitor')
     async def dashboard(p=Depends(client)):
+        query = '' if getattr(p, 'workforce', False) else f'?projectId={p.project}'
         agents, issues, live, approvals, model = await asyncio.gather(p.agents(),
-            p.request('GET', f'companies/{p.company}/issues?projectId={p.project}'),
+            p.request('GET', f'companies/{p.company}/issues' + query),
             p.request('GET', f'companies/{p.company}/live-runs'),
             p.request('GET', f'companies/{p.company}/approvals'), inference())
-        tasks = [i for i in issues if i.get('companyId') == p.company and i.get('projectId') == p.project]
+        tasks = [i for i in issues if i.get('companyId') == p.company and
+                 (getattr(p, 'workforce', False) or i.get('projectId') == p.project)]
         ids = {i['id'] for i in tasks}
         # Full approval payloads and adapter configs never cross this boundary.
         views = []
@@ -221,7 +226,8 @@ def add_routes(router, Paperclip):
         comments, runs, artifacts = await asyncio.gather(
             p.request('GET', f'issues/{task_id}/comments'), p.request('GET', f'issues/{task_id}/runs'),
             p.request('GET', f'issues/{task_id}/attachments'))
-        receipts = [receipt for c in comments for receipt in evidence(c, issue, runs, p.company)]
+        receipts = [receipt for c in sorted(comments, key=lambda c: c.get('createdAt') or '')
+            for receipt in evidence(c, issue, runs, p.company)]
         plans = [{k: c.get(k) for k in ('id', 'body', 'createdAt', 'authorAgentId')} for c in comments
             if c.get('authorAgentId') == p.ceo and (c.get('body') or '').startswith('[JARVIS CEO PLAN')]
         deps = {}
@@ -288,15 +294,34 @@ def add_routes(router, Paperclip):
     @router.post('/tasks/{task_id}/cancel')
     async def cancel(task_id: UUID, body: Cancellation, p=Depends(client)):
         await cancellation_preview(p, task_id)
-        return redact(await p.request('POST', f'issues/{task_id}/tree-holds',
-            {'mode': 'cancel', 'reason': body.reason, 'metadata': {'source': 'jarvis-human-hud'}}))
+        result=await p.request('POST', f'issues/{task_id}/tree-holds',
+            {'mode': 'cancel', 'reason': body.reason, 'metadata': {'source': 'jarvis-human-hud'}})
+        import cron_api
+        await cron_api.pause_mission(p,str(task_id))
+        return redact(result)
 
     @router.post('/approvals/{approval_id}/decision')
     async def decide(approval_id: UUID, body: Decision, p=Depends(client)):
         a, linked = await scoped_approval(p, approval_id)
         wanted = 'approved' if body.decision == 'approve' else 'rejected'
+        async def apply_staff_change(approval):
+            proposal = approval.get('payload') or {}
+            if proposal.get('kind') != 'jarvis_staff_termination' or wanted != 'approved':
+                return approval_view(approval)
+            if not getattr(p, 'workforce', False) or approval.get('requestedByAgentId') != p.ceo:
+                raise HTTPException(409, 'Staff changes require the configured CEO workforce policy')
+            agent_id = str(UUID(proposal['agentId']))
+            agent = next((a for a in await p.agents() if a['id'] == agent_id), None)
+            if not agent or agent_id == p.ceo or agent.get('reportsTo') != p.ceo or agent.get('companyId') != p.company:
+                raise HTTPException(409, 'Staff change is outside the CEO reporting hierarchy')
+            if agent.get('status') != 'terminated':
+                agent = await p.request('POST', f'agents/{agent_id}/terminate', {})
+            if agent.get('status') != 'terminated':
+                raise HTTPException(502, 'Native termination was not confirmed')
+            return {**approval_view(approval), 'execution': {'agent_id': agent_id, 'status': 'terminated',
+                'history_preserved': True}}
         if a.get('status') == wanted:
-            return approval_view(a)  # Safe replay of an acknowledged decision.
+            return await apply_staff_change(a)  # Reconcile uncertain staff-change acknowledgments safely.
         if a.get('status') not in ('pending', 'revision_requested'):
             raise HTTPException(409, 'Approval already has a different decision')
         if body.decision == 'approve' and a.get('type') == 'hire_agent':
@@ -319,4 +344,4 @@ def add_routes(router, Paperclip):
                     heartbeat.get('wakeOnAssignment') is not True or heartbeat.get('wakeOnDemand') is not True):
                 raise HTTPException(409, 'Hire differs from the reviewed capability template; review it in Paperclip')
         result = await p.request('POST', f'approvals/{approval_id}/{body.decision}', {'decisionNote': body.note})
-        return approval_view(result)
+        return await apply_staff_change(result)

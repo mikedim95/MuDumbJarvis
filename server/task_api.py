@@ -1,9 +1,14 @@
 """Authenticated Paperclip REST integration. No local task database or scheduler."""
 import asyncio
 import os
+from collections import defaultdict
+from datetime import datetime, timezone
 from uuid import UUID
 
 import httpx
+import work_scope
+import agent_work
+from task_brief import job_brief
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -15,12 +20,18 @@ class TaskSubmission(BaseModel):
     objective: bool = False
 
 
+class TaskMessage(BaseModel):
+    input: str = Field(min_length=1, max_length=8000)
+    request_id: UUID
+
+
 class Paperclip:
     def __init__(self):
         self.company = os.environ.get('PAPERCLIP_COMPANY_ID', '')
         self.project = os.environ.get('PAPERCLIP_PROJECT_ID', '')
         self.agent = os.environ.get('PAPERCLIP_AGENT_ID', '')
         self.ceo = os.environ.get('PAPERCLIP_CEO_AGENT_ID', '')
+        self.workforce = os.environ.get('JARVIS_CEO_WORKFORCE') == 'true'
         key = os.environ.get('PAPERCLIP_API_KEY', '')
         if not all((self.company, self.project, self.agent, key)):
             raise HTTPException(503, 'Paperclip integration is not configured')
@@ -54,14 +65,20 @@ class Paperclip:
 
     async def issue(self, issue_id):
         issue = await self.request('GET', 'issues/' + str(issue_id))
-        if issue['companyId'] != self.company or issue.get('projectId') != self.project:
+        if issue['companyId'] != self.company or (not getattr(self, 'workforce', False) and issue.get('projectId') != self.project):
             raise HTTPException(404, 'Task not found in General Operations')
+        if getattr(self, 'workforce', False) and issue.get('projectId'):
+            self.project = issue['projectId']
         return issue
 
 
-def project_issue(issue):
-    return {key: issue.get(key) for key in ('id', 'identifier', 'title', 'description', 'status',
-        'assigneeAgentId', 'parentId', 'createdAt', 'updatedAt', 'completedAt', 'executionRunId', 'unblockDescriptor')}
+def project_issue(issue,scope=None):
+    result={key: issue.get(key) for key in ('id', 'identifier', 'title', 'description', 'status', 'projectId',
+        'assigneeAgentId', 'parentId', 'createdAt', 'updatedAt', 'completedAt', 'executionRunId', 'unblockDescriptor', 'hiddenAt','originKind','originId')}
+    resolved=scope or work_scope.classify(issue)
+    result.update(work_scope=resolved['kind'],mission_id=resolved.get('mission_id'))
+    result['description']=work_scope.clean_description(result.get('description'))
+    return result
 
 
 def build_router(require_auth):
@@ -79,6 +96,33 @@ def build_router(require_auth):
         return {'ceo_id': p.ceo or None,
             'agents': [{k: a.get(k) for k in ('id', 'name', 'title', 'role', 'reportsTo', 'adapterType', 'status',
                 'lifecycleState', 'lifecycleError', 'capabilities')} for a in await p.agents()]}
+
+    @router.get('/agents/work')
+    async def staff_assignments(p: Paperclip = Depends(client)):
+        return await agent_work.overview(p)
+
+    async def project_visibility(task_id, p, hidden):
+        issue = await p.issue(task_id)
+        if issue.get('parentId') or not p.ceo or issue.get('assigneeAgentId') != p.ceo:
+            raise HTTPException(409, 'Only CEO-owned projects can be removed from this list')
+        if bool(issue.get('hiddenAt')) != hidden:
+            stamp = datetime.now(timezone.utc).isoformat().replace('+00:00','Z') if hidden else None
+            issue = await p.request('PATCH', f'issues/{task_id}', {'hiddenAt': stamp})
+        if issue.get('id') != str(task_id) or bool(issue.get('hiddenAt')) != hidden:
+            raise HTTPException(502, 'Paperclip did not confirm project visibility')
+        if hidden:
+            import cron_api
+            await cron_api.pause_mission(p,str(task_id))
+        return {'id': str(task_id), 'hidden_at': issue.get('hiddenAt'), 'removed': hidden,
+            'history_preserved': True, 'task': project_issue(issue)}
+
+    @router.delete('/projects/{task_id}')
+    async def remove_project(task_id: UUID, p: Paperclip = Depends(client)):
+        return await project_visibility(task_id, p, True)
+
+    @router.post('/projects/{task_id}/restore')
+    async def restore_project(task_id: UUID, p: Paperclip = Depends(client)):
+        return await project_visibility(task_id, p, False)
 
     @router.post('/tasks', status_code=201)
     async def create_task(body: TaskSubmission, p: Paperclip = Depends(client)):
@@ -107,37 +151,111 @@ def build_router(require_auth):
 
     @router.get('/tasks')
     async def history(p: Paperclip = Depends(client)):
-        issues = await p.request('GET', f'companies/{p.company}/issues?projectId={p.project}')
-        return {'tasks': sorted([project_issue(i) for i in issues
-            if i.get('companyId') == p.company and i.get('projectId') == p.project],
+        query = '' if getattr(p, 'workforce', False) else f'?projectId={p.project}'
+        issues = await p.request('GET', f'companies/{p.company}/issues' + query)
+        routines=await work_scope.routines_for(p,issues)
+        return {'tasks': sorted([project_issue(i,work_scope.classify(i,issues,routines)) for i in issues
+            if i.get('companyId') == p.company and (getattr(p, 'workforce', False) or i.get('projectId') == p.project)],
             key=lambda i: i.get('createdAt') or '', reverse=True)}
+
+    @router.post('/tasks/{task_id}/messages')
+    async def message(task_id: UUID, body: TaskMessage, p: Paperclip = Depends(client)):
+        issue = await p.issue(task_id)
+        if not getattr(p, 'workforce', False):
+            raise HTTPException(409, 'CEO conversation mode is not enabled')
+        if issue.get('parentId') or issue.get('assigneeAgentId') != p.ceo:
+            raise HTTPException(409, 'Messages must address a CEO-owned top-level objective')
+        if issue.get('status') == 'cancelled':
+            raise HTTPException(409, 'Cancelled objectives cannot be resumed through chat')
+        holds = await p.request('GET', f'issues/{task_id}/tree-holds?status=active')
+        if isinstance(holds, dict):
+            holds = holds.get('holds', [])
+        if holds:
+            raise HTTPException(409, 'This objective has a native stop hold; chat cannot release it')
+        text = body.input.strip()
+        if not text:
+            raise HTTPException(422, 'Message cannot be blank')
+        marker = '[JARVIS USER MESSAGE request_id=' + str(body.request_id) + ']\n'
+        comment = await p.request('POST', f'issues/{task_id}/comments', {
+            'body': marker + text, 'clientRequestId': str(body.request_id),
+            'reopen': True, 'resume': True})
+        if comment.get('body') != marker + text:
+            raise HTTPException(409, 'Message request ID already belongs to different text')
+        return {'task': project_issue(await p.issue(task_id)), 'comment_id': comment['id']}
 
     @router.get('/tasks/{task_id}')
     async def task(task_id: UUID, p: Paperclip = Depends(client)):
         issue = await p.issue(task_id)
-        async def details(item):
-            comments, runs = await asyncio.gather(
-                p.request('GET', f"issues/{item['id']}/comments"),
-                p.request('GET', f"issues/{item['id']}/runs"))
-            result = project_issue(item)
-            result['comments'] = [{k: c.get(k) for k in ('id', 'body', 'createdAt', 'authorAgentId', 'authorUserId')} for c in comments]
-            result['runs'] = [{k: r.get(k) for k in ('runId', 'status', 'startedAt', 'finishedAt', 'errorCode', 'error')} for r in runs]
-            return result
+        # Parentage and scheduled-run membership both come from Paperclip. Exclude
+        # other companies/projects before any request for comments or execution history.
+        issues, routines = await asyncio.gather(
+            agent_work.issue_index(p, p.project),
+            p.request('GET', f'companies/{p.company}/routines'))
+        current = issues.get(issue['id'], {})
+        issue = {**current, **issue}
+        if 'activeRun' in current:
+            issue['activeRun'] = current['activeRun']
+        issues[issue['id']] = issue
+        rows = list(issues.values())
+        routines = [job for job in routines if job.get('companyId') == p.company and job.get('projectId') == p.project]
+        links = agent_work.WorkLinks(p.company, p.ceo, issues, routines)
+        root_scope = links.run_scope(issue) or work_scope.classify(issue, rows, routines)
+        by_parent = defaultdict(list)
+        scheduled = []
+        for row in sorted(rows, key=lambda record: (record.get('createdAt') or '', record['id'])):
+            if row['id'] == issue['id']:
+                continue
+            if row.get('parentId'):
+                by_parent[row['parentId']].append(row)
+            elif root_scope['mission_id'] == issue['id']:
+                scope = links.run_scope(row)
+                if scope and scope['kind'] == 'project' and scope['mission_id'] == issue['id']:
+                    scheduled.append(row)
 
-        # Paperclip owns the hierarchy. Filter every child before reading its
-        # comments/runs; never infer ownership from a supplied parentId alone.
-        issues = await p.request('GET', f'companies/{p.company}/issues?projectId={p.project}')
-        children = [item for item in issues if item.get('parentId') == str(task_id)
-            and item.get('companyId') == p.company and item.get('projectId') == p.project]
         limit = asyncio.Semaphore(4)
 
-        async def child_details(item):
+        async def details(item, scope):
             async with limit:
-                return await details(item)
+                comments, runs = await asyncio.gather(
+                    p.request('GET', f"issues/{item['id']}/comments"),
+                    p.request('GET', f"issues/{item['id']}/runs"))
+            result = project_issue(item, scope)
+            result['comments'] = [{k: c.get(k) for k in ('id', 'body', 'createdAt', 'authorAgentId', 'authorUserId')} for c in comments]
+            result['runs'] = [{k: r.get(k) for k in ('runId', 'status', 'startedAt', 'finishedAt', 'errorCode', 'error')} for r in runs]
+            result['children'] = []
+            result['state'], result['active_agent_id'] = agent_work.engagement(item, runs)
+            association = links.for_issue(item)
+            result.update(cron_job=association['cron_job'], run_issue=association['run_issue'])
+            return result
 
-        result = await details(issue)
-        result['children'] = await asyncio.gather(*(child_details(item) for item in children))
-        return result
+        # A linked schedule is part of the mission, but preserves its real (null)
+        # parentId. De-duplicate the reachable tree before fetching per-issue data.
+        visits = [(issue, root_scope, None, None)]
+        seen = {issue['id']}
+        for item, parent_scope, _, _ in visits:
+            branches = [('children', by_parent[item['id']])]
+            if item['id'] == issue['id']:
+                branches.append(('scheduled_runs', scheduled))
+            for relation, children in branches:
+                for child in children:
+                    if child['id'] in seen:
+                        continue
+                    scope = links.run_scope(child) or parent_scope
+                    if (scope['kind'], scope['mission_id']) != (root_scope['kind'], root_scope['mission_id']):
+                        continue
+                    visits.append((child, scope, item['id'], relation))
+                    seen.add(child['id'])
+
+        results = await asyncio.gather(*(details(item, scope) for item, scope, _, _ in visits))
+        by_id = {row['id']: row for row in results}
+        root = results[0]
+        root['scheduled_runs'] = []
+        root['schedules'] = links.by_mission.get(root['id'], [])
+        for row, (_, _, parent, relation) in zip(results[1:], visits[1:]):
+            by_id[parent][relation].append(row)
+        for row in results:
+            row['brief'] = job_brief(row)
+        return root
 
     from task_monitor import add_routes
     add_routes(router, Paperclip)

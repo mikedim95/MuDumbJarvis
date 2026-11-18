@@ -17,6 +17,21 @@ APPROVAL = '88888888-8888-4888-8888-888888888888'
 ROOT = {'id': ISSUE, 'companyId': 'company', 'projectId': 'project', 'status': 'blocked', 'assigneeAgentId': AGENT}
 
 
+def test_monitor_labels_authenticated_codex_employee_separately_from_local_inference(monkeypatch):
+    key = 'private-test-proof-key'
+    monkeypatch.setenv('JARVIS_EXECUTION_PROOF_KEY', key)
+    record = {'version': 2, 'company_id': 'company', 'agent_id': CEO,
+        'provider': 'openai-codex', 'model': 'gpt-6.1-sol',
+        'endpoint': monitor._inference_policy.CODEX_ENDPOINT, 'context_length': 65536,
+        'inference_slots': 1, 'fallback_allowed': False, 'user_authorized': True,
+        'source': 'operator_authorized_codex_demo', 'authority_scope': 'ceo_readonly_demo'}
+    record['signature'] = monitor._inference_policy.signature(record, key)
+    projected = monitor.capability({'id': CEO, 'companyId': 'company',
+        'metadata': {'jarvis': {'inference_configuration': record}}})
+    assert projected['provider'] == 'openai-codex' and projected['model'] == 'gpt-6.1-sol'
+    assert 'signature' not in projected
+
+
 @pytest.mark.parametrize('method,path', [('GET', '/api/monitor'), ('GET', f'/api/tasks/{ISSUE}/monitor'),
     ('GET', f'/api/tasks/{ISSUE}/runs/{RUN}/log'), ('GET', f'/api/tasks/{ISSUE}/artifacts/{ARTIFACT}'),
     ('POST', f'/api/tasks/{ISSUE}/cancel-preview'), ('POST', f'/api/tasks/{ISSUE}/cancel'),
@@ -217,16 +232,33 @@ def test_dashboard_omits_credentials_preserves_real_queue_and_inference_error(mo
     assert 'apiKey' not in r.text and 'adapterConfig' not in r.text
 
 
-def test_monitor_labels_authenticated_codex_employee_separately_from_local_inference(monkeypatch):
+def test_historical_signed_success_is_not_current_completion(monkeypatch):
     key = 'private-test-proof-key'
     monkeypatch.setenv('JARVIS_EXECUTION_PROOF_KEY', key)
-    record = {'version': 2, 'company_id': 'company', 'agent_id': CEO,
-        'provider': 'openai-codex', 'model': 'gpt-6.1-sol',
-        'endpoint': monitor._inference_policy.CODEX_ENDPOINT, 'context_length': 65536,
-        'inference_slots': 1, 'fallback_allowed': False, 'user_authorized': True,
-        'source': 'operator_authorized_codex_demo', 'authority_scope': 'ceo_readonly_demo'}
-    record['signature'] = monitor._inference_policy.signature(record, key)
-    projected = monitor.capability({'id': CEO, 'companyId': 'company',
-        'metadata': {'jarvis': {'inference_configuration': record}}})
-    assert projected['provider'] == 'openai-codex' and projected['model'] == 'gpt-6.1-sol'
-    assert 'signature' not in projected
+    proof = {'version': 3, 'kind': 'execution', 'task_status': 'done', 'agent_id': AGENT, 'company_id': 'company',
+        'issue_id': ISSUE, 'paperclip_run_id': RUN, 'session_id': f'paperclip:company:company:agent:{AGENT}:issue:{ISSUE}', 'tool_calls': []}
+    comment = {'id': 'c', 'authorAgentId': AGENT, 'body': 'JARVIS_EXECUTION_EVIDENCE=' + json.dumps(sign(proof, key))}
+    runs = [{'runId': RUN, 'agentId': AGENT, 'status': 'succeeded', 'createdAt': '2026-11-12'},
+        {'runId': str(uuid4()), 'agentId': AGENT, 'status': 'succeeded', 'createdAt': '2026-11-13'}]
+    result = monitor.evidence(comment, {**ROOT, 'status': 'done'}, runs, 'company')[0]
+    assert result['verified'] and not result['completion_verified']
+
+
+def test_sensitive_action_scope_is_visible_and_credentials_stay_redacted(monkeypatch):
+    monkeypatch.setenv('PAPERCLIP_API_KEY', 'private-test-key-do-not-expose')
+    async def empty_inference(): return {'available': True, 'loaded_models': []}
+    monkeypatch.setattr(monitor, 'inference', empty_inference)
+    a = {'id': APPROVAL, 'companyId': 'company', 'status': 'pending', 'type': 'request_board_approval',
+        'payload': {'kind': 'jarvis_sensitive_action', 'proposal': 'Exact target: test-only fixture; no host execution. private-test-key-do-not-expose',
+            'execution': 'Operator execution only after scope review', 'apiKey': 'must-not-leak'}}
+    def handler(r):
+        if r.url.path == f'/api/approvals/{APPROVAL}': return httpx.Response(200, json=a)
+        if r.url.path == f'/api/approvals/{APPROVAL}/issues': return httpx.Response(200, json=[ROOT])
+        if r.url.path.endswith('/approvals'): return httpx.Response(200, json=[a])
+        return httpx.Response(200, json=[])
+    transport(monkeypatch, handler)
+    with TestClient(server.app) as c: response = c.get('/api/monitor', headers=headers)
+    assert response.status_code == 200
+    proposal = response.json()['approvals'][0]['proposal']
+    assert 'Exact target:' in proposal['proposal'] and 'Operator execution only' in proposal['execution']
+    assert 'private-test-key' not in response.text and 'must-not-leak' not in response.text
