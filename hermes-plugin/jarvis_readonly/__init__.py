@@ -78,6 +78,8 @@ def register(ctx):
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
         from . import ceo_tools
         ceo_tools.register(ctx)
+        from . import company_tools
+        company_tools.register(ctx)
     description = 'Retrieve the ACTUAL installed local Ollama models, their exact names, sizes in bytes and GiB, and architecture details. Always call this tool before answering questions about installed models. Never guess the inventory.'
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
         description = ('Retrieve actual local Ollama model names and sizes. For inventory-only work, your direct call is an explicit self-execution choice: '

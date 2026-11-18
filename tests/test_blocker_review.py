@@ -155,3 +155,24 @@ def test_worker_wakeup_restores_original_request_without_replacing_newer_chat(pl
     assert review.wake_request(lambda *_: native,plugin.turn,[report],[latest],[child]) is None
     native['contextSnapshot']['wakeCommentId']='different-comment'
     assert review.wake_request(lambda *_: native,plugin.turn,[report],[latest],[child])==latest
+
+
+def test_an_explicitly_incomplete_objective_cannot_be_completed_with_partial_reports(plugin, monkeypatch):
+    child_with_evidence(plugin, status='done')
+    plugin.children[0]['description'] = '[JARVIS REQUEST initial]\nCollect verified sources.'
+    plugin.turn.update(inference_configuration={'version':3}, plan_decision='delegate', needs_inventory=False,
+        response='The partial catalog is ready.\n\nCompleting attribution requires a public-video metadata reader. The overall task remains incomplete.')
+    original_api = plugin.reporting.api
+    created = []
+    def api(method, path, body=None, run_id=None):
+        if path.endswith('/interactions'):
+            if method == 'GET': return created
+            row = {**body, 'id':str(uuid4()), 'issueId':ROOT, 'createdByAgentId':CEO, 'status':'pending'}
+            created.append(row)
+            return row
+        return original_api(method,path,body,run_id)
+    monkeypatch.setattr(plugin.reporting,'api',api)
+    plugin.tools.finalize(plugin.turn,completed=True)
+    assert plugin.calls[-1][2]['status']=='blocked'
+    assert created[0]['kind']=='ask_user_questions'
+    assert 'metadata reader' in created[0]['summary']

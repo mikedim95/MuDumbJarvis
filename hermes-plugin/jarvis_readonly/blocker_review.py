@@ -11,6 +11,13 @@ REPORT = 'CEO review requested. '
 WAITING = 'Waiting for your decision. '
 
 
+def objective_blocker(response):
+    for paragraph in response.split('\n\n'):
+        if re.search(r'\b(?:overall\s+)?(?:task|objective|goal)\s+(?:remains?|is)\s+(?:blocked|incomplete|unfinished|unmet)\b', paragraph, re.I):
+            return paragraph.strip()[:900]
+    return None
+
+
 def decisions(rows, issue_id, ceo_id):
     result = []
     for row in rows:
@@ -96,12 +103,12 @@ def ask(api, turn, issue, child, text, reason):
     return turn['owner_question']
 
 
-def disposition(response, child):
+def disposition(response, child, reason=None):
     """Persist the CEO's final question when it was written as prose instead of a tool call."""
     lines = [line.strip(' *#>-') for line in response.splitlines() if line.strip()]
     question = next((sentence for line in reversed(lines) for sentence in reversed(
         re.split(r'(?<=[.!?])\s+', line)) if sentence.endswith('?') and 10 <= len(sentence) <= 500), None)
-    reason = (child.get('unblockDescriptor') or {}).get('action') or 'No executable correction was recorded.'
+    reason = reason or (child.get('unblockDescriptor') or {}).get('action') or 'No executable correction was recorded.'
     if not question:
         question = ('For ' + child['identifier'] + ', ' + reason[:280].rstrip('.!?') +
                     '. What input or change of scope can you provide so the team can continue?')

@@ -367,9 +367,9 @@ def manage(args, **kwargs):
     turn, me, issue = scope()
     action = args.get('action')
     if action == 'ask_owner':
-        child = next((i for i in children(turn) if i['id'] == args.get('child_id') and i['status'] == 'blocked'), None)
+        child = next((i for i in children(turn) if i['id'] == args.get('child_id') and i['status'] in ('blocked', 'done')), None)
         if not child or child.get('assigneeAgentId') not in {a['id'] for a in employees(turn)}:
-            raise PermissionError('Owner decisions must concern a blocked direct report on this objective.')
+            raise PermissionError('Owner decisions must concern an existing report on this objective.')
         decision = blocker_review.ask(reporting.api, turn, issue, child, str(args.get('text') or '').strip(),
                                      str(args.get('plan') or '').strip())
         return audit(turn, action, {'interaction_id': decision['id'], 'question': decision['question']})
@@ -591,12 +591,16 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
     names = {m['name'] for m in models if isinstance(m, dict) and isinstance(m.get('name'), str)}
     missing_report = bool(names) and (len(turn['response'].strip()) < 100 or
         sum(name in turn['response'] for name in names) < min(2, len(names)))
+    governed_decision = turn.get('action_approval') or (turn.get('plan_decision') == 'hire' and turn.get('hiring_approval'))
+    turn['completion_blocker'] = blocker_review.objective_blocker(turn['response']) if success and not governed_decision else None
     if success and not turn.get('owner_question') and (turn.get('inference_configuration') or {}).get('version') == 3:
         unresolved = next((c for c in items if c['status'] == 'blocked' and c['id'] in turn.get('inspected_blockers', ())), None)
+        if unresolved is None and turn['completion_blocker']:
+            unresolved = next((c for c in items if c['status'] == 'done'), None)
         if unresolved and not turn.get('action_approval') and unresolved.get('assigneeAgentId') in {a['id'] for a in employees(turn)}:
             issue = reporting.api('GET', '/issues/' + turn['issue'])
             if issue.get('executionRunId') == turn['run'] and issue.get('assigneeAgentId') == turn['agent']:
-                question, reason = blocker_review.disposition(turn['response'], unresolved)
+                question, reason = blocker_review.disposition(turn['response'], unresolved, turn['completion_blocker'])
                 blocker_review.ask(reporting.api, turn, issue, unresolved, question, reason)
     status, comment = 'blocked', turn['response']
     if not success:
@@ -606,8 +610,10 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
         status = 'in_review' if approval['status'] in ('pending', 'revision_requested') else 'blocked'
         comment = ('Sensitive-action approval ' + approval['id'] + ' is ' + approval['status'] +
             '. No sensitive action was executed; runtime authority remains unchanged.\n\n' + comment)
-    elif turn.get('owner_question') and any(i['id'] == turn['owner_question']['child_id'] and i['status'] == 'blocked' for i in items):
+    elif turn.get('owner_question') and (turn['completion_blocker'] or any(i['id'] == turn['owner_question']['child_id'] and i['status'] == 'blocked' for i in items)):
         comment = blocker_review.WAITING + turn['owner_question']['question']
+    elif turn['completion_blocker']:
+        comment = turn['completion_blocker']
     elif not turn.get('plan_decision'):
         comment = 'CEO verification blocked: no plan/assignment decision was recorded in Paperclip.\n\n' + comment
     elif any(i['status'] in ('blocked', 'cancelled') for i in items):
@@ -626,6 +632,8 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
         comment = 'CEO report incomplete: the response says it is waiting despite having no pending worker execution.\n\n' + comment
     elif missing_report:
         comment = 'CEO report incomplete: the final prose does not identify the retrieved models.\n\n' + comment
+    elif not items and turn.get('company_operation_verified'):
+        status = 'done'
     elif items:
         if (set(turn.get('reviewed_children', [])) == {i['id'] for i in items} or
                 (set(turn.get('delivered_children', [])) == {i['id'] for i in items} and

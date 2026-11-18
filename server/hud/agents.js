@@ -1,4 +1,4 @@
-/* Select a portrait to answer questions and inspect the agent's work. */
+/* Select a portrait for brief status and questions needing an owner reply. */
 (() => {
   if (!document.body.classList.contains('ai-minimal')) return;
   const el = id => document.getElementById(id);
@@ -23,21 +23,11 @@
     button.onclick = handle;
     return button;
   }
-  function stateLabel(job) {
-    if (job.state === 'closed') return {done:'Done',cancelled:'Cancelled'}[job.status] || 'Closed';
-    if (job.state === 'waiting' && job.status === 'in_review') return 'In review';
-    return stateNames[job.state] || 'Unknown';
-  }
   function missionLink(mission, label) {
     if (!mission?.id || mission.hiddenAt) return entry('span',label);
     const link = action(label,'Open project ' + label,() => window.JarvisModes.openProject(mission.id));
     link.dataset.projectId = mission.id;
     return link;
-  }
-  function relation(nodes, label, value) {
-    const row = entry('div','','agent-relation');
-    row.append(entry('span',label,'relation-type'),value);
-    nodes.append(row);
   }
   function replyForm(question) {
     if (replyForms.has(question.id)) return replyForms.get(question.id);
@@ -92,20 +82,22 @@
     return form;
   }
   function renderDetails(agent) {
-    const historyOpen = details.dataset.agentId === agent?.id && details.querySelector('details[open]');
     details.hidden = !agent;
     details.replaceChildren();
     if (!agent) { delete details.dataset.agentId; return; }
     details.dataset.agentId = agent.id;
-    const schedules = new Map(snapshot.agents.flatMap(a => (a.schedules || []).map(s => [s.id,s])));
     const activity = agent.activity || 'unknown';
     details.dataset.activity = activity;
     const heading = entry('h3',agent.name);
     heading.id = 'agentDetailsHeading';
     heading.tabIndex = -1;
     const questions = agent.questions || [];
-    const waitingForReply = reason => questions.length && reason?.startsWith('Waiting for your decision. ');
-    const primary = entry('p',agent.status_reason || '', 'agent-reason');
+    const waitingForReply = reason => questions.length && reason?.startsWith('Waiting for your decision.');
+    const activeJob = (agent.work || []).find(job => job.state === activity);
+    const reason = activity === 'idle' ? '' : activity === 'active' && activeJob
+      ? [activeJob.identifier,activeJob.title].filter(Boolean).join(' · ') : agent.status_reason || '';
+    const first = reason.split(/(?<=[.!?])\s|\n/)[0];
+    const primary = entry('p',first.length > 160 ? first.slice(0,157).trimEnd() + '…' : first,'agent-reason');
     primary.id = 'agentStatusReason';
     const top = entry('div','','agent-detail-heading');
     top.append(heading,entry('span',stateNames[activity] || activity,'agent-activity'));
@@ -119,86 +111,15 @@
       details.append(section);
     }
     if (primary.textContent && !waitingForReply(primary.textContent)) details.append(primary);
-
-    function cronLink(ref) {
-      const schedule = schedules.get(ref.id);
-      const canOpen = schedule && schedule.assigneeAgentId === snapshot.ceo_id && schedule.status !== 'archived'
-        && (schedule.work_scope === 'general' || schedule.mission?.id && !schedule.mission.hiddenAt);
-      const name = canOpen
-        ? action(ref.title,'Open cron job ' + ref.title,() => window.JarvisCron.openJob(ref.id,schedule.mission?.id))
-        : entry('span',ref.title);
-      name.dataset.routineId = ref.id;
-      return name;
-    }
-    function jobRow(job) {
-      const row = entry('li','','agent-job');
-      row.dataset.issueId = job.id;
-      row.dataset.state = job.state;
-      const title = job.title || job.identifier || 'Untitled job';
-      const headline = entry('div','','agent-job-heading');
-      const rootJob = job.mission?.id === job.id;
-      const name = rootJob ? missionLink(job.mission,title) : entry('span',title);
-      headline.append(entry('span',job.identifier || '', 'agent-job-id'),name,entry('span',stateLabel(job),'relation-status'));
-      row.append(headline);
-      if (job.state !== 'closed' && job.reason && !(waitingForReply(job.reason) && questions.some(q => q.task.id === job.id))) {
-        if (primary.isConnected && primary.textContent === job.reason) row.setAttribute('aria-describedby',primary.id);
-        else row.append(entry('p',job.reason,'job-reason'));
-      }
-      if (job.mission && !rootJob) {
-        relation(row,'Project',missionLink(job.mission,[job.mission.identifier,job.mission.title].filter(Boolean).join(' · ')));
-      } else if (job.work_scope === 'general') {
-        relation(row,'Scope',entry('span','General'));
-      }
-      if (job.cron_job) relation(row,'Cron job',cronLink(job.cron_job));
-      if (job.run_issue?.identifier && job.run_issue.id !== job.id)
-        relation(row,'Run',entry('span',job.run_issue.identifier));
-      return row;
-    }
-    function scheduleRow(job) {
-      const row = entry('li','','agent-schedule');
-      row.dataset.routineId = job.id;
-      row.dataset.enabled = String(Boolean(job.enabled));
-      const head = entry('div','','agent-job-heading');
-      head.append(cronLink(job),entry('span',job.enabled ? 'Enabled' : job.status === 'paused' ? 'Paused' : 'Disabled','relation-status'));
-      row.append(head);
-      if (job.mission)
-        relation(row,'Project',missionLink(job.mission,[job.mission.identifier,job.mission.title].filter(Boolean).join(' · ')));
-      else if (job.work_scope === 'general') relation(row,'Scope',entry('span','General'));
-      return row;
-    }
-    function group(title,rows,makeRow) {
-      if (!rows.length) return;
-      const section = entry('section','','agent-group'), list = entry('ul');
-      list.append(...rows.map(makeRow));
-      section.append(entry('h4',title),list);
-      details.append(section);
-    }
-    const rank = {blocked:0,active:1,waiting:2,queued:3};
-    group('Assigned work',[...(agent.work || [])].sort((a,b) => rank[a.state] - rank[b.state]),jobRow);
-    group('Owned schedules',agent.schedules || [],scheduleRow);
-    const past = agent.past_work || [];
-    if (past.length) {
-      const history = entry('details','','agent-history'), list = entry('ul');
-      history.append(entry('summary','Past work (' + past.length + ')'),list);
-      history.open = Boolean(historyOpen);
-      const populate = () => {
-        if (history.open && !list.childElementCount) list.append(...past.map(jobRow));
-      };
-      populate();
-      history.addEventListener('toggle',populate);
-      details.append(history);
-    }
   }
   function focusKey(node) {
     if (node?.classList.contains('agent-station')) return JSON.stringify(['portrait',node.dataset.agentId]);
     if (!details.contains(node)) return null;
     const question = node.closest('[data-question-id]');
     if (question) return JSON.stringify([question.dataset.questionId,node.tagName,node.type]);
-    if (!node.matches('button,summary')) return null;
-    const group = node.closest('[data-issue-id],.agent-schedule');
-    return JSON.stringify([details.dataset.agentId,group?.dataset.issueId || group?.dataset.routineId,
-      node.dataset.projectId || node.dataset.routineId || 'history']);
+    return node.matches('button') ? JSON.stringify([details.dataset.agentId,node.dataset.projectId]) : null;
   }
+
   function select(id,{focus = false,reveal = false} = {}) {
     if (!snapshot) return;
     const agent = snapshot.agents.find(a => a.id === id);
@@ -281,7 +202,7 @@
       if (workers.length) el('agentTeam').scrollLeft = previousScroll;
       select(selectedId);
       if (previousFocus)
-        [...map.querySelectorAll('button'),...details.querySelectorAll('button,summary,textarea')]
+        [...map.querySelectorAll('button'),...details.querySelectorAll('button,textarea')]
           .find(n => focusKey(n) === previousFocus)?.focus({preventScroll:true});
       const running = data.agents.filter(agent => agent.activity === 'active').length;
       el('agentsActivitySummary').textContent = data.agents.length + (data.agents.length === 1 ? ' agent' : ' agents') + ' · ' + running + ' running now';
