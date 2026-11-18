@@ -117,7 +117,7 @@ def test_agent_work_links_match_native_executors_and_project_schedules(monkeypat
             return httpx.Response(200, json=issues)
         if path == f'/api/issues/{mission}':
             return httpx.Response(200, json=root)
-        if path.endswith(('/comments', '/runs')):
+        if path.endswith(('/comments', '/runs', '/interactions')):
             return httpx.Response(200, json=[])
         raise AssertionError(path)
 
@@ -148,6 +148,40 @@ def test_agent_work_links_match_native_executors_and_project_schedules(monkeypat
     assert next(row for row in roster[CEO]['work'] if row['id'] == other)['cron_job'] is None
     finished = next(row for row in roster[CEO]['past_work'] if row['id'] == 'general-run')
     assert finished['mission'] is None and finished['work_scope'] == 'general'
+
+
+def test_profiles_show_only_pending_owner_questions_on_the_author(monkeypatch):
+    from test_blocker_review import form
+
+    project, root, child, foreign = (str(uuid4()) for _ in range(4))
+    person = {'companyId': 'company', 'role': 'operator', 'status': 'idle'}
+    people = [{**person, 'id': CEO}, {**person, 'id': WORKER, 'reportsTo': CEO}]
+    mission = {'id': root, 'identifier': 'JAR-75', 'title': 'Check a source', 'assigneeAgentId': CEO,
+               'companyId': 'company', 'projectId': project, 'status': 'blocked'}
+    rows = [mission, {**mission, 'id': child, 'parentId': root, 'assigneeAgentId': WORKER},
+            {**mission, 'id': foreign, 'companyId': 'other'}]
+    question = form(CEO, root, child)
+    interactions = [question, {**form(CEO, root, child), 'status': 'answered'},
+                    form(WORKER, root, child), form(CEO, foreign, child),
+                    {**form(CEO, root, child), 'kind': 'request_confirmation'}]
+
+    def handler(request):
+        path = request.url.path
+        data = {'/api/companies/company/agents': people, '/api/companies/company/routines': [],
+                '/api/companies/company/issues': rows, f'/api/issues/{root}/interactions': interactions}
+        return httpx.Response(200, json=data[path])
+
+    transport(monkeypatch, handler, workforce=True)
+    with TestClient(server.app) as client:
+        response = client.get('/api/agents/work', headers=HEADERS)
+        agents = {a['id']: a for a in response.json()['agents']}
+        assert agents[WORKER]['questions'] == []
+        pending, = agents[CEO]['questions']
+        assert pending['id'] == question['id'] and pending['question'] == 'Which approved source can we use?'
+        assert pending['task']['id'] == pending['mission']['id'] == root
+        question['status'] = 'answered'
+        agents = client.get('/api/agents/work', headers=HEADERS).json()['agents']
+        assert all(not a['questions'] for a in agents)
 
 
 def test_legacy_routine_links_and_unchanged_historical_scope():

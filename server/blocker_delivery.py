@@ -14,6 +14,12 @@ _review = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_review)
 decisions = _review.decisions
 PREFIX = _review.REPORT
+WAITING = _review.WAITING
+
+
+async def owner_decisions(client, issue_id):
+    rows = await client.request('GET', f'issues/{issue_id}/interactions')
+    return decisions(rows, issue_id, client.ceo)
 
 
 async def reconcile(p, delivered):

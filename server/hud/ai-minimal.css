@@ -614,6 +614,11 @@ body.ai-minimal[data-ui-mode="general"] #agentsPanel:not([hidden]) {
   position:absolute; z-index:2; inset:auto auto 7px 7px; padding:3px 7px;
   border:1px solid #ffffff2e; border-radius:20px; background:#101719e8;
 }
+.agent-question-badge {
+  position:absolute; z-index:2; inset:7px 7px auto auto; display:grid; place-items:center;
+  inline-size:26px; block-size:26px; border:1px solid #fff1c0; border-radius:50%;
+  background:#ffcf73; color:#271b07; box-shadow:0 1px 6px #0009; font:750 18px/1 Inter,system-ui,sans-serif;
+}
 .agent-activity::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
 [data-activity="idle"] .agent-activity::before { box-sizing:border-box; background:transparent; border:1px solid currentColor; }
 [data-activity="blocked"] .agent-activity::before { border-radius:1px; transform:rotate(45deg); }
@@ -624,6 +629,26 @@ body.ai-minimal[data-ui-mode="general"] #agentsPanel:not([hidden]) {
 #agentDetails[hidden] { display:none; }
 .agent-detail-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
 .agent-detail-heading h3 { color:#f0f4f4; font:600 17px/1.3 Inter,system-ui,sans-serif; }
+.agent-questions { margin-top:12px; }
+.agent-questions h4 { color:#ffcf73; font:600 13px/1.4 Inter,system-ui,sans-serif; }
+.agent-question {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:6px 10px;
+  margin-top:7px; padding:10px 12px; border:1px solid #61523b; border-radius:8px; background:#25251f;
+}
+.agent-question-task { grid-column:1 / -1; justify-self:start; color:#bfc5c9; font-size:12px; }
+.agent-question-prompt { grid-column:1 / -1; color:#f0eeea; }
+.agent-question textarea {
+  width:100%; min-width:0; box-sizing:border-box; resize:vertical; padding:8px 10px;
+  border:1px solid #505a5e; border-radius:6px; color:#f0f4f4; background:#15191b; font:inherit;
+}
+.agent-question button[type="submit"] {
+  min-height:36px; padding:5px 12px; border:1px solid #849e96; border-radius:6px;
+  color:#e9f7f4; background:#334943; cursor:pointer; font:inherit;
+}
+.agent-question button:disabled { opacity:.65; cursor:default; }
+.agent-question :is(textarea,button):focus-visible { outline:2px solid #a6ded1; outline-offset:2px; }
+.agent-question-error { grid-column:1 / -1; color:#ffa49a; font-size:12px; }
+.agent-question-error:empty { display:none; }
 .agent-reason { margin-top:6px; color:#d8e0e0; }
 #agentDetails ul { list-style:none; margin:0; padding:0; }
 #agentDetails .agent-group { margin-top:14px; }

@@ -8,6 +8,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+import blocker_delivery
 import work_scope
 
 
@@ -73,7 +74,7 @@ def issue_condition(issue):
         detail = safe_text(recovery.get('nextAction'), 285)
         cause = safe_text(recovery.get('cause'), 90).replace('_', ' ')
         return 'blocked', detail or (f'Execution stopped because of {cause}.' if cause else 'Execution recovery requires attention.')
-    if action.startswith('Waiting for your decision. '):
+    if action.startswith(blocker_delivery.WAITING):
         return 'waiting', action
     if attention.get('state') == 'stalled':
         return 'blocked', action or (f'{dependency} has stalled and needs attention.' if dependency else 'The review has stalled and needs attention.')
@@ -294,7 +295,7 @@ async def overview(client):
     links = WorkLinks(client.company, client.ceo, issues, scoped)
     agents = {person['id']: {**{key: person.get(key) for key in ('id', 'name', 'title', 'role', 'status', 'reportsTo')},
                              'portrait_url': portrait_url(person, client.ceo), 'specialization': specialization(person),
-                             'work': [], 'past_work': [], 'schedules': []} for person in people}
+                             'work': [], 'past_work': [], 'schedules': [], 'questions': []} for person in people}
     # Paperclip's list omits the execution recovery detail on older failed runs.
     # Read it only when the list supplies neither the necessary action nor a dependency.
     limit = asyncio.Semaphore(4)
@@ -309,11 +310,33 @@ async def overview(client):
         if (detail.get('companyId'), detail.get('projectId'), detail.get('status'), detail.get('assigneeAgentId')) == (
                 client.company, row.get('projectId'), 'blocked', row.get('assigneeAgentId')):
             row['executionBlocker'] = detail.get('executionBlocker')
-    await asyncio.gather(*(recovery_detail(row) for row in issues.values() if row.get('status') == 'blocked'
+
+    async def pending_questions(row):
+        async with limit:
+            try:
+                decisions = await blocker_delivery.owner_decisions(client, row['id'])
+            except HTTPException as exc:
+                if exc.status_code == 404:
+                    return
+                raise
+        agents[row['assigneeAgentId']]['questions'].extend(
+            {'id': decision['id'], 'question': decision['question'], 'created': decision['created'],
+             'task': reference(row), 'mission': links.for_issue(row)['mission']}
+            for decision in decisions if decision['status'] == 'pending')
+
+    lookups = [recovery_detail(row) for row in issues.values() if row.get('status') == 'blocked'
         and row.get('assigneeAgentId') in agents and not row.get('executionBlocker')
         and not (row.get('unblockDescriptor') or {}).get('action')
         and (row.get('blockerAttention') or {}).get('state') == 'needs_attention'
-        and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')))
+        and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')]
+    if getattr(client, 'workforce', False) and client.ceo in agents:
+        blocked_parents = {row.get('parentId') for row in issues.values() if row.get('status') == 'blocked'}
+        lookups.extend(pending_questions(row) for row in issues.values()
+            if row.get('assigneeAgentId') == client.ceo and not row.get('parentId')
+            and row.get('status') not in ('done', 'cancelled')
+            and (row.get('status') == 'blocked' or row['id'] in blocked_parents
+                 or ((row.get('unblockDescriptor') or {}).get('action') or '').startswith(blocker_delivery.WAITING)))
+    await asyncio.gather(*lookups)
     for row in sorted(issues.values(), key=lambda i: i.get('updatedAt') or '', reverse=True):
         state, executor = engagement(row)
         assignee = row.get('assigneeAgentId')
@@ -330,4 +353,5 @@ async def overview(client):
     for person in people:
         agent = agents[person['id']]
         agent['activity'], agent['status_reason'] = staff_condition(person, agent['work'])
+        agent['questions'].sort(key=lambda question: (question['created'], question['id']), reverse=True)
     return {'ceo_id': client.ceo, 'agents': list(agents.values())}

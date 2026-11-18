@@ -38,6 +38,18 @@
     return data;
   }
 
+  function postMessage(taskId, input, requestId, interactionId) {
+    return api('tasks/' + encodeURIComponent(taskId) + '/messages', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({input, request_id: requestId, interaction_id: interactionId})});
+  }
+
+  async function replyToQuestion(taskId, questionId, input) {
+    const receipt = await postMessage(taskId, input, questionId, questionId);
+    if (receipt.task?.id !== taskId || receipt.interaction_id !== questionId)
+      throw new Error('The reply was not confirmed. Try again.');
+    ownerQuestions.delete(taskId);
+  }
+
   function history() {
     el('taskHistory').replaceChildren();
     for (const task of tasks) {
@@ -205,8 +217,7 @@
           interaction_id: ownerQuestions.get(target) || null};
         localStorage.setItem('jarvis-task-pending', JSON.stringify(pending));
       }
-      const receipt = await api('tasks/' + encodeURIComponent(target) + '/messages', {method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({input: pending.input, request_id: pending.request_id, interaction_id: pending.interaction_id})});
+      const receipt = await postMessage(target, pending.input, pending.request_id, pending.interaction_id);
       if (receipt.task?.id !== target || !(receipt.comment_id || receipt.interaction_id)) throw new Error('The CEO follow-up was not confirmed. Retry the same text.');
       ownerQuestions.delete(target);
       pending = null; localStorage.removeItem('jarvis-task-pending');
@@ -276,7 +287,7 @@
     if(removed&&selected===id){selected=null;localStorage.removeItem('jarvis-task-selected');window.JarvisMonitor.clear();}
     history();announce();return receipt;
   }
-  window.JarvisTasks = {submit, snapshot, followup, newObjective, decide, refresh,
+  window.JarvisTasks = {submit, snapshot, followup, replyToQuestion, newObjective, decide, refresh,
     removeProject:id=>projectVisibility(id,true),restoreProject:id=>projectVisibility(id,false),
     selectObjective: async id => {
       if (pending) throw new Error('A submission is awaiting confirmation. Retry its text before changing projects.');

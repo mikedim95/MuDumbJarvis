@@ -1,4 +1,4 @@
-/* Select a portrait to inspect the agent's Paperclip assignments and schedules. */
+/* Select a portrait to answer questions and inspect the agent's work. */
 (() => {
   if (!document.body.classList.contains('ai-minimal')) return;
   const el = id => document.getElementById(id);
@@ -8,6 +8,7 @@
     paused:'Paused', unavailable:'Unavailable', closed:'Closed', unknown:'Unknown',
   };
   let request = null, snapshot = null, signature = '', selectedId = null, focusAgent = null;
+  const replyForms = new Map();
   const visible = () => !el('agentsPanel').hidden;
   const entry = (tag, value = '', className = '') => {
     const node = document.createElement(tag);
@@ -38,6 +39,58 @@
     row.append(entry('span',label,'relation-type'),value);
     nodes.append(row);
   }
+  function replyForm(question) {
+    if (replyForms.has(question.id)) return replyForms.get(question.id);
+    const form = entry('form','','agent-question');
+    form.dataset.questionId = question.id;
+    const prompt = entry('label',question.question,'agent-question-prompt');
+    const input = entry('textarea');
+    input.id = 'agent-reply-' + question.id;
+    input.rows = 2;
+    input.required = true;
+    input.maxLength = 8000;
+    input.placeholder = 'Write your reply…';
+    prompt.htmlFor = input.id;
+    const send = entry('button','Reply');
+    send.type = 'submit';
+    const error = entry('p','','agent-question-error');
+    error.setAttribute('role','status');
+    const meta = question.mission?.id === question.task.id
+      ? missionLink(question.mission,question.task.identifier)
+      : entry('span',question.task.identifier || question.task.title);
+    meta.classList.add('agent-question-task');
+    form.append(meta,prompt,input,send,error);
+    form.onsubmit = async event => {
+      event.preventDefault();
+      if (send.disabled) return;
+      const text = input.value.trim();
+      if (!text) {
+        error.textContent = 'Write a reply before sending.';
+        input.focus();
+        return;
+      }
+      error.textContent = '';
+      input.readOnly = send.disabled = true;
+      send.textContent = 'Sending…';
+      try {
+        await window.JarvisTasks.replyToQuestion(question.task.id,question.id,text);
+        const hadFocus = form.contains(document.activeElement);
+        request?.abort();
+        request = null;
+        render({...snapshot, agents:snapshot.agents.map(agent => ({...agent,
+          questions:(agent.questions || []).filter(item => item.id !== question.id)}))});
+        if (hadFocus) (details.querySelector('.agent-question textarea') || el('agentDetailsHeading'))?.focus();
+      } catch (err) {
+        error.textContent = err.message;
+      } finally {
+        input.readOnly = send.disabled = false;
+        send.textContent = 'Reply';
+        load();
+      }
+    };
+    replyForms.set(question.id,form);
+    return form;
+  }
   function renderDetails(agent) {
     const historyOpen = details.dataset.agentId === agent?.id && details.querySelector('details[open]');
     details.hidden = !agent;
@@ -49,12 +102,23 @@
     details.dataset.activity = activity;
     const heading = entry('h3',agent.name);
     heading.id = 'agentDetailsHeading';
+    heading.tabIndex = -1;
+    const questions = agent.questions || [];
+    const waitingForReply = reason => questions.length && reason?.startsWith('Waiting for your decision. ');
     const primary = entry('p',agent.status_reason || '', 'agent-reason');
     primary.id = 'agentStatusReason';
     const top = entry('div','','agent-detail-heading');
     top.append(heading,entry('span',stateNames[activity] || activity,'agent-activity'));
     details.append(top);
-    if (primary.textContent) details.append(primary);
+    if (questions.length) {
+      const section = entry('section','','agent-questions');
+      const title = entry('h4',questions.length === 1 ? 'Question for you' : 'Questions for you');
+      title.id = 'agentQuestionsHeading';
+      section.setAttribute('aria-labelledby',title.id);
+      section.append(title,...questions.map(replyForm));
+      details.append(section);
+    }
+    if (primary.textContent && !waitingForReply(primary.textContent)) details.append(primary);
 
     function cronLink(ref) {
       const schedule = schedules.get(ref.id);
@@ -76,8 +140,8 @@
       const name = rootJob ? missionLink(job.mission,title) : entry('span',title);
       headline.append(entry('span',job.identifier || '', 'agent-job-id'),name,entry('span',stateLabel(job),'relation-status'));
       row.append(headline);
-      if (job.state !== 'closed' && job.reason) {
-        if (primary.textContent === job.reason) row.setAttribute('aria-describedby',primary.id);
+      if (job.state !== 'closed' && job.reason && !(waitingForReply(job.reason) && questions.some(q => q.task.id === job.id))) {
+        if (primary.isConnected && primary.textContent === job.reason) row.setAttribute('aria-describedby',primary.id);
         else row.append(entry('p',job.reason,'job-reason'));
       }
       if (job.mission && !rootJob) {
@@ -127,7 +191,10 @@
   }
   function focusKey(node) {
     if (node?.classList.contains('agent-station')) return JSON.stringify(['portrait',node.dataset.agentId]);
-    if (!details.contains(node) || !node.matches('button,summary')) return null;
+    if (!details.contains(node)) return null;
+    const question = node.closest('[data-question-id]');
+    if (question) return JSON.stringify([question.dataset.questionId,node.tagName,node.type]);
+    if (!node.matches('button,summary')) return null;
     const group = node.closest('[data-issue-id],.agent-schedule');
     return JSON.stringify([details.dataset.agentId,group?.dataset.issueId || group?.dataset.routineId,
       node.dataset.projectId || node.dataset.routineId || 'history']);
@@ -147,7 +214,8 @@
     }
     if (reveal) {
       const panel = el('agentsPanel'), heading = el('agentDetailsHeading');
-      const bottom = (details.querySelector('.agent-reason') || heading).getBoundingClientRect().bottom;
+      const firstItem = details.querySelector('.agent-question textarea,.agent-reason') || heading;
+      const bottom = firstItem.getBoundingClientRect().bottom;
       panel.scrollTop += Math.max(0,bottom - panel.getBoundingClientRect().bottom + 12);
     }
   }
@@ -160,7 +228,9 @@
     card.dataset.activity = state;
     card.setAttribute('aria-controls','agentDetails');
     card.setAttribute('aria-expanded',String(agent.id === selectedId));
-    card.setAttribute('aria-label',[agent.name,specialization,label].filter(Boolean).join(', '));
+    const count = agent.questions?.length || 0;
+    const questionLabel = count === 1 ? '1 question for you' : count ? count + ' questions for you' : '';
+    card.setAttribute('aria-label',[agent.name,specialization,label,questionLabel].filter(Boolean).join(', '));
     card.onclick = () => select(selectedId === agent.id ? null : agent.id,{reveal:true});
     const frame = entry('span','','agent-likeness');
     const initials = entry('span',agent.name.split(/\s+/).slice(0,2).map(s => s[0]).join(''),'agent-initials');
@@ -175,6 +245,11 @@
       frame.append(image);
     }
     frame.append(entry('span',label,'agent-activity'));
+    if (count) {
+      const badge = entry('span','!','agent-question-badge');
+      badge.setAttribute('aria-hidden','true');
+      frame.append(badge);
+    }
     const name = entry('span',agent.name,'agent-name');
     const role = entry('span',specialization,'agent-specialization');
     card.append(frame,name,role);
@@ -186,6 +261,8 @@
       snapshot = data;
       const previousFocus = focusKey(document.activeElement);
       const previousScroll = el('agentTeam')?.scrollLeft || 0;
+      const openQuestions = new Set(data.agents.flatMap(agent => (agent.questions || []).map(question => question.id)));
+      for (const id of replyForms.keys()) if (!openQuestions.has(id)) replyForms.delete(id);
       const leader = data.agents.find(a => a.id === data.ceo_id);
       const workers = data.agents.filter(a => a !== leader);
       const roster = document.createDocumentFragment();
@@ -204,7 +281,7 @@
       if (workers.length) el('agentTeam').scrollLeft = previousScroll;
       select(selectedId);
       if (previousFocus)
-        [...map.querySelectorAll('button'),...details.querySelectorAll('button,summary')]
+        [...map.querySelectorAll('button'),...details.querySelectorAll('button,summary,textarea')]
           .find(n => focusKey(n) === previousFocus)?.focus({preventScroll:true});
       const running = data.agents.filter(agent => agent.activity === 'active').length;
       el('agentsActivitySummary').textContent = data.agents.length + (data.agents.length === 1 ? ' agent' : ' agents') + ' · ' + running + ' running now';

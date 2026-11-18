@@ -86,11 +86,6 @@ def project_issue(issue,scope=None):
     return result
 
 
-async def owner_decisions(client, issue):
-    rows = await client.request('GET', 'issues/' + issue['id'] + '/interactions')
-    return blocker_delivery.decisions(rows, issue['id'], client.ceo)
-
-
 def build_router(require_auth):
     router = APIRouter(prefix='/api', dependencies=[Depends(require_auth)])
 
@@ -211,7 +206,7 @@ def build_router(require_auth):
         if not text:
             raise HTTPException(422, 'Message cannot be blank')
         if body.interaction_id:
-            decisions = await owner_decisions(p, issue)
+            decisions = await blocker_delivery.owner_decisions(p, issue['id'])
             decision = next((d for d in decisions if d['id'] == str(body.interaction_id)), None)
             if not decision:
                 raise HTTPException(409, 'This question does not belong to the selected CEO objective.')
@@ -222,7 +217,7 @@ def build_router(require_auth):
                 except HTTPException as exc:
                     if exc.status_code != 409:
                         raise
-                    decisions = await owner_decisions(p, issue)
+                    decisions = await blocker_delivery.owner_decisions(p, issue['id'])
                     if not any(d['id'] == decision['id'] and d['status'] == 'answered' and d['answer'] == text for d in decisions):
                         raise
             elif decision['status'] != 'answered' or decision['answer'] != text:
@@ -304,7 +299,7 @@ def build_router(require_auth):
         root = results[0]
         if getattr(p, 'workforce', False) and not issue.get('parentId') and issue.get('assigneeAgentId') == p.ceo and any(
                 item.get('status') == 'blocked' for item in rows if item.get('parentId') == issue['id']):
-            decisions = await owner_decisions(p, issue)
+            decisions = await blocker_delivery.owner_decisions(p, issue['id'])
             root['owner_question'] = next(({'id': d['id'], 'question': d['question']} for d in decisions if d['status'] == 'pending'), None)
         root['scheduled_runs'] = []
         root['schedules'] = links.by_mission.get(root['id'], [])
