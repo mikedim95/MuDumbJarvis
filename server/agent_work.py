@@ -73,6 +73,8 @@ def issue_condition(issue):
         detail = safe_text(recovery.get('nextAction'), 285)
         cause = safe_text(recovery.get('cause'), 90).replace('_', ' ')
         return 'blocked', detail or (f'Execution stopped because of {cause}.' if cause else 'Execution recovery requires attention.')
+    if action.startswith('Waiting for your decision. '):
+        return 'waiting', action
     if attention.get('state') == 'stalled':
         return 'blocked', action or (f'{dependency} has stalled and needs attention.' if dependency else 'The review has stalled and needs attention.')
     if _hard_stop.search(action):

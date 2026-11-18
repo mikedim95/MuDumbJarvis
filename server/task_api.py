@@ -8,6 +8,7 @@ from uuid import UUID
 import httpx
 import work_scope
 import agent_work
+import blocker_delivery
 from task_brief import job_brief
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -24,6 +25,7 @@ class TaskSubmission(BaseModel):
 class TaskMessage(BaseModel):
     input: str = Field(min_length=1, max_length=8000)
     request_id: UUID
+    interaction_id: UUID | None = None
 
 
 class Paperclip:
@@ -82,6 +84,11 @@ def project_issue(issue,scope=None):
     if issue.get('status') == 'blocked' or issue.get('executionBlocker'):
         result['state'] = agent_work.engagement(issue)[0]
     return result
+
+
+async def owner_decisions(client, issue):
+    rows = await client.request('GET', 'issues/' + issue['id'] + '/interactions')
+    return blocker_delivery.decisions(rows, issue['id'], client.ceo)
 
 
 def build_router(require_auth):
@@ -203,6 +210,24 @@ def build_router(require_auth):
         text = body.input.strip()
         if not text:
             raise HTTPException(422, 'Message cannot be blank')
+        if body.interaction_id:
+            decisions = await owner_decisions(p, issue)
+            decision = next((d for d in decisions if d['id'] == str(body.interaction_id)), None)
+            if not decision:
+                raise HTTPException(409, 'This question does not belong to the selected CEO objective.')
+            if decision['status'] == 'pending':
+                try:
+                    await p.request('POST', f'issues/{task_id}/interactions/{body.interaction_id}/respond',
+                        {'answers': [{'questionId': 'child-' + decision['child_id'], 'optionIds': [], 'otherText': text}]})
+                except HTTPException as exc:
+                    if exc.status_code != 409:
+                        raise
+                    decisions = await owner_decisions(p, issue)
+                    if not any(d['id'] == decision['id'] and d['status'] == 'answered' and d['answer'] == text for d in decisions):
+                        raise
+            elif decision['status'] != 'answered' or decision['answer'] != text:
+                raise HTTPException(409, 'This question has already been closed or answered differently.')
+            return {'task': project_issue(await p.issue(task_id)), 'interaction_id': decision['id']}
         marker = '[JARVIS USER MESSAGE request_id=' + str(body.request_id) + ']\n'
         comment = await p.request('POST', f'issues/{task_id}/comments', {
             'body': marker + text, 'clientRequestId': str(body.request_id),
@@ -277,12 +302,18 @@ def build_router(require_auth):
         results = await asyncio.gather(*(details(item, scope) for item, scope, _, _ in visits))
         by_id = {row['id']: row for row in results}
         root = results[0]
+        if getattr(p, 'workforce', False) and not issue.get('parentId') and issue.get('assigneeAgentId') == p.ceo and any(
+                item.get('status') == 'blocked' for item in rows if item.get('parentId') == issue['id']):
+            decisions = await owner_decisions(p, issue)
+            root['owner_question'] = next(({'id': d['id'], 'question': d['question']} for d in decisions if d['status'] == 'pending'), None)
         root['scheduled_runs'] = []
         root['schedules'] = links.by_mission.get(root['id'], [])
         for row, (_, _, parent, relation) in zip(results[1:], visits[1:]):
             by_id[parent][relation].append(row)
         for row in results:
             row['brief'] = job_brief(row)
+        if root.get('owner_question'):
+            root['brief']['progress'] = 'Jarvis needs your decision. ' + root['owner_question']['question']
         return root
 
     from task_monitor import add_routes

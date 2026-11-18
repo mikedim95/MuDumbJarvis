@@ -6,6 +6,7 @@
   let tasks = [], selected = localStorage.getItem('jarvis-task-selected'), fetching = false, submitting = false;
   let refreshQueued = false, reloadAgents = false, ceoId = null, agents = [];
   let projectVisibilityVersion = 0;
+  const ownerQuestions = new Map();
   let objectiveId = localStorage.getItem('jarvis-ceo-objective') || null;
   if (!objectiveId) {
     try { objectiveId = JSON.parse(localStorage.getItem('jarvis-agent-popups-v1') || 'null')?.objective || null; } catch {}
@@ -72,6 +73,7 @@
     const target = selected;
     const task = await api('tasks/' + encodeURIComponent(target));
     if (selected !== target) return;
+    ownerQuestions.set(task.id, task.owner_question?.id || null);
     window.dispatchEvent(new CustomEvent('jarvis-task-detail',{detail:{task}}));
     visualState(task);
     if (document.body.classList.contains('ai-minimal') && task.work_scope !== 'general') return;
@@ -191,16 +193,22 @@
       error('A previous submission is awaiting confirmation. Retry its original text before starting another objective or follow-up: ' + pending.input);
       return;
     }
-    if (!pending) {
-      pending = {input: text, request_id: crypto.randomUUID(), objective: true, task_id: objectiveId};
-      localStorage.setItem('jarvis-task-pending', JSON.stringify(pending));
-    }
     const target = objectiveId;
     submitting = true; el('sendBtn').disabled = true; error('');
     try {
+      if (!pending) {
+        if (!ownerQuestions.has(target)) {
+          const task = await api('tasks/' + encodeURIComponent(target));
+          ownerQuestions.set(target, task.owner_question?.id || null);
+        }
+        pending = {input: text, request_id: crypto.randomUUID(), objective: true, task_id: target,
+          interaction_id: ownerQuestions.get(target) || null};
+        localStorage.setItem('jarvis-task-pending', JSON.stringify(pending));
+      }
       const receipt = await api('tasks/' + encodeURIComponent(target) + '/messages', {method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({input: pending.input, request_id: pending.request_id})});
-      if (receipt.task?.id !== target || !receipt.comment_id) throw new Error('The CEO follow-up was not confirmed. Retry the same text.');
+        body: JSON.stringify({input: pending.input, request_id: pending.request_id, interaction_id: pending.interaction_id})});
+      if (receipt.task?.id !== target || !(receipt.comment_id || receipt.interaction_id)) throw new Error('The CEO follow-up was not confirmed. Retry the same text.');
+      ownerQuestions.delete(target);
       pending = null; localStorage.removeItem('jarvis-task-pending');
       selected = target; localStorage.setItem('jarvis-task-selected', target);
       window.dispatchEvent(new CustomEvent('jarvis-objective-submitted', {detail: {task: receipt.task, followup: true, comment_id: receipt.comment_id}}));
@@ -209,6 +217,10 @@
       if (err.status === 404) {
         pending = null; localStorage.removeItem('jarvis-task-pending'); newObjective();
         error('That CEO objective is no longer available. Use /new followed by your objective.');
+      } else if (err.status === 409 && pending?.interaction_id) {
+        ownerQuestions.delete(target);
+        pending = null; localStorage.removeItem('jarvis-task-pending');
+        error(err.message);
       } else error(err.message + ' The message ID has been saved; retrying the same text is safe.');
     }
     finally { submitting = false; el('sendBtn').disabled = false; announce(); }

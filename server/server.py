@@ -767,7 +767,29 @@ def require_task_auth(request: Request):
         raise HTTPException(403, 'Cross-origin task submission is not allowed')
 
 
-from task_api import build_router
+from task_api import Paperclip, build_router
+from blocker_delivery import monitor as monitor_worker_blockers
+
+_blocker_monitor = None
+_blocker_monitor_lock = threading.Lock()
+
+
+@app.on_event("startup")
+async def start_blocker_delivery():
+    global _blocker_monitor
+    if os.environ.get('JARVIS_CEO_WORKFORCE') == 'true':
+        with _blocker_monitor_lock:
+            if _blocker_monitor is None or _blocker_monitor.done():
+                _blocker_monitor = asyncio.create_task(monitor_worker_blockers(Paperclip))
+
+
+@app.on_event("shutdown")
+async def stop_blocker_delivery():
+    task = _blocker_monitor
+    if task and task.get_loop() is asyncio.get_running_loop():
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
 app.include_router(build_router(require_task_auth))
 from cron_api import build_router as build_cron_router
 app.include_router(build_cron_router(require_task_auth))

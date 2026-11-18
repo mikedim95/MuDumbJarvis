@@ -127,7 +127,7 @@ def begin(session_id='', turn_id='', **kwargs):
         description = (issue.get('description') or '').lower()
         turn = {'session': session_id, 'issue': issue_id, 'run': run_id, 'response': '',
             'agent': agent, 'company': company, 'project': issue.get('projectId'),
-            'ceo': ceo, 'plan_decision': decision, 'reviewed_children': [],
+            'ceo': ceo, 'reports_to': me.get('reportsTo'), 'plan_decision': decision, 'reviewed_children': [],
             'needs_inventory': ('ollama' in description and 'model' in description) or 'installed models' in description,
             'inventory_verified': False, 'started_at': time.time()}
         if ceo:
@@ -136,6 +136,24 @@ def begin(session_id='', turn_id='', **kwargs):
             from . import inference_policy, profile_registry
             base_model = profile_registry.profile(os.environ['JARVIS_PROFILE'])['model'] if os.environ.get('JARVIS_PROFILE') else profile_registry.catalog()['model']
             turn['runtime_model'], turn['inference_configuration'] = inference_policy.runtime_selection(me, base_model)
+            if ceo and (turn.get('inference_configuration') or {}).get('version') == 3:
+                human = [c for c in comments or [] if c.get('authorUserId') and
+                    re.match(r'^\[JARVIS USER MESSAGE request_id=[a-f0-9-]{36}\]\n', c.get('body', ''))]
+                from . import blocker_review
+                records = api('GET', '/companies/' + company + '/issues')
+                latest = blocker_review.wake_request(api, turn, comments or [], human, records)
+                turn['conversation_request_id'] = latest['id'] if latest else 'initial'
+                turn['latest_user_request'] = latest['body'].split('\n', 1)[1] if latest else issue.get('description', '')
+                effective = turn['latest_user_request'].lower()
+                turn['needs_inventory'] = ('ollama' in effective and 'model' in effective) or 'installed models' in effective
+                turn['needs_report'] = bool(re.search(r'\breport\b', effective))
+                turn['needs_research'] = bool((re.search(r'\bresearch\b', effective) and re.search(r'\bframeworks?\b', effective)) or
+                    ('osint' in effective and re.search(r'research|catalog|knowledge',effective)))
+                turn['needs_test_execution'] = bool(re.search(r'\b(?:execute|run)\s+(?:\w+\s+){0,3}tests?\b', effective))
+                if latest and not any(c.get('authorAgentId') == agent and
+                        c.get('createdAt', '') > latest.get('createdAt', '') and
+                        c.get('body', '').startswith('[JARVIS CEO PLAN') for c in comments):
+                    turn['plan_decision'] = None
         if os.environ.get('JARVIS_PROFILE'):
             turn['needs_tests'] = bool(re.search(r'\btests?\b|unittest|pytest', description))
         with _lock:
@@ -261,8 +279,16 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
     success = completed and not failed and not interrupted and bool(turn['response'].strip())
     missing_tool = turn['needs_inventory'] and not turn['inventory_verified']
     missing_execution = None
+    worker_blocker = None
     if os.environ.get('JARVIS_PROFILE'):
         from . import employee_tools
+        if success:
+            response = turn['response'].lstrip(' \t\n\r#>*_`-')
+            label = re.match(r'(?:task )?(?:blocked|incomplete)[*_`]*(?:\s*[:—–-]|[.!]?(?:\r?\n|$))', response, re.I)
+            if label:
+                reason = response[label.end():].lstrip(' \t\n\r#>*_`-')
+                worker_blocker = reason.splitlines()[0] if reason else 'The worker reported incomplete work.'
+                success = False
         if success and not employee_tools.missing_execution(turn, require_deliverables=False):
             from . import employee_work
             try:
@@ -286,6 +312,8 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
         comment = 'Verification failed: no successful local_ollama_models call was recorded. Task is blocked; the response is not accepted as a retrieved inventory.\n\nRuntime response:\n' + turn['response']
     if missing_execution:
         comment = 'Execution verification failed: ' + missing_execution + '\nTask is blocked; the model response is not accepted as completed work.\n\nRuntime response:\n' + turn['response']
+    if worker_blocker:
+        comment = turn['response'].strip()
     if success and turn.get('inventory') is not None:
         verified = [{k: model.get(k) for k in ('name', 'size_bytes', 'size_gib')} for model in turn['inventory']]
         comment += '\n\nVerified local_ollama_models data (exact tool output; recommendations above are model-generated):\n```json\n' + json.dumps(verified, indent=2) + '\n```'
@@ -308,9 +336,21 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
     # One atomic Paperclip update records final disposition and the real runtime reply.
     payload = {'status': status, 'comment': comment}
     if status == 'blocked':
+        action = 'Review the Hermes execution error, fix its cause, then explicitly retry this task.'
+        if missing_execution:
+            action = str(missing_execution)[:1500]
+        if turn.get('action_approval'):
+            action = 'Respect the recorded approval decision: ' + approval['status']
+        if worker_blocker and not turn.get('action_approval'):
+            action = ('Resolve the reported blocker before retrying: ' + worker_blocker)[:2000]
+        report_to_manager = os.environ.get('JARVIS_PROFILE') and current and current.get('parentId') and turn.get('reports_to')
+        if report_to_manager:
+            from . import blocker_review
         payload['unblockDescriptor'] = {'owner': {'agentId': turn['agent']},
-            'action': 'Review the Hermes execution error, fix its cause, then explicitly retry this task.'}
+            'action': (blocker_review.REPORT if report_to_manager else '') + action[:1900]}
     api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
+    if status == 'blocked' and report_to_manager:
+        blocker_review.report(api, turn, current, action)
 
 
 def observe_model_context(session_id='', request_messages=None, model='', api_request_id='', **kwargs):

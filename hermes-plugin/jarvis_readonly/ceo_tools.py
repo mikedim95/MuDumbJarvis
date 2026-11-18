@@ -8,6 +8,7 @@ from uuid import UUID
 
 from . import paperclip_reporting as reporting
 from . import profile_registry
+from . import blocker_review
 
 
 def scope():
@@ -27,7 +28,9 @@ def scope():
 def children(turn):
     issues = reporting.api('GET', '/companies/' + turn['company'] + '/issues')
     return [i for i in issues if i.get('parentId') == turn['issue'] and
-            i.get('companyId') == turn['company'] and i.get('projectId') == turn['project']]
+            i.get('companyId') == turn['company'] and i.get('projectId') == turn['project'] and
+            ((turn.get('inference_configuration') or {}).get('version') != 3 or
+             str(i.get('description', '')).startswith('[JARVIS REQUEST ' + turn.get('conversation_request_id', 'initial') + ']\n'))]
 
 
 def employees(turn):
@@ -123,6 +126,19 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
         reporting.check_budget(deadline)
         snapshot, items = context_snapshot(turn, issue, comments)
         reporting.check_budget(deadline)
+        if (turn.get('inference_configuration') or {}).get('version') == 3 and items and (
+                any(i['status'] == 'blocked' for i in items) or
+                any(c.get('authorAgentId') == turn['agent'] and c.get('body', '').startswith(blocker_review.WAITING)
+                    for c in (comments if comments is not None else reporting.api('GET', '/issues/' + turn['issue'] + '/comments')))):
+            rows = reporting.api('GET', '/issues/' + turn['issue'] + '/interactions')
+            decisions = [d for d in blocker_review.decisions(rows, turn['issue'], turn['agent'])
+                         if d['child_id'] in {i['id'] for i in items}]
+            snapshot['owner_decisions'] = decisions[:8]
+            turn['review_child_ids'] = [i['id'] for i in items]
+            turn['owner_decisions'] = decisions
+            pending = next((d for d in decisions if d['status'] == 'pending'), None)
+            if pending:
+                turn['owner_question'] = pending
         verified = []
         if items and all(item['status'] == 'done' for item in items):
             verified = verified_children(turn, items, deadline=deadline)
@@ -141,6 +157,35 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
             snapshot['current_action'] = (
                 'Existing delegated work is not all complete. Do not create duplicate work or claim completion. '
                 'Report the actual pending/blocked child state. Paperclip owns continuation.')
+            blocked = [item for item in items if item['status'] == 'blocked']
+            if blocked:
+                diagnostics = []
+                for child in blocked[:5]:
+                    updates = sorted(reporting.api('GET', '/issues/' + child['id'] + '/comments'),
+                        key=lambda c: c.get('createdAt') or '')
+                    worker = [c for c in updates if c.get('authorAgentId') == child['assigneeAgentId']]
+                    human = [c for c in updates if c.get('authorUserId')]
+                    diagnostics.append({'child_id': child['id'], 'identifier': child['identifier'],
+                        'status': child['status'], 'assignee_agent_id': child['assigneeAgentId'],
+                        'latest_worker_error_or_summary': worker[-1]['body'].split('JARVIS_EXECUTION_EVIDENCE=')[0][:1800] if worker else None,
+                        'blocker': (child.get('unblockDescriptor') or {}).get('action'),
+                        'execution_hold': bool(child.get('executionBlocker')),
+                        'prior_corrections': [c['body'][:900] for c in updates if c.get('authorAgentId') == turn['agent']
+                            and c.get('body', '').startswith('[JARVIS CEO CORRECTION')][-3:],
+                        'human_review_notes': [c['body'][:1200] for c in human[-2:]],
+                        'interpretation': 'Native blocked-task diagnostics, not accepted completion evidence.'})
+                snapshot['blocked_child_diagnostics'] = diagnostics
+                turn['inspected_blockers'] = {entry['child_id'] for entry in diagnostics}
+                snapshot['current_action'] = (
+                    'You own these blockers. Review the reason, attempted fixes and any owner answer. '
+                    'Use action=review with a blocked child_id to inspect its partial report. '
+                    'If you can solve one, call paperclip_ceo action=request_correction with that SAME child_id '
+                    'and a concrete different approach within existing authority. Use depends_on as a STRUCTURED '
+                    'argument for actual prerequisites. Never retry a failed approach unchanged, bypass a hold, or '
+                    'override a rejection. When your team cannot proceed, call action=ask_owner with child_id, '
+                    'plan explaining what you tried and why only the owner can decide, and text containing one '
+                    'specific question. Use any existing answer first. A pending question already awaits the owner. '
+                    'A status update alone does not resolve a blocker.')
         elif turn.get('hiring_approval_status') in ('pending', 'revision_requested', 'rejected', 'cancelled'):
             snapshot['current_action'] = ('Native hiring decision is ' + turn['hiring_approval_status'] +
                 '. Respect the human decision. Do not create duplicate hires or claim execution. Report this real decision and blocker.')
@@ -318,6 +363,13 @@ def review_projection(item):
 def manage(args, **kwargs):
     turn, me, issue = scope()
     action = args.get('action')
+    if action == 'ask_owner':
+        child = next((i for i in children(turn) if i['id'] == args.get('child_id') and i['status'] == 'blocked'), None)
+        if not child or child.get('assigneeAgentId') not in {a['id'] for a in employees(turn)}:
+            raise PermissionError('Owner decisions must concern a blocked direct report on this objective.')
+        decision = blocker_review.ask(reporting.api, turn, issue, child, str(args.get('text') or '').strip(),
+                                     str(args.get('plan') or '').strip())
+        return audit(turn, action, {'interaction_id': decision['id'], 'question': decision['question']})
     if action == 'request_correction':
         child_id = str(UUID(str(args.get('child_id', ''))))
         known = next((child for child in children(turn) if child['id'] == child_id), None)
@@ -331,12 +383,29 @@ def manage(args, **kwargs):
         text = str(args.get('text', '')).strip()
         if not 30 <= len(text) <= 1500:
             raise ValueError('Supply concrete factual/test correction feedback (30–1500 characters)')
+        review_marker = ''
+        if child['status'] == 'blocked' and (turn.get('inference_configuration') or {}).get('version') == 3:
+            if (turn.get('owner_question') or {}).get('child_id') == child_id:
+                raise ValueError('The project owner has a pending question for this child.')
+            holds = reporting.api('GET', '/issues/' + child_id + '/tree-holds?status=active')
+            if isinstance(holds, dict):
+                holds = holds.get('holds', [])
+            if holds:
+                raise PermissionError('The assignment has an active stop hold.')
+            cause = (child.get('unblockDescriptor') or {}).get('action') or ''
+            answer = next((d['id'] for d in turn.get('owner_decisions', []) if d['child_id'] == child_id and d['answer']), '')
+            revision = hashlib.sha256((cause.strip().casefold() + answer).encode()).hexdigest()[:20]
+            review_marker = '[JARVIS BLOCKER REVIEW ' + revision + ']'
+            history = reporting.api('GET', '/issues/' + child_id + '/comments')
+            if any(c.get('authorAgentId') == turn['agent'] and review_marker in (c.get('body') or '') for c in history):
+                raise ValueError('The same correction cycle returned this blocker. Review the result and ask the owner for the missing input.')
+
         marker = '[JARVIS CEO CORRECTION ' + hashlib.sha256(text.encode()).hexdigest()[:16] + ']'
         if marker in (child.get('description') or ''):
             raise ValueError('This correction was already requested; review the new evidence before repeating it')
         revised = reporting.api('PATCH', '/issues/' + child_id,
             {'description': (child.get('description') or '')[:6000] + '\n\n' + marker + '\n' + text,
-             'status': 'todo', 'comment': marker + '\nCEO review feedback: ' + text}, turn['run'])
+             'status': 'todo', 'unblockDescriptor': None, 'comment': marker + '\nCEO review feedback: ' + text + ('\n' + review_marker if review_marker else '')}, turn['run'])
         return audit(turn, action, {'child_id': child_id, 'identifier': revised['identifier'], 'status': revised['status'],
             'next': 'End with the actual waiting state. Paperclip owns the correction assignment and continuation; do not poll or create duplicate work.'})
     if action == 'plan':
@@ -416,6 +485,12 @@ def manage(args, **kwargs):
         items = children(turn)
         if not items:
             raise ValueError('There are no delegated results to review')
+        blocked = [c for c in items if c['status'] == 'blocked' and (not args.get('child_id') or c['id'] == args['child_id'])]
+        if blocked:
+            return audit(turn, action, {'diagnostics': [{'child_id': c['id'], 'identifier': c['identifier'],
+                'blocker': (c.get('unblockDescriptor') or {}).get('action'),
+                'partial_reports': blocker_review.partial_reports(reporting, turn, c)} for c in blocked[:5]],
+                'next': 'These are partial results. Send an executable correction or ask the owner for the missing decision.'})
         verified = verified_children(turn, items)
         turn['reviewed_children'] = [i['id'] for i in items]
         turn['child_evidence'] = verified
@@ -516,6 +591,13 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
     names = {m['name'] for m in models if isinstance(m, dict) and isinstance(m.get('name'), str)}
     missing_report = bool(names) and (len(turn['response'].strip()) < 100 or
         sum(name in turn['response'] for name in names) < min(2, len(names)))
+    if success and not turn.get('owner_question') and (turn.get('inference_configuration') or {}).get('version') == 3:
+        unresolved = next((c for c in items if c['status'] == 'blocked' and c['id'] in turn.get('inspected_blockers', ())), None)
+        if unresolved and not turn.get('action_approval') and unresolved.get('assigneeAgentId') in {a['id'] for a in employees(turn)}:
+            issue = reporting.api('GET', '/issues/' + turn['issue'])
+            if issue.get('executionRunId') == turn['run'] and issue.get('assigneeAgentId') == turn['agent']:
+                question, reason = blocker_review.disposition(turn['response'], unresolved)
+                blocker_review.ask(reporting.api, turn, issue, unresolved, question, reason)
     status, comment = 'blocked', turn['response']
     if not success:
         comment = 'CEO runtime failed or was interrupted. ' + str(turn_exit_reason)
@@ -524,6 +606,8 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
         status = 'in_review' if approval['status'] in ('pending', 'revision_requested') else 'blocked'
         comment = ('Sensitive-action approval ' + approval['id'] + ' is ' + approval['status'] +
             '. No sensitive action was executed; runtime authority remains unchanged.\n\n' + comment)
+    elif turn.get('owner_question') and any(i['id'] == turn['owner_question']['child_id'] and i['status'] == 'blocked' for i in items):
+        comment = blocker_review.WAITING + turn['owner_question']['question']
     elif not turn.get('plan_decision'):
         comment = 'CEO verification blocked: no plan/assignment decision was recorded in Paperclip.\n\n' + comment
     elif any(i['status'] in ('blocked', 'cancelled') for i in items):
@@ -575,7 +659,9 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
     payload = {'status': status, 'comment': comment}
     if status == 'blocked':
         action = 'Review the CEO/worker execution, request any required operator decision, then explicitly retry this task.'
-        if comment.startswith('[JARVIS CEO WAITING]'):
+        if comment.startswith(blocker_review.WAITING):
+            action = comment
+        elif comment.startswith('[JARVIS CEO WAITING]'):
             action = 'Await completion of ' + ', '.join(i['identifier'] for i in items) + '; Paperclip will wake this CEO to review their execution evidence and consolidate the result.'
         payload['unblockDescriptor'] = {'owner': {'agentId': turn['agent']}, 'action': action}
     reporting.api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
@@ -605,9 +691,9 @@ def register(ctx):
         schema={'name': 'paperclip_context', 'description': 'Read your actual assigned Paperclip objective, company goals, existing employees and child task states. Authenticated current context is automatically supplied; call for additional reads.',
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}}, handler=context)
     ctx.register_tool(name='paperclip_ceo', toolset='jarvis_ceo',
-        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. End turn after delegation. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
+        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. A blocked direct report needs request_correction(child_id, text) for an executable fix or ask_owner(child_id, plan=reason, text=question) for a human decision. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. End turn after delegation. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
                 'parameters': {'type': 'object', 'properties': {
-                    'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire', 'request_correction']},
+                    'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire', 'request_correction', 'ask_owner']},
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},
                     'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
                     'child_id': {'type': 'string', 'format': 'uuid'},

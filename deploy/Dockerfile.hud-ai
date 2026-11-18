@@ -6,6 +6,7 @@ COPY --chown=1000:1000 server/chat_context.py /app/server/chat_context.py
 COPY --chown=1000:1000 server/general_context.py /app/server/general_context.py
 COPY --chown=1000:1000 server/administration.py /app/server/administration.py
 COPY --chown=1000:1000 server/agent_config_lock.py /app/server/agent_config_lock.py
+COPY --chown=1000:1000 server/blocker_delivery.py /app/server/blocker_delivery.py
 COPY --chown=1000:1000 server/task_api.py /app/server/task_api.py
 COPY --chown=1000:1000 server/task_brief.py /app/server/task_brief.py
 COPY --chown=1000:1000 server/agent_work.py /app/server/agent_work.py
