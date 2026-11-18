@@ -21,6 +21,7 @@ COPY --chown=1000:1000 server/hud/project-results.js /app/server/hud/project-res
 COPY --chown=1000:1000 server/hud/general-context.js /app/server/hud/general-context.js
 COPY --chown=1000:1000 server/hud/administrator.js /app/server/hud/administrator.js
 COPY --chown=1000:1000 server/hud/agents.js /app/server/hud/agents.js
+COPY --chown=1000:1000 server/hud/portraits /app/server/hud/portraits
 COPY --chown=1000:1000 server/hud/cron-jobs.js /app/server/hud/cron-jobs.js
 COPY --chown=1000:1000 server/hud/ai-minimal.css /app/server/hud/ai-minimal.css
 COPY --chown=1000:1000 server/hud/csi /app/server/hud/csi

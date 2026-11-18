@@ -4,6 +4,21 @@ import json
 from pathlib import Path
 
 
+HIRE_PORTRAITS = tuple(json.loads(Path(__file__).with_name('portraits.json').read_text())['hires'])
+
+
+def hire_portrait(seed, choice=None, roster=()):
+    if choice is not None:
+        if choice not in HIRE_PORTRAITS:
+            raise ValueError('Choose a portrait from the hiring catalog')
+        return choice
+    used = [((a.get('metadata') or {}).get('jarvis') or {}).get('portrait_id')
+            for a in roster if a.get('status') != 'terminated']
+    offset = int.from_bytes(hashlib.sha256(seed.encode()).digest()[:4], 'big') % len(HIRE_PORTRAITS)
+    order = HIRE_PORTRAITS[offset:] + HIRE_PORTRAITS[:offset]
+    return min(order, key=used.count)
+
+
 def catalog():
     data = json.loads(Path(__file__).with_name('profiles.json').read_text())
     if data['version'] != 1 or data['inference_slots'] != 1:
@@ -31,7 +46,7 @@ def ready_employee(agent):
             and (not managed.get('managed') or managed.get('provisioned') is True))
 
 
-def hire_body(turn, ceo, profile_id, name, reason):
+def hire_body(turn, ceo, profile_id, name, reason, portrait=None, roster=()):
     item = profile(profile_id)
     runtime = hashlib.sha256((turn['company'] + ':' + turn['issue'] + ':' + profile_id).encode()).hexdigest()[:24]
     return {'name': name[:80], 'role': item['role'], 'title': item['name'], 'reportsTo': ceo['id'],
@@ -41,6 +56,7 @@ def hire_body(turn, ceo, profile_id, name, reason):
         'runtimeConfig': {'heartbeat': {'enabled': False, 'wakeOnAssignment': True,
             'wakeOnDemand': True, 'maxConcurrentRuns': 1}},
         'metadata': {'jarvis': {'managed': True, 'provisioned': False, 'profile': profile_id,
+            'portrait_id': hire_portrait(runtime, portrait, roster),
             'profile_sha256': item['sha256'], 'runtime_id': runtime, 'source_issue_id': turn['issue'],
             'hiring_reason': reason[:2000], 'limits': item['limits'], 'model': item['model'],
             'workspace': 'private employee container; issue-scoped directories; no host access'}},

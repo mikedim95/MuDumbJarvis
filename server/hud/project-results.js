@@ -57,7 +57,9 @@
       const status=text('span','','job-state');
       const stateLabel=statusNames[job.status]||String(job.status||'Unknown').replaceAll('_',' ');
       let activity=stateLabel;
-      if(job.state==='active')activity+=' · Working now';
+      if(job.state==='blocked')activity='Blocked';
+      else if(job.status==='blocked'&&job.state==='waiting')activity='Waiting';
+      else if(job.state==='active')activity+=' · Working now';
       else if(job.status==='in_progress'&&job.state==='waiting')activity+=' · Waiting';
       else if(job.status==='in_progress'&&job.state==='queued')activity+=' · Queued';
       const engagement=text('span',activity,'job-engagement');

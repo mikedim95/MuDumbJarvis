@@ -437,10 +437,11 @@ def manage(args, **kwargs):
         company = reporting.api('GET', '/companies/' + turn['company'])
         if not company.get('requireBoardApprovalForNewAgents'):
             raise PermissionError('Human hiring approval must be enabled')
+        portrait = profile_registry.hire_portrait(turn['issue'] + ':' + name, args.get('portrait'), employees(turn))
         # A candidate is inert until a human approves AND provisions its isolated runtime.
         hired = reporting.api('POST', '/companies/' + turn['company'] + '/agent-hires',
                     {'name': name[:80], 'role': 'general', 'title': name[:80], 'reportsTo': me['id'],
-                     'capabilities': reason[:2000], 'adapterType': 'hermes_gateway',
+                     'capabilities': reason[:2000], 'metadata': {'jarvis': {'portrait_id': portrait}}, 'adapterType': 'hermes_gateway',
                      'adapterConfig': {}, 'runtimeConfig': {'heartbeat': {'enabled': False}},
                      'sourceIssueId': turn['issue']}, turn['run'])
         approval = hired.get('approval') or {}
@@ -466,10 +467,10 @@ def request_profile_hire(turn, me, args, tool_name='paperclip_ceo'):
         return emit({'hire_created': False, 'existing_employees': [
             {'id': a['id'], 'name': a['name'], 'runtime_ready': profile_registry.ready_employee(a)} for a in suitable],
             'next': 'Reuse the existing employee. If its runtime is being provisioned, wait for the native readiness notification; do not create a duplicate.'})
-    body = profile_registry.hire_body(turn, me, selected['id'], name, reason)
     # Native roster/approvals remain the only durable source. Check across runs,
     # complementing Paperclip's own per-run hire fingerprint idempotency.
     all_agents = reporting.api('GET', '/companies/' + turn['company'] + '/agents')
+    body = profile_registry.hire_body(turn, me, selected['id'], name, reason, args.get('portrait'), all_agents)
     pending = [a for a in all_agents if a.get('reportsTo') == me['id'] and a.get('status') == 'pending_approval'
                and profile_registry.employee_profile(a) == selected['id']]
     if pending:
@@ -585,7 +586,11 @@ def register(ctx):
     employee_work.register(ctx, ceo=True)
     def request_employee(args, **kwargs):
         turn, me, _ = scope()
-        return request_profile_hire(turn, me, {'profile': args['profile'], 'title': args['name'], 'text': args['reason']}, tool_name='request_employee')
+        return request_profile_hire(turn, me, {'profile': args['profile'], 'title': args['name'],
+            'text': args['reason'], 'portrait': args.get('portrait')}, tool_name='request_employee')
+
+    portrait_field = {'type': 'string', 'enum': list(profile_registry.HIRE_PORTRAITS),
+                      'description': 'Optional helmet portrait for this employee. Omit to assign from the least-used designs.'}
 
     ctx.register_tool(name='request_employee', toolset='jarvis_ceo', schema={
         'name': 'request_employee',
@@ -593,6 +598,7 @@ def register(ctx):
         'parameters': {'type': 'object', 'properties': {
             'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])},
             'name': {'type': 'string'},
+            'portrait': portrait_field,
             'reason': {'type': 'string', 'description': 'Why existing employees cannot provide this essential capability; at least 40 characters.'}},
             'required': ['profile', 'name', 'reason'], 'additionalProperties': False}}, handler=request_employee)
     ctx.register_tool(name='paperclip_context', toolset='jarvis_ceo',
@@ -605,6 +611,6 @@ def register(ctx):
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},
                     'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
                     'child_id': {'type': 'string', 'format': 'uuid'},
-                    'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])},
+                    'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])}, 'portrait': portrait_field,
                     'depends_on': {'type': 'array', 'items': {'type': 'string', 'format': 'uuid'}, 'maxItems': 5}},
                     'required': ['action'], 'additionalProperties': False}}, handler=manage)

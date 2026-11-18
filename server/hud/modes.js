@@ -22,6 +22,8 @@
     el('generalSidebarToggle').setAttribute('aria-expanded',String(open));
   }
   function displayStatus(task){
+    if(task.state==='blocked')return 'Blocked';
+    if(task.status==='blocked'&&task.state==='waiting')return 'Waiting';
     if(task.status==='blocked'&&String(task.unblockDescriptor?.action||'').startsWith('Await completion of ')&&
       window.JarvisTasks.snapshot().tasks.some(child=>child.parentId===task.id&&
         (child.executionRunId||['todo','in_progress'].includes(child.status))))return 'Waiting for workers';

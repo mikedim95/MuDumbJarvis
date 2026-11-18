@@ -1,9 +1,99 @@
 """Read-only staff assignments and their native mission and routine links."""
 import asyncio
+import hashlib
+import json
+import re
+from pathlib import Path
+from uuid import UUID
 
 from fastapi import HTTPException
 
 import work_scope
+
+
+_portraits = json.loads((Path(__file__).resolve().parents[1] / 'hermes-plugin' / 'jarvis_readonly' / 'portraits.json').read_text())
+_portrait_ids = {*_portraits['roles'].values(), *_portraits['hires']}
+
+
+def safe_text(value, limit):
+    from chat_context import text
+    return text(value, limit)
+
+
+def custom_asset(person):
+    try:
+        asset = str(UUID((person.get('appearance') or {}).get('customAvatarAssetId') or ''))
+    except (ValueError, TypeError, AttributeError):
+        return None
+    return asset
+
+
+def portrait_url(person, ceo):
+    asset = custom_asset(person)
+    if asset:
+        return f"/api/agents/{person['id']}/portrait/{asset}"
+    meta = (person.get('metadata') or {}).get('jarvis') or {}
+    chosen = meta.get('portrait_id')
+    if not isinstance(chosen, str) or chosen not in _portrait_ids:
+        role = 'ceo' if person['id'] == ceo else person.get('role')
+        chosen = _portraits['roles'].get(role)
+    if not chosen:
+        seed = hashlib.sha256(person['id'].encode()).digest()
+        chosen = _portraits['hires'][int.from_bytes(seed[:4], 'big') % len(_portraits['hires'])]
+    return f'/hud/portraits/{chosen}.webp'
+
+
+def specialization(person):
+    title = person.get('title') or ''
+    if title.casefold() == 'research' and ((person.get('metadata') or {}).get('jarvis') or {}).get('profile') == 'research':
+        return 'Public-source research'
+    return safe_text(title or (person.get('role') or 'Team member').replace('_', ' ').title(), 140)
+
+
+_ordinary_wait = re.compile(r'^(?:await(?:ing)?|wait(?:ing)? (?:for|on)|pending)\b', re.I)
+_approval_wait = re.compile(r'\b(?:pending (?:human |board )?(?:approval|review|decision)|'
+                            r'(?:approval|review) (?:is )?(?:pending|required)|review and approve)\b', re.I)
+_hard_stop = re.compile(
+    r'\b(?:guardrail|access denied|permission denied|access was denied|authorization failed|'
+    r'(?:missing|required|invalid|expired|revoked) (?:access|credentials?|permissions?|authorization)|'
+    r'(?:await(?:ing)?|wait(?:ing)? for) (?:valid |the )?credentials?\b|'
+    r'(?:credentials?|permission|authorization) (?:is |are )?(?:missing|invalid|expired|revoked)|'
+    r'(?:policy|guardrail) (?:denies|forbids|prohibits|blocks)|approval (?:was )?(?:rejected|denied)|'
+    r'(?:missing|required|insufficient|unavailable|unverified) evidence|(?:cannot|could not|unable to) verify|'
+    r'could (?:not|never) be verified|execution error|execution failed|runtime failure)\b', re.I)
+
+
+def issue_condition(issue):
+    """Classify Paperclip's various blocked states into a dependency wait or a problem needing action."""
+    recovery = issue.get('executionBlocker') or {}
+    action = safe_text((issue.get('unblockDescriptor') or {}).get('action'), 285)
+    attention = issue.get('blockerAttention') or {}
+    dependency = safe_text(attention.get('sampleBlockerIdentifier'), 65)
+    if recovery:
+        detail = safe_text(recovery.get('nextAction'), 285)
+        cause = safe_text(recovery.get('cause'), 90).replace('_', ' ')
+        return 'blocked', detail or (f'Execution stopped because of {cause}.' if cause else 'Execution recovery requires attention.')
+    if attention.get('state') == 'stalled':
+        return 'blocked', action or (f'{dependency} has stalled and needs attention.' if dependency else 'The review has stalled and needs attention.')
+    if _hard_stop.search(action):
+        # A parent's recorded action can describe its child's failure. Keep the
+        # problem on that job unless this job has an independent hard stop.
+        own_condition = action
+        if dependency:
+            subject = re.compile(r'^(?:(?:task|worker|job|child)\s+)?' + re.escape(dependency) + r'\b', re.I)
+            own_condition = ' '.join(clause for clause in re.split(r'(?<=[.!?;,])\s+|\s+(?:and|but)\s+', action)
+                                     if not subject.match(clause))
+        if _hard_stop.search(own_condition):
+            return 'blocked', action
+    if (attention.get('reason') in ('active_child', 'active_dependency') or dependency
+            or _ordinary_wait.match(action) or _approval_wait.search(action)):
+        wait = f'Waiting for {dependency}.' if dependency else 'Waiting for the dependent work to finish.'
+        if action and dependency and dependency not in action:
+            return 'waiting', f'{wait} {action}'
+        return 'waiting', action or wait
+    if action or attention.get('state') == 'needs_attention':
+        return 'blocked', action or 'Paperclip requires intervention. No further reason was recorded.'
+    return 'waiting', 'Paperclip is holding this job. No specific cause was recorded.'
 
 
 def reference(issue):
@@ -44,9 +134,41 @@ def engagement(issue, runs=()):
         return 'active', run.get('agentId') or issue.get('assigneeAgentId')
     if run.get('status') == 'queued':
         return 'queued', None
+    if status == 'blocked' or issue.get('executionBlocker'):
+        return issue_condition(issue)[0], None
     if status in ('backlog', 'todo'):
         return 'queued', None
     return 'waiting', None
+
+
+def work_reason(issue, state, executor=None):
+    if state == 'closed':
+        return ''
+    if state == 'active':
+        return 'The agent is executing this assignment.'
+    if executor:
+        return 'Another agent is executing the current run.'
+    if state == 'queued':
+        return 'The job is in the backlog.' if issue.get('status') == 'backlog' else 'The assignment is queued for execution.'
+    if issue.get('status') == 'blocked' or state == 'blocked':
+        return issue_condition(issue)[1]
+    if issue.get('status') == 'in_review':
+        return 'The assignment is awaiting review.'
+    return 'The assignment is open. No run is currently executing.'
+
+
+def staff_condition(person, jobs):
+    if person.get('status') == 'error' or person.get('lifecycleState') in ('error', 'failed'):
+        return 'blocked', safe_text(person.get('errorReason') or person.get('lifecycleError'), 285) or 'The agent runtime reported an error.'
+    if person.get('status') == 'paused':
+        return 'paused', 'The agent is paused in Paperclip.'
+    if person.get('status') == 'running' and not any(j['state'] == 'active' for j in jobs):
+        return 'active', 'Paperclip reports a running agent. No linked assignment was supplied.'
+    for state in ('active','blocked','waiting','queued'):
+        primary = next((j for j in jobs if j['state'] == state), None)
+        if primary:
+            return state, primary['reason']
+    return 'idle', 'No open assignments.'
 
 
 class WorkLinks:
@@ -169,17 +291,41 @@ async def overview(client):
     scoped = [job for job in routines if not project or job.get('projectId') == project]
     links = WorkLinks(client.company, client.ceo, issues, scoped)
     agents = {person['id']: {**{key: person.get(key) for key in ('id', 'name', 'title', 'role', 'status', 'reportsTo')},
+                             'portrait_url': portrait_url(person, client.ceo), 'specialization': specialization(person),
                              'work': [], 'past_work': [], 'schedules': []} for person in people}
+    # Paperclip's list omits the execution recovery detail on older failed runs.
+    # Read it only when the list supplies neither the necessary action nor a dependency.
+    limit = asyncio.Semaphore(4)
+    async def recovery_detail(row):
+        async with limit:
+            try:
+                detail = await client.request('GET', 'issues/' + row['id'])
+            except HTTPException as exc:
+                if exc.status_code == 404:
+                    return
+                raise
+        if (detail.get('companyId'), detail.get('projectId'), detail.get('status'), detail.get('assigneeAgentId')) == (
+                client.company, row.get('projectId'), 'blocked', row.get('assigneeAgentId')):
+            row['executionBlocker'] = detail.get('executionBlocker')
+    await asyncio.gather(*(recovery_detail(row) for row in issues.values() if row.get('status') == 'blocked'
+        and row.get('assigneeAgentId') in agents and not row.get('executionBlocker')
+        and not (row.get('unblockDescriptor') or {}).get('action')
+        and (row.get('blockerAttention') or {}).get('state') == 'needs_attention'
+        and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')))
     for row in sorted(issues.values(), key=lambda i: i.get('updatedAt') or '', reverse=True):
         state, executor = engagement(row)
         assignee = row.get('assigneeAgentId')
         for agent_id in {assignee, executor} & agents.keys():
             job_state = 'waiting' if state == 'active' and executor != agent_id else state
-            entry = {**reference(row), 'status': row.get('status'), 'state': job_state, 'assigneeAgentId': assignee,
+            entry = {**reference(row), 'status': row.get('status'), 'state': job_state, 'reason': work_reason(row, job_state, executor),
+                     'assigneeAgentId': assignee,
                      'active_agent_id': executor, **links.for_issue(row)}
             agents[agent_id]['past_work' if state == 'closed' else 'work'].append(entry)
     for job in links.jobs.values():
         owner = job.get('assigneeAgentId')
         if owner in agents and job.get('status') != 'archived':
             agents[owner]['schedules'].append(links.schedule(job))
+    for person in people:
+        agent = agents[person['id']]
+        agent['activity'], agent['status_reason'] = staff_condition(person, agent['work'])
     return {'ceo_id': client.ceo, 'agents': list(agents.values())}

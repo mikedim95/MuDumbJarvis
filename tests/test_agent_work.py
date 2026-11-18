@@ -1,10 +1,70 @@
 from uuid import uuid4
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from test_tasks import AGENT as WORKER, CEO, headers as HEADERS, transport
 from test_phase1 import server
+
+
+@pytest.mark.parametrize('action,attention,state', [
+    ('Await completion of the assigned research.', {'reason': 'active_child'}, 'waiting'),
+    ('Pending human approval of the requested change.', {}, 'waiting'),
+    ('Review and approve the change.', {}, 'waiting'),
+    ('Waiting for required credentials to verify the source.', {'sampleBlockerIdentifier': 'R-4'}, 'blocked'),
+    ('Waiting for R-4 and for missing credentials.', {'sampleBlockerIdentifier': 'R-4'}, 'blocked'),
+    ('Waiting for access denied by policy to be restored.', {}, 'blocked'),
+    ('No mentions could be verified from accessible sources.', {'state': 'needs_attention'}, 'blocked'),
+    ('R-4 could not verify the source. Review its evidence.', {'sampleBlockerIdentifier': 'R-4'}, 'waiting'),
+    ('R-4 could not verify the source. Required credentials for this job are missing.',
+     {'sampleBlockerIdentifier': 'R-4'}, 'blocked'),
+])
+def test_waiting_and_substantive_blockers(action, attention, state):
+    import agent_work
+    task = {'status':'blocked', 'unblockDescriptor':{'action':action}, 'blockerAttention':attention}
+    assert agent_work.engagement(task) == (state, None)
+    assert action in agent_work.work_reason(task, state)
+
+
+def test_actual_runtime_recovery_and_agent_reason_precedence():
+    import agent_work
+    task = {'status': 'in_progress', 'executionBlocker': {'cause': 'credentials_revoked', 'nextAction': 'Review the expired credentials.'}}
+    assert agent_work.engagement(task) == ('blocked', None)
+    reason = agent_work.work_reason(task, 'blocked')
+    assert reason == 'Review the expired credentials.'
+    jobs = [{'state': 'waiting', 'reason': 'Waiting for review.'}, {'state':'blocked', 'reason':reason}]
+    assert agent_work.staff_condition({}, jobs) == ('blocked', reason)
+    assert agent_work.staff_condition({}, []) == ('idle', 'No open assignments.')
+    assert agent_work.staff_condition({}, [{'state':'active', 'reason':'Running.'}, *jobs])[0] == 'active'
+
+
+def test_assigned_portrait_and_native_avatar_are_scoped(monkeypatch):
+    import agent_work
+    asset = str(uuid4())
+    worker = {'companyId':'company', 'id':WORKER, 'reportsTo':CEO, 'role':'engineer',
+              'metadata':{'jarvis':{'portrait_id':'relay'}}}
+    path = f'/api/agents/{WORKER}/portrait/{asset}'
+    assert agent_work.portrait_url(worker, CEO) == '/hud/portraits/relay.webp'
+    assert agent_work.portrait_url({**worker, 'metadata':{'jarvis':{'portrait_id':'../outside'}}}, CEO) == '/hud/portraits/software.webp'
+    person = {**worker, 'appearance':{'customAvatarAssetId':asset}}
+    assert agent_work.portrait_url(person, CEO) == path
+    image = b'\x89PNG\r\n\x1a\n' + b'fixture'
+    fetched = []
+    def handler(req):
+        if req.url.path.endswith('/agents'):
+            return httpx.Response(200,json=[person])
+        assert req.url.path == f'/api/assets/{asset}/content'
+        fetched.append(asset)
+        return httpx.Response(200,headers={'Content-Type':'image/png'},content=image)
+    transport(monkeypatch, handler)
+    with TestClient(server.app) as client:
+        assert client.get(path).status_code == 401
+        assert client.get(f'/api/agents/{WORKER}/portrait/{uuid4()}', headers=HEADERS).status_code == 404
+        assert client.get(f'/api/agents/{uuid4()}/portrait/{asset}', headers=HEADERS).status_code == 404
+        assert fetched == []
+        response = client.get(path, headers=HEADERS)
+        assert response.content == image and response.headers['content-type'] == 'image/png'
 
 
 def test_agent_work_links_match_native_executors_and_project_schedules(monkeypatch):

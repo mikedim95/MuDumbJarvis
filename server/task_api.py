@@ -10,6 +10,7 @@ import work_scope
 import agent_work
 from task_brief import job_brief
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 
@@ -78,6 +79,8 @@ def project_issue(issue,scope=None):
     resolved=scope or work_scope.classify(issue)
     result.update(work_scope=resolved['kind'],mission_id=resolved.get('mission_id'))
     result['description']=work_scope.clean_description(result.get('description'))
+    if issue.get('status') == 'blocked' or issue.get('executionBlocker'):
+        result['state'] = agent_work.engagement(issue)[0]
     return result
 
 
@@ -100,6 +103,31 @@ def build_router(require_auth):
     @router.get('/agents/work')
     async def staff_assignments(p: Paperclip = Depends(client)):
         return await agent_work.overview(p)
+
+    @router.get('/agents/{agent_id}/portrait/{asset_id}')
+    async def staff_portrait(agent_id: UUID, asset_id: UUID, p: Paperclip = Depends(client)):
+        from general_context import team
+        person = next((a for a in await team(p) if a['id'] == str(agent_id)), None)
+        if not person or agent_work.custom_asset(person) != str(asset_id):
+            raise HTTPException(404, 'Agent portrait not found')
+        # Paperclip re-encodes custom agent avatars as a single PNG, at most 512 x 512.
+        try:
+            async with p.http.stream('GET', f'assets/{asset_id}/content') as upstream:
+                if upstream.status_code == 404:
+                    raise HTTPException(404, 'Agent portrait not found')
+                if upstream.status_code != 200 or upstream.headers.get('content-type', '').split(';')[0] != 'image/png':
+                    raise HTTPException(502, 'The portrait could not be loaded')
+                payload = bytearray()
+                async for chunk in upstream.aiter_bytes():
+                    if len(payload) + len(chunk) > 2 * 1024 * 1024:
+                        raise HTTPException(502, 'Invalid agent portrait')
+                    payload.extend(chunk)
+        except httpx.RequestError:
+            raise HTTPException(502, 'The portrait could not be loaded') from None
+        if not payload.startswith(b'\x89PNG\r\n\x1a\n'):
+            raise HTTPException(502, 'Invalid agent portrait')
+        return Response(content=bytes(payload), media_type='image/png',
+                        headers={'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options':'nosniff'})
 
     async def project_visibility(task_id, p, hidden):
         issue = await p.issue(task_id)

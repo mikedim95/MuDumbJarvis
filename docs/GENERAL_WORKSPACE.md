@@ -16,9 +16,13 @@ In Chat and General you speak directly to Jarvis, the CEO. Assigning a task
 opens its project after Paperclip confirms creation. Questions get a chat
 answer. Ask explicitly when you want findings saved as shared General knowledge.
 
-**Agents** shows the whole team, including people with no current assignment.
-Select a project on an agent's card to see its delegation tree. Select an agent
-in the tree to return to their card. Jobs started by a cron run show the schedule
+**Agents** shows Jarvis above the team's portrait row. Select a portrait to
+see what the agent is doing, why it is waiting, or what needs attention.
+Waiting covers ordinary dependencies and reviews. Blocked identifies a
+guardrail or a problem such as missing access or evidence that needs attention.
+Open a listed project to see its delegation tree. Select an agent in the tree
+to return to their portrait. Jarvis can choose a portrait for each new hire
+from the [portrait catalog](AGENT_PORTRAITS.md). Jobs started by a cron run show the schedule
 that started them. An enabled timer can be idle between runs.
 
 Agents lead reports with the result and include only requested or essential

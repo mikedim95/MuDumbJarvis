@@ -9,6 +9,23 @@ profiles = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(profiles)
 
 
+def test_hire_portraits_are_persisted_reusable_catalog_choices():
+    turn = {'company':'company', 'issue':'issue'}
+    def hire(roster=(), choice=None):
+        return profiles.hire_body(turn, {'id':'ceo'}, 'research', 'Analyst', 'Document source evidence',
+                                  choice, roster)['metadata']['jarvis']['portrait_id']
+    assert hire() == hire()
+    assert hire(choice='halo') == 'halo'
+    used = []
+    for _ in profiles.HIRE_PORTRAITS:
+        selected = hire(used)
+        assert selected not in [a['metadata']['jarvis']['portrait_id'] for a in used]
+        used.append({'metadata':{'jarvis':{'portrait_id':selected}}})
+    assert hire(used) in profiles.HIRE_PORTRAITS
+    with pytest.raises(ValueError):
+        hire(choice='../avatar')
+
+
 def test_catalog_is_templates_and_preserves_single_model_slot():
     data = profiles.catalog()
     assert set(data['profiles']) == {'research', 'software_development', 'system_administration', 'documentation', 'security_analysis'}

@@ -26,6 +26,7 @@ import hashlib
 import json
 import logging
 import hmac
+import mimetypes
 import os
 import re
 import threading
@@ -1249,6 +1250,7 @@ def versioned_hud_index(directory: Path) -> bytes:
 
 
 if HUD_DIR.exists():
+    mimetypes.add_type("image/webp", ".webp")
     hud_html = versioned_hud_index(HUD_DIR)
     hud_etag = '"' + hashlib.sha256(hud_html).hexdigest() + '"'
 

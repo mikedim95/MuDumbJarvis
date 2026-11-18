@@ -1,0 +1,4 @@
+{
+  "roles": {"ceo": "ceo", "engineer": "software", "security": "security", "devops": "systems", "researcher": "osint"},
+  "hires": ["prism", "relay", "halo", "vector"]
+}

@@ -9,7 +9,7 @@ import pytest
 
 
 def test_profile_hire_records_model_rationale_before_native_approval(plugin):
-    result = json.loads(plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development',
+    result = json.loads(plugin.tools.manage({'action': 'request_hire', 'profile': 'software_development', 'portrait': 'prism',
         'title': 'Bounded developer', 'text': 'Existing research employee cannot create and execute the required isolated code and tests.'}))
     assert result['approval_status'] == 'pending' and result['profile'] == 'software_development'
     writes = [call for call in plugin.calls if call[0] in ('POST', 'PATCH')]
@@ -17,6 +17,7 @@ def test_profile_hire_records_model_rationale_before_native_approval(plugin):
     hire = next(i for i, call in enumerate(writes) if call[1].endswith('/agent-hires'))
     assert plan < hire
     body = writes[hire][2]
+    assert body['metadata']['jarvis']['portrait_id'] == 'prism'
     assert body['adapterConfig'] == {} and body['metadata']['jarvis']['provisioned'] is False
     assert body['permissions']['canCreateAgents'] is False
     assert 'synthetic-secret' not in json.dumps(result)

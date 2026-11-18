@@ -4,8 +4,11 @@ const {chromium} = require('playwright');
 
 const origin = process.env.JARVIS_HUD_ORIGIN || 'http://127.0.0.1:8765';
 const id = n => '00000000-0000-4000-a000-' + String(n).padStart(12, '0');
-const agents = ['Jarvis', 'Researcher', 'Editor', 'Archivist'].map((name, index) => ({
-  id: id(index + 1), name, lifecycleState: 'ready', role: index === 0 ? 'ceo' : 'worker',
+const agents = [
+  ['Jarvis', 'Mission leadership'], ['Researcher', 'Source discovery'], ['Editor', 'Editorial review'],
+  ['Archivist', 'Archive management'], ['Verifier', 'Source verification'],
+].map(([name, title], index) => ({
+  id: id(index + 1), name, title, lifecycleState: 'ready', role: index === 0 ? 'ceo' : 'worker',
   status: index === 1 ? 'running' : 'idle', reportsTo: index === 0 ? null : id(1),
 }));
 
@@ -39,7 +42,7 @@ async function main() {
   const future = {...cron, id: id(701), title: 'Quarterly archive review', assigneeAgentId: agents[3].id};
   project.schedules = [cron, future];
   const shared = {...cron, id: id(702), title: 'Company calendar review', work_scope: 'general', mission_id: null, mission: null};
-  const generalRun = job(508, null, 0, 'Review next week’s calendar', 'blocked', 'Waiting for calendar access.');
+  const generalRun = job(508, null, 4, 'Review next week’s calendar', 'blocked', 'Waiting for the calendar owner to confirm the meeting dates.');
   Object.assign(generalRun, {work_scope: 'general', mission_id: null, state: 'waiting',
     cron_job: {id: shared.id, title: shared.title}, run_issue: reference(generalRun)});
   const definitions = [...project.schedules, shared];
@@ -47,7 +50,8 @@ async function main() {
     current.cron_job = {id: cron.id, title: cron.title};
     current.run_issue = reference(scheduled);
   }
-  project.state = scheduled.state = source.state = 'waiting';
+  project.state = scheduled.state = 'waiting';
+  source.state = 'blocked';
   research.state = update.state = 'active';
   research.active_agent_id = update.active_agent_id = agents[1].id;
   review.state = 'closed';
@@ -56,14 +60,23 @@ async function main() {
   project.comments.push({id: id(600), authorAgentId: agents[0].id, body: automaticReport, createdAt: '2026-01-01T12:00:00Z'});
   const tasks = [project, research, review, source, other, scheduled, update, generalRun];
   function roster() {
-    return agents.map(agent => {
+    const portraits = [
+      '/hud/portraits/ceo.webp', '/hud/portraits/osint.webp', '/hud/portraits/security.webp',
+      '/api/agents/' + agents[3].id + '/portrait/' + id(910), '/hud/portraits/vector.webp',
+    ];
+    const activity = ['waiting', 'active', source.state==='closed'?'idle':'blocked', 'idle', 'waiting'];
+    const reasons = [project.brief.progress, update.brief.progress, activity[2]==='idle'?'No current assignment.':source.brief.progress,
+      'No current assignment.', generalRun.brief.progress];
+    return agents.map((agent, index) => {
       const assignments = tasks.filter(task => task.assigneeAgentId === agent.id).map(task => ({
-        ...reference(task), status: task.status, state: task.state, work_scope: task.work_scope,
+        ...reference(task), status: task.status, state: task.state, reason: task.brief.progress, work_scope: task.work_scope,
         mission: task.work_scope === 'general' ? null : reference(task === other ? other : project),
         assigneeAgentId: task.assigneeAgentId, active_agent_id: task.active_agent_id || null,
         cron_job: task.cron_job || null, run_issue: task.run_issue || null,
       }));
-      return {...agent, work: assignments.filter(task => task.state !== 'closed'),
+      return {...agent, portrait_url: portraits[index],
+        specialization: agent.title, activity: activity[index], status_reason: reasons[index],
+        work: assignments.filter(task => task.state !== 'closed'),
         past_work: assignments.filter(task => task.state === 'closed'),
         schedules: definitions.filter(schedule => schedule.assigneeAgentId === agent.id)};
     });
@@ -83,6 +96,11 @@ async function main() {
       if (request.method() !== 'GET' || path.includes('/artifacts/')) {
         unexpected.push(request.method() + ' ' + path);
         return route.fulfill({status: 405, json: {}});
+      }
+      if (path === '/agents/' + agents[3].id + '/portrait/' + id(910)) {
+        // A one-pixel PNG supplied as an authenticated native portrait.
+        return route.fulfill({contentType:'image/png',body:Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64')});
       }
       const detail = tasks.find(task => '/tasks/' + task.id === path);
       if (detail) return route.fulfill({json: detail});
@@ -116,8 +134,11 @@ async function main() {
     const card = task => item(task).locator(':scope > article');
     async function choose(task) {
       await page.locator('#projectsModeBtn').click();
-      await page.locator('.project-list-item[data-project-id="' + task.id + '"]').click();
+      const item = page.locator('.project-list-item[data-project-id="' + task.id + '"]');
+      if (task === project) assert.equal(await item.locator('.project-item-status').innerText(), 'Waiting');
+      await item.click();
       await card(task).waitFor({state: 'visible'});
+      if (task === project) assert((await page.locator('#projectStatus').innerText()).endsWith('Waiting'));
     }
     async function checkNoFiles() {
       assert.equal(await page.locator('#feed .project-file:visible, #feed [download]:visible').count(), 0);
@@ -145,7 +166,11 @@ async function main() {
       assert((await node.locator('.job-progress').innerText()).includes(task.brief.progress));
       if (task.brief.result) assert((await node.locator('.job-result').innerText()).includes(task.brief.result));
     }
-    assert.equal(await card(source).locator('.job-engagement').getAttribute('data-state'), 'waiting');
+    // Paperclip reports both as blocked. Only the task with an actionable barrier uses the blocked label.
+    assert.equal(await card(project).locator('.job-engagement').innerText(), 'Waiting');
+    assert.equal(await card(project).locator('.job-engagement').getAttribute('data-state'), 'waiting');
+    assert.equal(await card(source).locator('.job-engagement').innerText(), 'Blocked');
+    assert.equal(await card(source).locator('.job-engagement').getAttribute('data-state'), 'blocked');
     assert.equal(await card(update).locator('.job-engagement').getAttribute('data-state'), 'active');
     assert((await card(update).locator('.job-routine[data-routine-id="' + cron.id + '"]').innerText()).includes(cron.title));
     const schedules = tree.locator('.project-schedules');
@@ -170,25 +195,71 @@ async function main() {
     assert(agentsBox.y > cronBox.y && Math.abs(agentsBox.x - cronBox.x) < 8);
     await agentsButton.click();
     const map = page.locator('#agentsMap');
-    const station = index => map.locator('.agent-station[data-agent-id="' + agents[index].id + '"]');
-    const assignment = (index, task) => station(index).locator('[data-issue-id="' + task.id + '"]');
+    const station = index => map.locator('button.agent-station[data-agent-id="' + agents[index].id + '"]');
+    const details = index => page.locator('#agentDetails[data-agent-id="' + agents[index].id + '"]');
+    const assignment = (index, task) => details(index).locator('[data-issue-id="' + task.id + '"]');
+    async function selectPortrait(index, keyboard = false) {
+      const tile = station(index);
+      if (await tile.getAttribute('aria-expanded') !== 'true') {
+        if (keyboard) { await tile.focus(); await tile.press('Enter'); }
+        else await tile.click();
+      }
+      await details(index).waitFor({state:'visible'});
+      assert.equal(await tile.getAttribute('aria-expanded'), 'true');
+    }
     await station(3).waitFor({state: 'visible'});
     assert.equal(await map.locator('.agent-station').count(), agents.length);
-    assert.equal(await map.locator('ul[aria-label="Reports to Jarvis"] > li').count(), agents.length - 1);
-    for (const [index, agent] of agents.entries()) assert((await station(index).innerText()).includes(agent.name));
-    for (const [index, state] of [[1, 'active'], [2, 'waiting'], [3, 'idle']])
-      assert.equal(await station(index).getAttribute('data-activity'), state);
+    assert.equal(await map.locator('#agentLeader .agent-station').count(),1);
+    assert.equal(await map.locator('#agentTeam .agent-station').count(),agents.length-1);
+    assert.equal(await page.locator('#agentDetails:visible').count(),0);
+    for (const [index, agent] of roster().entries()) {
+      const tile = station(index);
+      assert((await tile.locator('.agent-name').innerText()).includes(agent.name));
+      assert.equal(await tile.locator('.agent-specialization').innerText(),agent.specialization);
+      assert.equal(await tile.getAttribute('data-activity'), agent.activity);
+      const img = tile.locator('img.agent-portrait');
+      const portrait = await img.evaluate(async node => {
+        await node.decode();
+        return {url:new URL(node.currentSrc).pathname,width:node.naturalWidth,height:node.naturalHeight};
+      });
+      assert.equal(portrait.url,agent.portrait_url);
+      const minSize = agent.portrait_url.startsWith('/hud/') ? 128 : 1;
+      assert(portrait.width >= minSize && portrait.height >= minSize, 'The assigned portrait must decode');
+      const [imageRect, statusRect] = await Promise.all([img,tile.locator('.agent-activity')].map(n => n.boundingBox()));
+      assert(statusRect.x < imageRect.x+imageRect.width && statusRect.x+statusRect.width > imageRect.x &&
+        statusRect.y < imageRect.y+imageRect.height && statusRect.y+statusRect.height > imageRect.y,'Status should overlay the portrait');
+    }
+    const coords = await Promise.all(agents.map((_,i) => station(i).boundingBox()));
+    const lineup = await map.locator('#agentTeam').boundingBox();
+    assert(Math.abs((coords[0].x+coords[0].width/2) - (lineup.x+lineup.width/2)) < 8,
+      'The CEO portrait should be centered above the team');
+    for (const [i,worker] of coords.slice(1).entries()) {
+      assert(worker.y >= coords[0].y+coords[0].height,'The CEO portrait should sit above all workers');
+      assert(Math.abs(worker.y-coords[1].y) < 3,'Workers share one row');
+      if (i > 0) assert(worker.x > coords[i].x,'Worker portraits should appear side by side');
+    }
     assert.match(await station(1).locator('.agent-activity').innerText(), /running|working|active/i);
-    assert.match(await station(2).locator('.agent-activity').innerText(), /waiting/i);
+    assert.match(await station(2).locator('.agent-activity').innerText(), /blocked/i);
+    assert.match(await station(4).locator('.agent-activity').innerText(), /waiting/i);
     assert.match(await station(3).locator('.agent-activity').innerText(), /idle/i);
+    await selectPortrait(2,true);
+    assert((await details(2).innerText()).includes(source.brief.progress));
+    assert.match(await assignment(2,source).innerText(), /blocked/i);
+    await station(2).press('Space');
+    assert.equal(await page.locator('#agentDetails:visible').count(),0);
+    await selectPortrait(4);
+    assert((await details(4).innerText()).includes(generalRun.brief.progress));
+    assert(!(await details(4).innerText()).includes(source.brief.progress));
+    await selectPortrait(1);
     assert.match(await assignment(1, update).innerText(), /running|working|active/i);
-    assert.match(await assignment(2, source).innerText(), /blocked|waiting/i);
-    const ownerSchedule = station(3).locator('.agent-schedule[data-routine-id="' + future.id + '"]');
+    await selectPortrait(3);
+    const ownerSchedule = details(3).locator('.agent-schedule[data-routine-id="' + future.id + '"]');
     assert((await ownerSchedule.innerText()).includes(future.title));
     await ownerSchedule.locator('button[data-project-id="' + project.id + '"]').click();
     await futureOwner.click();
-    await station(3).waitFor({state: 'visible'});
+    await details(3).waitFor({state: 'visible'});
     assert(await station(3).evaluate(el => el.contains(document.activeElement)));
+    await selectPortrait(1);
     const routineWork = assignment(1, update);
     const cronLink = routineWork.locator('[data-routine-id="' + cron.id + '"]');
     assert((await cronLink.innerText()).includes(cron.title));
@@ -199,17 +270,18 @@ async function main() {
     assert.equal(await page.evaluate(() => window.JarvisModes.snapshot().missionId), project.id);
     await page.locator('#generalModeBtn').click();
     await agentsButton.click();
-    await assignment(0, generalRun).locator('[data-routine-id="' + shared.id + '"]').click();
+    await selectPortrait(4);
+    await assignment(4, generalRun).locator('[data-routine-id="' + shared.id + '"]').click();
     await page.locator('.cron-card[data-job-id="' + shared.id + '"][data-selected="true"]').waitFor({state: 'visible'});
     assert((await page.locator('#cronHeading').innerText()).includes('General'));
     await agentsButton.click();
-    await station(1).waitFor({state: 'visible'});
+    await selectPortrait(1);
     await routineWork.locator('button[data-project-id="' + project.id + '"]').click();
     await card(update).waitFor({state: 'visible'});
     const worker = card(update).locator('button[data-agent-id="' + agents[1].id + '"]');
     assert.equal(await worker.innerText(), agents[1].name);
     await worker.click();
-    await station(1).waitFor({state: 'visible'});
+    await details(1).waitFor({state: 'visible'});
     assert(await station(1).evaluate(el => el.contains(document.activeElement)));
     assert.equal(await page.locator('#administratorInput').inputValue(), 'Keep this general draft.');
     await choose(project);
@@ -253,6 +325,15 @@ async function main() {
     await sidebar.click();
     await agentsButton.click();
     await station(3).waitFor({state: 'visible'});
+    const team = map.locator('#agentTeam');
+    await station(2).locator('.agent-activity').filter({hasText:/idle/i}).waitFor();
+    const mobileWorkers = await Promise.all(agents.slice(1).map((_,i) => station(i+1).boundingBox()));
+    assert(mobileWorkers.every(box => Math.abs(box.y-mobileWorkers[0].y) < 3),'Mobile worker portraits must stay on one row');
+    await selectPortrait(4,true);
+    const [mobileRow, lastPortrait] = await Promise.all([team,station(4)].map(n => n.boundingBox()));
+    assert(lastPortrait.x >= mobileRow.x-2 && lastPortrait.x+lastPortrait.width <= mobileRow.x+mobileRow.width+2,
+      'The final mobile portrait must be reachable within the horizontal row');
+    assert((await details(4).innerText()).includes(generalRun.brief.progress));
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     assert(await page.locator('#administratorInput').isVisible());
     await sidebar.click();
@@ -261,7 +342,7 @@ async function main() {
     assert.equal(await page.locator('#administratorInput').inputValue(), 'Keep this general draft.');
     assert.deepEqual(unexpected, []);
     assert.deepEqual(errors, []);
-    console.log('Delegation, live updates, roster states, schedule relationships, linked project/agent navigation and mobile layout passed.');
+    console.log('Delegation, decoded agent portraits, waiting and blocked reasons, keyboard and mobile selection, and project/cron links passed.');
   } finally {
     await browser.close();
   }
