@@ -131,7 +131,7 @@ def test_ceo_repairs_same_assignment_then_escalates_repeated_cause(plugin, monke
     api = plugin.reporting.api
     def patch(method, path, body=None, run_id=None):
         if path.endswith('/tree-holds?status=active'):
-            return []
+            raise AssertionError('The native tree-holds endpoint requires board credentials')
         if method == 'PATCH' and path.endswith(CHILD):
             plugin.child_comments[CHILD].append({'authorAgentId':CEO,'body':body['comment']})
         return api(method,path,body,run_id)

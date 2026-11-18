@@ -115,8 +115,8 @@ def test_agent_work_links_match_native_executors_and_project_schedules(monkeypat
             return httpx.Response(200, json=routines)
         if path == '/api/companies/company/issues':
             return httpx.Response(200, json=issues)
-        if path == f'/api/issues/{mission}':
-            return httpx.Response(200, json=root)
+        if path.startswith('/api/issues/') and path.count('/') == 3:
+            return httpx.Response(200, json=next(i for i in issues if i['id'] == path.rsplit('/', 1)[1]))
         if path.endswith(('/comments', '/runs', '/interactions')):
             return httpx.Response(200, json=[])
         raise AssertionError(path)
@@ -168,7 +168,8 @@ def test_profiles_show_only_pending_owner_questions_on_the_author(monkeypatch):
     def handler(request):
         path = request.url.path
         data = {'/api/companies/company/agents': people, '/api/companies/company/routines': [],
-                '/api/companies/company/issues': rows, f'/api/issues/{root}/interactions': interactions}
+                '/api/companies/company/issues': rows, f'/api/issues/{root}/interactions': interactions,
+                f'/api/issues/{root}': mission}
         return httpx.Response(200, json=data[path])
 
     transport(monkeypatch, handler, workforce=True)
@@ -206,3 +207,21 @@ def test_legacy_routine_links_and_unchanged_historical_scope():
     assert links.for_issue(rows['stamped'])['mission']['id'] == other
     forced_general = {**routine, 'variables': [{'name': 'jarvis_work_scope', 'defaultValue': 'general'}]}
     assert links.schedule(forced_general)['mission'] is None
+
+
+def test_children_of_an_archived_parent_are_preserved_in_history(monkeypatch):
+    root, child = str(uuid4()), str(uuid4())
+    parent = {'id': root, 'companyId': 'company', 'projectId': 'project', 'assigneeAgentId': CEO,
+              'title': 'Archived mission', 'status': 'blocked', 'hiddenAt': '2026-01-01T00:00:00Z'}
+    job = {**parent, 'id': child, 'parentId': root, 'assigneeAgentId': WORKER, 'hiddenAt': None}
+    people = [{'id': CEO, 'companyId': 'company'}, {'id': WORKER, 'reportsTo': CEO, 'companyId': 'company'}]
+    def handler(request):
+        data = {'/api/companies/company/agents': people, '/api/companies/company/routines': [],
+                '/api/companies/company/issues': [job], '/api/issues/' + root: parent}
+        return httpx.Response(200, json=data[request.url.path])
+    transport(monkeypatch, handler, workforce=True)
+    with TestClient(server.app) as client:
+        workers = {a['id']: a for a in client.get('/api/agents/work', headers=HEADERS).json()['agents']}
+    assert workers[WORKER]['activity'] == 'idle' and workers[WORKER]['work'] == []
+    old, = workers[WORKER]['past_work']
+    assert old['id'] == child and old['state'] == 'paused' and old['mission']['id'] == root

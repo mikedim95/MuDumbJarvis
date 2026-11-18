@@ -177,10 +177,13 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                 snapshot['blocked_child_diagnostics'] = diagnostics
                 turn['inspected_blockers'] = {entry['child_id'] for entry in diagnostics}
                 snapshot['current_action'] = (
-                    'You own these blockers. Review the reason, attempted fixes and any owner answer. '
+                    'You own these blockers. Apply the latest owner answer, including a changed scope, before asking again. '
+                    'Review the reason and attempted fixes. '
                     'Use action=review with a blocked child_id to inspect its partial report. '
                     'If you can solve one, call paperclip_ceo action=request_correction with that SAME child_id '
-                    'and a concrete different approach within existing authority. Use depends_on as a STRUCTURED '
+                    'and a concrete different approach within existing authority. If another existing specialist can '
+                    'repair a missing capability, delegate that specific repair and then resume the original worker. '
+                    'Use depends_on as a STRUCTURED '
                     'argument for actual prerequisites. Never retry a failed approach unchanged, bypass a hold, or '
                     'override a rejection. When your team cannot proceed, call action=ask_owner with child_id, '
                     'plan explaining what you tried and why only the owner can decide, and text containing one '
@@ -387,11 +390,8 @@ def manage(args, **kwargs):
         if child['status'] == 'blocked' and (turn.get('inference_configuration') or {}).get('version') == 3:
             if (turn.get('owner_question') or {}).get('child_id') == child_id:
                 raise ValueError('The project owner has a pending question for this child.')
-            holds = reporting.api('GET', '/issues/' + child_id + '/tree-holds?status=active')
-            if isinstance(holds, dict):
-                holds = holds.get('holds', [])
-            if holds:
-                raise PermissionError('The assignment has an active stop hold.')
+            # Paperclip enforces stop holds and resume authority on this mutation.
+            # Inspecting tree-holds requires board credentials.
             cause = (child.get('unblockDescriptor') or {}).get('action') or ''
             answer = next((d['id'] for d in turn.get('owner_decisions', []) if d['child_id'] == child_id and d['answer']), '')
             revision = hashlib.sha256((cause.strip().casefold() + answer).encode()).hexdigest()[:20]

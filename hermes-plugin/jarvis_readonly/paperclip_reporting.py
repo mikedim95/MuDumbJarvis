@@ -284,7 +284,7 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
         from . import employee_tools
         if success:
             response = turn['response'].lstrip(' \t\n\r#>*_`-')
-            label = re.match(r'(?:task )?(?:blocked|incomplete)[*_`]*(?:\s*[:—–-]|[.!]?(?:\r?\n|$))', response, re.I)
+            label = re.match(r'(?:task )?(?:blocked|incomplete)[*_`]*(?:\s*[:—–-]|[.!]?(?:\r?\n|$)|\s+(?:on|by|because|due to)\b)', response, re.I)
             if label:
                 reason = response[label.end():].lstrip(' \t\n\r#>*_`-')
                 worker_blocker = reason.splitlines()[0] if reason else 'The worker reported incomplete work.'

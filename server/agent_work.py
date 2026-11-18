@@ -75,7 +75,7 @@ def issue_condition(issue):
         cause = safe_text(recovery.get('cause'), 90).replace('_', ' ')
         return 'blocked', detail or (f'Execution stopped because of {cause}.' if cause else 'Execution recovery requires attention.')
     if action.startswith(blocker_delivery.WAITING):
-        return 'waiting', action
+        return 'blocked', action
     if attention.get('state') == 'stalled':
         return 'blocked', action or (f'{dependency} has stalled and needs attention.' if dependency else 'The review has stalled and needs attention.')
     if _hard_stop.search(action):
@@ -88,6 +88,8 @@ def issue_condition(issue):
                                      if not subject.match(clause))
         if _hard_stop.search(own_condition):
             return 'blocked', action
+    if dependency and attention.get('blockingTreeLive') is False:
+        return 'blocked', action or f'{dependency} is blocked. Jarvis must resolve it or request your intervention.'
     if (attention.get('reason') in ('active_child', 'active_dependency') or dependency
             or _ordinary_wait.match(action) or _approval_wait.search(action)):
         wait = f'Waiting for {dependency}.' if dependency else 'Waiting for the dependent work to finish.'
@@ -291,6 +293,27 @@ async def overview(client):
     project = None if getattr(client, 'workforce', False) else client.project
     people, issues, routines = await asyncio.gather(
         team(client), issue_index(client, project), client.request('GET', f'companies/{client.company}/routines'))
+    # Hidden parents are omitted from the issue list while their children remain.
+    # Read those ancestors so archived work cannot appear to be an active wait.
+    missing = {row['parentId'] for row in issues.values()
+               if row.get('parentId') and row['parentId'] not in issues and row.get('status') not in ('done', 'cancelled')}
+    checked = set()
+    while missing:
+        parent_id = missing.pop()
+        if parent_id in checked:
+            continue
+        checked.add(parent_id)
+        try:
+            parent = await client.request('GET', 'issues/' + parent_id)
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                continue
+            raise
+        if parent.get('companyId') != client.company or (project and parent.get('projectId') != project):
+            continue
+        issues[parent_id] = parent
+        if parent.get('parentId') and parent['parentId'] not in issues:
+            missing.add(parent['parentId'])
     scoped = [job for job in routines if not project or job.get('projectId') == project]
     links = WorkLinks(client.company, client.ceo, issues, scoped)
     agents = {person['id']: {**{key: person.get(key) for key in ('id', 'name', 'title', 'role', 'status', 'reportsTo')},
@@ -308,13 +331,17 @@ async def overview(client):
                     return
                 raise
         if (detail.get('companyId'), detail.get('projectId'), detail.get('status'), detail.get('assigneeAgentId')) == (
-                client.company, row.get('projectId'), 'blocked', row.get('assigneeAgentId')):
+                client.company, row.get('projectId'), row.get('status'), row.get('assigneeAgentId')):
             row['executionBlocker'] = detail.get('executionBlocker')
 
     async def pending_questions(row):
         async with limit:
             try:
                 decisions = await blocker_delivery.owner_decisions(client, row['id'])
+                if row.get('status') == 'in_review':
+                    approvals = await client.request('GET', 'issues/' + row['id'] + '/approvals')
+                    if any(a.get('status') in ('pending', 'revision_requested') for a in approvals):
+                        row['_owner_wait'] = 'Jarvis needs your approval before continuing.'
             except HTTPException as exc:
                 if exc.status_code == 404:
                     return
@@ -324,28 +351,38 @@ async def overview(client):
              'task': reference(row), 'mission': links.for_issue(row)['mission']}
             for decision in decisions if decision['status'] == 'pending')
 
-    lookups = [recovery_detail(row) for row in issues.values() if row.get('status') == 'blocked'
-        and row.get('assigneeAgentId') in agents and not row.get('executionBlocker')
-        and not (row.get('unblockDescriptor') or {}).get('action')
-        and (row.get('blockerAttention') or {}).get('state') == 'needs_attention'
-        and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')]
+    lookups = [recovery_detail(row) for row in issues.values()
+        if row.get('assigneeAgentId') in agents and not row.get('executionBlocker')
+        and not row.get('executionRunId') and not row.get('activeRun')
+        and not row.get('hiddenAt') and row.get('status') not in ('backlog', 'done', 'cancelled')
+        and (row.get('assigneeAgentId') == client.ceo or
+             ((row.get('blockerAttention') or {}).get('state') == 'needs_attention'
+              and not (row.get('unblockDescriptor') or {}).get('action')
+              and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')))]
     if getattr(client, 'workforce', False) and client.ceo in agents:
         blocked_parents = {row.get('parentId') for row in issues.values() if row.get('status') == 'blocked'}
         lookups.extend(pending_questions(row) for row in issues.values()
             if row.get('assigneeAgentId') == client.ceo and not row.get('parentId')
+            and not row.get('hiddenAt')
             and row.get('status') not in ('done', 'cancelled')
-            and (row.get('status') == 'blocked' or row['id'] in blocked_parents
+            and (row.get('status') in ('blocked', 'in_review') or row['id'] in blocked_parents
                  or ((row.get('unblockDescriptor') or {}).get('action') or '').startswith(blocker_delivery.WAITING)))
     await asyncio.gather(*lookups)
     for row in sorted(issues.values(), key=lambda i: i.get('updatedAt') or '', reverse=True):
         state, executor = engagement(row)
+        if row.get('_owner_wait') and state != 'active':
+            state = 'blocked'
         assignee = row.get('assigneeAgentId')
         for agent_id in {assignee, executor} & agents.keys():
             job_state = 'waiting' if state == 'active' and executor != agent_id else state
-            entry = {**reference(row), 'status': row.get('status'), 'state': job_state, 'reason': work_reason(row, job_state, executor),
+            entry = {**reference(row), 'status': row.get('status'), 'state': job_state,
+                     'reason': row.get('_owner_wait') if job_state == 'blocked' and row.get('_owner_wait') else work_reason(row, job_state, executor),
                      'assigneeAgentId': assignee,
                      'active_agent_id': executor, **links.for_issue(row)}
-            agents[agent_id]['past_work' if state == 'closed' else 'work'].append(entry)
+            archived = (entry.get('mission') or {}).get('hiddenAt')
+            if archived and state != 'closed':
+                entry.update(state='paused', reason='This project was archived. Its saved assignments are paused.')
+            agents[agent_id]['past_work' if state == 'closed' or archived else 'work'].append(entry)
     for job in links.jobs.values():
         owner = job.get('assigneeAgentId')
         if owner in agents and job.get('status') != 'archived':

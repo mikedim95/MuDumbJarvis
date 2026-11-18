@@ -2,6 +2,8 @@
 import asyncio
 import logging
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from uuid import NAMESPACE_URL, uuid5
@@ -20,6 +22,55 @@ WAITING = _review.WAITING
 async def owner_decisions(client, issue_id):
     rows = await client.request('GET', f'issues/{issue_id}/interactions')
     return decisions(rows, issue_id, client.ceo)
+
+
+async def continue_stalled_projects(p):
+    from agent_work import issue_index
+    records = await issue_index(p)
+    for root in records.values():
+        if (root.get('assigneeAgentId') != p.ceo or root.get('parentId') or root.get('hiddenAt')
+                or root.get('status') in ('backlog', 'done', 'cancelled')):
+            continue
+        tree = [root]
+        seen = {root['id']}
+        for parent in tree:
+            for child in records.values():
+                if (child.get('parentId') == parent['id'] and child.get('projectId') == root.get('projectId')
+                        and child['id'] not in seen):
+                    seen.add(child['id'])
+                    tree.append(child)
+        if any(row.get('executionRunId') or (row.get('activeRun') or {}).get('status') in ('running', 'queued') for row in tree):
+            continue
+        latest_change = max(row.get('updatedAt') or root['updatedAt'] for row in tree)
+        if datetime.fromisoformat(latest_change) > datetime.now(timezone.utc) - timedelta(seconds=15):
+            continue
+        interactions = await p.request('GET', 'issues/' + root['id'] + '/interactions')
+        if any(d.get('status') == 'pending' and not d.get('addresseeAgentId') for d in interactions):
+            continue
+        approvals = await p.request('GET', 'issues/' + root['id'] + '/approvals')
+        if any(a.get('status') in ('pending', 'revision_requested') for a in approvals):
+            continue
+        holds = await p.request('GET', 'issues/' + root['id'] + '/tree-holds?status=active')
+        if isinstance(holds, dict):
+            holds = holds.get('holds', [])
+        if holds:
+            continue
+        runs = await p.request('GET', 'issues/' + root['id'] + '/runs')
+        if any(r.get('status') in ('running', 'queued', 'scheduled_retry') for r in runs):
+            continue
+        # Durable native idempotency allows one recovery for an unchanged situation.
+        # CEO comments and failed review turns cannot produce an automatic retry loop.
+        evidence = [(row['id'], row.get('status'), row.get('updatedAt')) for row in tree if row['id'] != root['id']]
+        answers = [(d['id'], d['status'], d.get('result')) for d in interactions]
+        comments = await p.request('GET', 'issues/' + root['id'] + '/comments')
+        latest_user = max((c.get('createdAt') or '' for c in comments if c.get('authorUserId')), default='')
+        fingerprint = hashlib.sha256(json.dumps([root['id'], sorted(evidence), sorted(answers), latest_user], sort_keys=True).encode()).hexdigest()
+        await p.request('POST', 'agents/' + p.ceo + '/wakeup', {
+            'source': 'on_demand', 'reason': 'issue_commented', 'idempotencyKey': 'jarvis-progress:' + fingerprint,
+            'payload': {'issueId': root['id'], 'source': 'jarvis.progress_check',
+                        'message': 'No run, queued execution, pending owner question or approval is keeping this project moving. '
+                                   'Apply recorded owner answers and resolve the current blocker. Resume the existing worker '
+                                   'with a concrete correction, or ask the owner for the specific intervention you require.'}})
 
 
 async def reconcile(p, delivered):
@@ -100,9 +151,10 @@ async def monitor(client):
         try:
             p = client()
             await reconcile(p, delivered)
+            await continue_stalled_projects(p)
         except Exception:
             logging.exception('Worker blocker delivery will retry')
         finally:
             if p is not None:
                 await p.http.aclose()
-        await asyncio.sleep(45)
+        await asyncio.sleep(15)
