@@ -1,0 +1,13 @@
+{
+  "status": "factual_review_rejected",
+  "checked_at": "2026-11-13T15:54:20.767163+00:00",
+  "task_id": "7dc24648-d025-4450-8957-bcd8b25262d7",
+  "identifier": "JAR-45",
+  "native_review_comment_id": "ccc1b1a3-48f9-4950-9b78-2b404a5abca8",
+  "review": "[JARVIS OPERATOR QUALITY REVIEW]\nThis research draft is NOT approved as factual analysis. Its own sources do not support claims that garak lacks offline targets, that promptfoo requires CI/CD hooks, or that PyRIT GUI uses Playwright. Licensing and 90+ probe counts were not verified by these retrievals. Garak source explicitly lists a Hugging Face target; do not claim it is API-only. Correct the SAME child: at most three concise framework bullets with primary-source URLs and only observed capabilities/module names. State architecture inferences and unassessed licensing/compatibility explicitly. Remove invented filenames, artifact sizes and out-of-band instructions. Source retrieval is valid; generated claims require correction.",
+  "source_retrieval_accepted": true,
+  "generated_comparison_accepted": false,
+  "employee_execution_status_not_overridden": true,
+  "parent_objective": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+  "observed_native_effect": "Paperclip automatically reopened the completed research issue on the operator quality comment and admitted run 2d05d054-01d7-443c-b3a5-d622b82498bb. No manual task-status patch or CEO correction call is claimed."
+}

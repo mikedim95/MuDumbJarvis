@@ -50,7 +50,8 @@ def test_profile_hire_cannot_bypass_disabled_human_gate(plugin):
 
 def test_dedicated_hiring_tool_keeps_its_actual_name_in_audit(plugin, tmp_path):
     registered = {}
-    ctx = SimpleNamespace(register_tool=lambda **entry: registered.update({entry['name']: entry['handler']}))
+    ctx = SimpleNamespace(register_hook=lambda *args: None,
+        register_tool=lambda **entry: registered.update({entry['name']: entry['handler']}))
     plugin.tools.register(ctx)
     registered['request_employee']({'profile': 'software_development', 'name': 'Developer',
         'reason': 'Existing research capability cannot implement software and execute tests in an isolated workspace.'})
@@ -413,7 +414,8 @@ def test_ceo_reviews_actual_worker_authorship_session_and_succeeded_run(plugin):
     assert plugin.turn['reviewed_children'] == [CHILD]
     plugin.tools.finalize(plugin.turn, completed=True)
     assert last_patch(plugin)['status'] == 'done'
-    assert 'real-model:3b' in last_patch(plugin)['comment']
+    assert last_patch(plugin)['comment'] == plugin.turn['response']
+    assert proof == plugin.tools.verified_children(plugin.turn, [child])[0]['evidence']
 
 
 @pytest.mark.parametrize('defect', ['author', 'run', 'issue', 'company_session', 'agent_session'])
@@ -462,6 +464,19 @@ def test_self_inventory_with_actual_tool_data_can_complete(plugin):
     plugin.tools.finalize(plugin.turn, completed=True)
     assert last_patch(plugin)['status'] == 'done'
     assert '123456789' in last_patch(plugin)['comment']
+
+
+def test_ceo_inventory_retains_evidence_without_repeating_an_already_journaled_result(plugin):
+    models = [{'name': 'real-model:3b', 'size_bytes': 100}]
+    plugin.turn.update(plan_decision='self', inventory_verified=True, inventory=models,
+        inventory_journaled=plugin.reporting.inventory_fingerprint(models), response='real-model:3b, 100 bytes.')
+    plugin.tools.finalize(plugin.turn, completed=True)
+    assert last_patch(plugin)['comment'] == plugin.turn['response']
+
+    models[0]['size_bytes'] = 200
+    plugin.turn['response'] = 'real-model:3b, 200 bytes.'
+    plugin.tools.finalize(plugin.turn, completed=True)
+    assert 'Verified local_ollama_models data:' in last_patch(plugin)['comment']
 
 
 def test_no_plan_or_failed_runtime_never_completes_parent(plugin):
@@ -578,6 +593,18 @@ def test_self_inventory_raw_footer_does_not_replace_substantive_report(plugin):
     assert 'report incomplete' in last_patch(plugin)['comment']
 
 
+@pytest.mark.parametrize(('response', 'verified', 'status'), [
+    ('real-model:3b, 123456789 bytes.', True, 'done'),
+    ('real-model:3b, 123456789 bytes.', False, 'blocked'),
+    ('other-model:3b, 123456789 bytes.', True, 'blocked'),
+])
+def test_short_inventory_report_requires_actual_tool_and_model(plugin, response, verified, status):
+    plugin.turn.update(plan_decision='self', inventory_verified=verified,
+        inventory=[{'name': 'real-model:3b', 'size_bytes': 123456789}], response=response)
+    plugin.tools.finalize(plugin.turn, completed=True)
+    assert last_patch(plugin)['status'] == status
+
+
 def test_two_distinct_retrieved_models_must_be_named_in_final_report(plugin):
     plugin.turn.update(plan_decision='self', inventory_verified=True,
         inventory=[{'name': 'real-model:3b', 'size_bytes': 123456789},
@@ -585,6 +612,23 @@ def test_two_distinct_retrieved_models_must_be_named_in_final_report(plugin):
         response='real-model:3b is installed; real-model:3b was retrieved; real-model:3b has actual local data.')
     plugin.tools.finalize(plugin.turn, completed=True)
     assert last_patch(plugin)['status'] == 'blocked'
+
+
+def test_completed_mission_pauses_only_its_own_recurring_jobs(plugin,monkeypatch):
+    import importlib
+    scopes=importlib.import_module(plugin.tools.__package__+'.work_scope')
+    jobs=[{'id':'mission-job','companyId':COMPANY,'assigneeAgentId':CEO,'status':'active','variables':scopes.variables([],'project',ROOT)},
+        {'id':'general-job','companyId':COMPANY,'assigneeAgentId':CEO,'status':'active','variables':scopes.variables([],'general')}]
+    original=plugin.reporting.api
+    def api(method,path,body=None,run_id=None):
+        if path=='/companies/'+COMPANY+'/routines':return jobs
+        if path.startswith('/routines/'):
+            row=next(j for j in jobs if j['id']==path.split('/')[-1]);row.update(body);return row
+        return original(method,path,body,run_id)
+    monkeypatch.setattr(plugin.reporting,'api',api)
+    child_with_evidence(plugin);plugin.turn.update(plan_decision='delegate',work_scope={'kind':'project','mission_id':ROOT})
+    plugin.tools.manage({'action':'review'});plugin.tools.finalize(plugin.turn,completed=True)
+    assert last_patch(plugin)['status']=='done' and [j['status'] for j in jobs]==['paused','active']
 
 
 def test_waiting_update_is_valid_only_while_real_delegated_work_is_pending(plugin):
@@ -928,6 +972,7 @@ def test_preflight_delivers_actual_objective_and_roster_without_scheduling_or_fa
     plugin.issue.update(title='Actual objective', description='Inspect local Ollama installation and installed models.')
     text = plugin.tools.prepare_turn_context(plugin.turn, deadline=plugin.tools.time.monotonic() + 20)
     data = decode_preflight(text)
+    assert data['reporting_style'] == plugin.reporting.REPORT_STYLE
     assert data['objective']['description'] == plugin.issue['description']
     assert data['employees'][0]['id'] == WORKER and data['goals'][0]['title'] == 'Local operations'
     assert not plugin.turn.get('delivered_children') and not plugin.turn.get('reviewed_children')
@@ -1086,6 +1131,82 @@ def test_begin_preflight_uses_actual_post_checkout_status_without_an_extra_issue
     assert snapshot['objective']['status'] == 'in_progress'
     assert plugin.issue['status'] == 'blocked', 'Fixture retains the pre-checkout snapshot deliberately'
     assert sum(call[:2] == ('GET', '/issues/' + ROOT) for call in plugin.calls) == 1
+
+
+def test_research_report_cannot_complete_from_self_plan_and_prose(plugin):
+    plugin.turn.update(plan_decision='self', needs_inventory=False, needs_research=True,
+        response='Research report about garak, PyRIT and Promptfoo. This is generated prose with no retrieved sources or actual employee execution.')
+    plugin.tools.finalize(plugin.turn, completed=True)
+    final = next(call for call in reversed(plugin.calls) if call[0] == 'PATCH' and 'status' in call[2])
+    assert final[2]['status'] == 'blocked' and 'no retrieved primary sources' in final[2]['comment']
+
+
+def test_ceo_completion_requires_actual_requested_work_not_only_a_done_child(plugin):
+    child_with_evidence(plugin)
+    plugin.turn.update(plan_decision='delegate', reviewed_children=[CHILD], needs_research=True)
+    plugin.tools.finalize(plugin.turn, completed=True)
+    final = next(call for call in reversed(plugin.calls) if call[0] == 'PATCH' and 'status' in call[2])
+    assert final[2]['status'] == 'blocked' and 'required actual work is missing' in final[2]['comment']
+
+
+def test_self_plan_cannot_complete_requested_tests_from_prose(plugin):
+    plugin.turn.update(plan_decision='self', needs_inventory=False, needs_test_execution=True)
+    plugin.tools.finalize(plugin.turn, completed=True)
+    final = next(call for call in reversed(plugin.calls) if call[0] == 'PATCH' and 'status' in call[2])
+    assert final[2]['status'] == 'blocked' and 'no actual isolated test execution' in final[2]['comment']
+
+
+def test_implementation_dependency_must_be_structured_not_claimed_in_prose(plugin):
+    plugin.turn.update(needs_research=True, needs_test_execution=True)
+    developer = {**plugin.employees[0], 'metadata': {'jarvis': {'profile': 'software_development'}}}
+    research = {**developer, 'id': '77777777-7777-4777-8777-777777777777', 'metadata': {'jarvis': {'profile': 'research'}}}
+    plugin.employees.append(research)
+    item = {'id': CHILD, 'assigneeAgentId': research['id']}
+    with pytest.raises(ValueError, match='STRUCTURED'):
+        plugin.tools.check_research_dependency(plugin.turn, developer, [item], [])
+    plugin.tools.check_research_dependency(plugin.turn, developer, [item], [CHILD])
+    assert not any(method in ('POST', 'PATCH') for method, *_ in plugin.calls)
+
+
+def test_completed_tools_do_not_hide_missing_native_dependency(plugin, monkeypatch):
+    other = '77777777-7777-4777-8777-777777777777'
+    plugin.turn.update(needs_research=True, needs_test_execution=True)
+    actual = [{'issue_id': CHILD, 'evidence': {'tool_calls': [{'tool': 'research_sources', 'success': True}]}},
+        {'issue_id': other, 'evidence': {'tool_calls': [{'tool': 'terminal', 'success': True}]}}]
+    native = {'id': other, 'blockedBy': []}
+    monkeypatch.setattr(plugin.reporting, 'api', lambda method, path: native)
+    corrections = plugin.tools.dependency_corrections(plugin.turn, actual)
+    assert corrections[0]['child_id'] == other and corrections[0]['required_source_child_ids'] == [CHILD]
+    native['blockedBy'] = [{'id': CHILD}]
+    assert plugin.tools.dependency_corrections(plugin.turn, actual) == []
+
+
+def test_native_human_quality_rejection_blocks_provenance_only_completion(plugin):
+    child_with_evidence(plugin)
+    plugin.child_comments[CHILD][0]['createdAt'] = '2026-11-13T10:00:00Z'
+    plugin.child_comments[CHILD].append({'authorUserId': 'operator', 'createdAt': '2026-11-13T10:01:00Z',
+        'body': '[JARVIS OPERATOR QUALITY REVIEW]\nThe source contradicts this claim. Correct the actual report.'})
+    plugin.turn.update(plan_decision='delegate', reviewed_children=[CHILD])
+    verified = plugin.tools.verified_children(plugin.turn, plugin.children)
+    assert verified[0]['operator_review_notes']
+    plugin.tools.finalize(plugin.turn, completed=True)
+    final = next(call for call in reversed(plugin.calls) if call[0] == 'PATCH' and 'status' in call[2])
+    assert final[2]['status'] == 'blocked' and 'human quality review' in final[2]['comment']
+    plugin.child_comments[CHILD][0]['createdAt'] = '2026-11-13T10:02:00Z'
+    assert not plugin.tools.verified_children(plugin.turn, plugin.children)[0]['operator_review_notes']
+
+
+def test_blocked_children_deliver_actual_errors_for_scoped_ceo_repair(plugin):
+    plugin.turn['plan_decision'] = 'delegate'
+    child_with_evidence(plugin, status='blocked')
+    plugin.child_comments[CHILD].append({'authorUserId': 'operator', 'createdAt': '2026-11-13',
+        'body': '[JARVIS OPERATOR QUALITY REVIEW]\nCorrect this unsupported source claim.'})
+    context = json.loads(plugin.tools.prepare_turn_context(plugin.turn).split('\n', 1)[1])
+    detail = context['blocked_child_diagnostics'][0]
+    assert detail['child_id'] == CHILD and detail['status'] == 'blocked'
+    assert 'unsupported source claim' in detail['human_review_notes'][0]
+    assert 'request_correction' in context['current_action'] and 'STRUCTURED' in context['current_action']
+    assert not any(method in ('POST', 'PATCH') for method, *_ in plugin.calls)
 
 
 @pytest.mark.parametrize('wrapped', [False, True])

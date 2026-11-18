@@ -1,0 +1,141 @@
+{
+  "checked_at": "2026-11-18T07:01:09.107205+00:00",
+  "status": "passed",
+  "navigation": [
+    "Chat",
+    "Projects",
+    "General"
+  ],
+  "general_jobs": 1,
+  "mission_contexts": 23,
+  "general_work_runs": 2,
+  "osint_job": {
+    "id": "387ef428-5533-414a-970e-e093a01165e4",
+    "work_scope": "general",
+    "status": "active",
+    "schedule": [
+      {
+        "id": "7164006d-0463-4730-a631-e3aaf91f42c5",
+        "enabled": true,
+        "cronExpression": "0 9 * * *",
+        "timezone": "Europe/Athens",
+        "nextRunAt": "2026-11-19T07:00:00.000Z",
+        "lastFiredAt": "2026-11-18T07:00:00.107Z",
+        "lastResult": "Created execution issue 5a0dae22-b038-435d-8b1f-52c1abc07350"
+      }
+    ],
+    "last_run": {
+      "id": "585e8413-4944-4cdc-9010-4b0fd87d7ff1",
+      "status": "failed",
+      "triggeredAt": "2026-11-18T07:00:00.107Z",
+      "completedAt": "2026-11-18T07:00:41.675Z",
+      "linkedIssueId": "5a0dae22-b038-435d-8b1f-52c1abc07350",
+      "failureReason": "Execution issue moved to blocked"
+    }
+  },
+  "services": [
+    {
+      "name": "jarvis-hud",
+      "running": true,
+      "health": "healthy"
+    },
+    {
+      "name": "jarvis-hermes",
+      "running": true,
+      "health": "healthy"
+    },
+    {
+      "name": "jarvis-hermes-ceo",
+      "running": true,
+      "health": "healthy"
+    }
+  ],
+  "checks": {
+    "python_passed": 635,
+    "python_skipped": 1,
+    "javascript_passed": 25,
+    "workspace_browser": "passed",
+    "result_browser": "passed",
+    "all_five_roles_read_shared_knowledge": "passed"
+  },
+  "automatic_general_run": {
+    "checked_at": "2026-11-18T07:02:54.961716+00:00",
+    "status": "passed",
+    "automatic_daily_general_run": {
+      "id": "5a0dae22-b038-435d-8b1f-52c1abc07350",
+      "identifier": "JAR-73",
+      "status": "in_progress",
+      "originKind": "routine_execution",
+      "originId": "387ef428-5533-414a-970e-e093a01165e4"
+    },
+    "display_status": "in_progress",
+    "native_routine_run_status": "failed",
+    "interpretation": "Native routine status can temporarily be failed while its CEO waits for active workers; Jarvis displays Waiting for workers. This batch is not claimed complete.",
+    "workers": [
+      {
+        "id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "identifier": "JAR-74",
+        "status": "done"
+      }
+    ],
+    "actual_provider_context_observations": [
+      {
+        "issue_id": "5a0dae22-b038-435d-8b1f-52c1abc07350",
+        "paperclip_run_id": "f46b8a66-56cc-4aaf-b8f7-2c5790239e96",
+        "context_chars": 14983,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "5a0dae22-b038-435d-8b1f-52c1abc07350",
+        "paperclip_run_id": "f46b8a66-56cc-4aaf-b8f7-2c5790239e96",
+        "context_chars": 14983,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "issue_id": "40b0e8ed-7fd5-4ff1-9c77-83b3cde227d4",
+        "paperclip_run_id": "e86e06e6-5169-4519-89f6-3903a6b14db3",
+        "context_chars": 9894,
+        "complete_context_present": true,
+        "model": "gpt-6.1-sol"
+      }
+    ],
+    "all_work_scopes": "general"
+  }
+}

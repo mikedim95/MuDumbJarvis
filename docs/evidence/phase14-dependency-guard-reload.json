@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "at": "2026-11-13T15:50:17.979273+00:00",
+  "native_ceo_adapter_test": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-13T15:50:17.894Z"
+  },
+  "only_idle_ceo_reloaded": true,
+  "worker_runs_left_running": [
+    "81d2fac6-e82c-4558-9e78-74d9ab823fbd",
+    "9f238f2b-4742-4b97-a8af-3ef2c9ef87f8"
+  ],
+  "changes": "Structured dependency validation and same-child correction support; current first-attempt missing native dependency remains recorded as a failed acceptance condition."
+}

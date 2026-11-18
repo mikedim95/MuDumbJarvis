@@ -1,0 +1,109 @@
+{
+  "checked_at": "2026-11-17T07:30:58.270609+00:00",
+  "status": "passed",
+  "real_codex_tool_calls": [
+    {
+      "step": "append_ceo",
+      "run_id": "run_fe0aaf44d87a49cebf177628e1d41f74",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "tools": [
+        "general_context",
+        "general_context",
+        "general_context"
+      ],
+      "receipts": [
+        {
+          "agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+          "status": "saved",
+          "revision": 1,
+          "chars": 106
+        }
+      ]
+    },
+    {
+      "step": "clear_ceo",
+      "run_id": "run_a0addb02bc624413bc70df988220404b",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "tools": [
+        "general_context",
+        "general_context",
+        "general_context"
+      ],
+      "receipts": [
+        {
+          "agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+          "status": "saved",
+          "revision": 2,
+          "chars": 0
+        }
+      ]
+    },
+    {
+      "step": "clear_software",
+      "run_id": "run_55f29a1a17fd48b4be70ea0f063b3278",
+      "runtime": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "route_source": "raw_request",
+        "model_lock": "confirmed"
+      },
+      "tools": [
+        "general_context",
+        "general_context",
+        "general_context"
+      ],
+      "receipts": [
+        {
+          "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+          "status": "saved",
+          "revision": 2,
+          "chars": 0
+        }
+      ]
+    }
+  ],
+  "native_contexts_after_cleanup": [
+    {
+      "agent_id": "5c82ec12-85e9-40be-99bb-158f0ea5e012",
+      "name": "JARVIS Systems",
+      "current_chars": 0,
+      "revision": 0
+    },
+    {
+      "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "name": "JARVIS Software",
+      "current_chars": 0,
+      "revision": 2
+    },
+    {
+      "agent_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS",
+      "current_chars": 0,
+      "revision": 2
+    },
+    {
+      "agent_id": "364450b8-c2b3-4afc-970e-ec6c0ea81618",
+      "name": "JARVIS Security",
+      "current_chars": 0,
+      "revision": 0
+    },
+    {
+      "agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS Research",
+      "current_chars": 0,
+      "revision": 0
+    }
+  ],
+  "temporary_test_directions_removed": true,
+  "project_tasks_created_by_general_context": 0
+}

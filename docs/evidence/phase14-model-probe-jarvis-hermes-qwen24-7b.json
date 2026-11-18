@@ -1,0 +1,71 @@
+{
+  "status": "observed_pending_quality_review",
+  "at": "2026-11-13T16:14:38.457152+00:00",
+  "model": "jarvis-hermes-qwen24:7b",
+  "transport": "Existing Ollama OpenAI-compatible endpoint",
+  "native_model_capabilities": [
+    "completion",
+    "tools"
+  ],
+  "native_model_parameters_unchanged": "num_predict                    768\nnum_thread                     24\nstop                           \"<|im_start|>\"\nstop                           \"<|im_end|>\"\ntemperature                    0.1\ntop_k                          40\ntop_p                          0.9\nnum_batch                      1024\nnum_ctx                        65536",
+  "requested_temporary_options": {
+    "num_thread": 24,
+    "num_ctx": 16384
+  },
+  "observed_runner_arguments": [
+    "1273335             /usr/lib/ollama/llama-server --model /root/.ollama/models/blobs/sha256-9edfe9f5aaef74e6381c575d63bdd8c4eb6e7f4f2f6e04e78138898e8549c51e --port 45485 --host 127.0.0.1 --no-webui --offline -c 32768 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --load-mode none --flash-attn auto -b 1024 -ub 1024 -t 24 --context-shift --keep 4"
+  ],
+  "models_unchanged": true,
+  "employees_or_tasks_changed": false,
+  "tool_execution": false,
+  "source_snapshot_artifact": "5f5ccaea-7b46-490d-a5ae-4caaba367c8e",
+  "source_snapshot_sha256": "17e75a8872b1f9281a9ae3fdacd79558e019733ae8359ac3a5eb3c5ba911fe0e",
+  "results": [
+    {
+      "case": "grounded_comparison",
+      "elapsed_seconds": 73.359,
+      "message": {
+        "role": "assistant",
+        "content": "### Garak\n- **Purpose**: Red-teaming and assessment kit for LLMs.\n- **Architecture**: Command-line tool. Scans for hallucination, data leakage, prompt injection, etc.\n- **Source URL**: [https://github.com/NVIDIA/garak](https://github.com/NVIDIA/garak)\n\n### PyRIT\n- **Purpose**: AI red teaming for models and applications.\n- **Architecture**: Command-line scanner, graphical interface, extensible.\n- **Source URL**: [https://github.com/microsoft/PyRIT](https://github.com/microsoft/PyRIT)\n\n### Promptfoo\n- **Purpose**: LLM evals and red teaming.\n- **Architecture**: CLI and library for evaluating and red-teaming LLM-based apps.\n- **Source URL**: [https://github.com/promptfoo/promptfoo](https://github.com/promptfoo/promptfoo)"
+      },
+      "usage": {
+        "prompt_tokens": 810,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 189,
+        "total_tokens": 999
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "case": "tool_selection_only_no_execution",
+      "elapsed_seconds": 20.415,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "id": "call_rwllij02",
+            "index": 0,
+            "type": "function",
+            "function": {
+              "name": "paperclip_ceo",
+              "arguments": "{\"action\":\"delegate\",\"agent_id\":\"09f66b7a-d435-4332-be9a-9223055d0bef\",\"title\":\"Primary-Source Research on Garak, PyRIT, and Promptfoo\",\"text\":\"Assign primary-source research on Garak, PyRIT, and Promptfoo to the existing researcher with agent_id=09f66b7a-d435-4332-be9a-9223055d0bef.\"}"
+            }
+          }
+        ]
+      },
+      "usage": {
+        "prompt_tokens": 242,
+        "prompt_tokens_details": {
+          "cached_tokens": 2
+        },
+        "completion_tokens": 139,
+        "total_tokens": 381
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "limit": "Operator inference experiment only; generated text/tool selection is not employee execution or end-to-end acceptance."
+}

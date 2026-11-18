@@ -35,6 +35,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', action='store_true')
     parser.add_argument('--phase', choices=('12', '13', '14'), default='12')
+    parser.add_argument('--allow-added-model', action='append', default=[], help='Explicit JARVIS-only added alias; original manifests must still match exactly')
     args = parser.parse_args()
     if not args.run:
         print(json.dumps({'status': 'not_executed'}))
@@ -51,13 +52,20 @@ def main():
             'configuration_unchanged': True, 'comparison': comparison, 'running': True, 'paused': False})
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=10) as response:
         models = [{key: model[key] for key in ('name', 'size', 'digest')} for model in json.load(response)['models']]
-    assert sorted(models, key=lambda m: m['name']) == sorted(baseline['models'], key=lambda m: m['name'])
+    expected = {m['name']: m for m in baseline['models']}
+    observed = {m['name']: m for m in models}
+    assert all(observed.get(name) == manifest for name, manifest in expected.items())
+    added = set(observed) - set(expected)
+    assert added == set(args.allow_added_model), 'Unexpected additions to model inventory'
+    assert all(name.startswith('jarvis-') for name in added), 'Only explicitly named JARVIS additions are allowed'
     evidence = {'status': 'passed', 'checked_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'baseline': 'Original container identities/start times and Phase 11 configuration checksums',
-        'protected_containers': receipts, 'model_manifests_unchanged': True, 'models': models,
+        'protected_containers': receipts, 'original_model_manifests_unchanged': True,
+        'explicitly_added_model_manifests': [observed[name] for name in sorted(added)], 'models': models,
         'inference_requested': False, 'protected_service_mutations': 0}
     (ROOT / 'docs/evidence' / ('phase' + args.phase + '-preservation.json')).write_text(json.dumps(evidence, indent=2))
-    print(json.dumps({'status': 'passed', 'protected_containers': len(receipts), 'models_unchanged': len(models),
+    print(json.dumps({'status': 'passed', 'protected_containers': len(receipts), 'original_models_unchanged': len(expected),
+        'explicitly_added_models': len(added),
         'inference_requested': False, 'protected_service_mutations': 0}))
 
 

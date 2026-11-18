@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-11-17T09:43:55.153411+00:00",
+  "status": "passed",
+  "method": "Actual retrieval function with read-only native API and artifact reads",
+  "catalog_artifact_id": "9f97262b-30c1-408f-b04e-14eed3a6f666",
+  "catalog_sha256": "b7188a7f7686bf34a6b3b31e8da4c1057479a91cb6eb302816f9cefcf08187d5",
+  "entries_available_for_next_run": 16,
+  "source_urls_available_for_merge": 19,
+  "native_mutations": 0
+}

@@ -36,14 +36,14 @@ def test_wrong_assignment_blocks_execution(monkeypatch):
     assert api.call_count == 2
 
 
-def test_verified_success_records_actual_reply(monkeypatch):
+def test_verified_success_records_actual_reply_and_clears_prior_blocker(monkeypatch):
     api, result = start(monkeypatch)
     assert result is None
     api.side_effect = None
     reporting.response(session_id=session, assistant_response='Actual runtime result')
     reporting.finish(session_id=session, completed=True)
     assert api.call_args.args == ('PATCH', '/issues/' + issue,
-        {'status': 'done', 'comment': 'Actual runtime result'}, 'real-run')
+        {'status': 'done', 'comment': 'Actual runtime result', 'unblockDescriptor': None}, 'real-run')
 
 
 def test_failed_execution_never_marks_done(monkeypatch):
@@ -62,7 +62,7 @@ def test_callbacks_on_separate_workers_keep_turn_identity(monkeypatch):
         worker.submit(reporting.response, session_id=session, assistant_response='Retrieved result').result()
     with ThreadPoolExecutor(1) as worker:
         worker.submit(reporting.finish, session_id=session, completed=True).result()
-    assert api.call_args.args[2] == {'status': 'done', 'comment': 'Retrieved result'}
+    assert api.call_args.args[2] == {'status': 'done', 'comment': 'Retrieved result', 'unblockDescriptor': None}
 
 
 def test_inventory_reply_without_actual_tool_is_blocked(monkeypatch):

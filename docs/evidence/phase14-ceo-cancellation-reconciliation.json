@@ -1,0 +1,26 @@
+{
+  "status": "native_reconciliation_verified",
+  "at": "2026-11-13T17:12:39.818015+00:00",
+  "issue_id": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+  "request": {
+    "actionId": "70b1c4a4-76ca-4fc9-8f68-39dd87b508c9",
+    "outcome": "restored",
+    "sourceIssueStatus": "todo",
+    "resolutionNote": "Controlled operator stop verified. Resume this same incomplete objective; CEO must correct existing blocked children and review actual tools/tests. No completion is claimed.",
+    "executionReconciliation": {
+      "runId": "eab7e7be-4128-4eae-b2a9-8f67d84e4b59",
+      "providerStopped": true,
+      "actionOutcome": "not_performed",
+      "outcomeEvidence": "Operator verified authenticated Hermes run_584d4f45782246a39a77dd2522cc57d2 and native run eab7e7be are cancelled, CEO active sessions empty and its Ollama connection closed. No model planning/delegation/work tool event exists for this run. Automatic preflight checkout/final-status bookkeeping occurred. Earlier child tasks remain preserved. This CEO has no host/external-action tools. Interrupted zero completed usage does not prove no inference. Only the owned CEO run was stopped; no Ollama/PentAGI/AIGoat process or configuration was interrupted."
+    }
+  },
+  "result": {
+    "id": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+    "identifier": "JAR-44",
+    "status": "todo",
+    "executionRunId": null,
+    "executionBlocker": null
+  },
+  "prior_attempt": "sourceIssueStatus blocked was rejected HTTP400 by the native schema; no recovery was applied then. Restored actions require todo/done/in_review; todo is used because work is incomplete.",
+  "source": "Explicit operator controlled-failure recovery, not an autonomous CEO correction call"
+}

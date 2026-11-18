@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-11-17T08:15:13.777Z",
+  "apply_setup": false,
+  "status": "passed",
+  "separate_chat": true,
+  "seven_actual_prompt_targets": true,
+  "prompt_and_history_reload": true,
+  "drafts_isolated": true,
+  "project_list_preserved": true,
+  "mobile_checks": true,
+  "browser_errors": [],
+  "mutations": [],
+  "retained_administrator_messages": 8,
+  "retained_owner_configuration": {
+    "osint_agent": "09f66b7a-d435-4332-be9a-9223055d0bef",
+    "saved_directions": [
+      {
+        "name": "JARVIS Software",
+        "revision": 3
+      },
+      {
+        "name": "JARVIS Systems",
+        "revision": 1
+      },
+      {
+        "name": "JARVIS",
+        "revision": 3
+      },
+      {
+        "name": "JARVIS Security",
+        "revision": 1
+      },
+      {
+        "name": "JARVIS OSINT",
+        "revision": 1
+      }
+    ],
+    "direct_prompt_sha256": "45a21ebab3b79ff29e22c125553bfa6c9fda1aa37f7576f7a5fd15a203db9d34"
+  }
+}

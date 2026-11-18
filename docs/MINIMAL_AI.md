@@ -1,5 +1,9 @@
 # Minimal JARVIS AI interface
 
+The current interface has explicit [Direct Chat and Projects modes](TWO_MODES.md),
+including a separate active context for each project. This document retains the
+earlier minimal-interface implementation and verification history.
+
 The default HUD opens on the floating AI core and direct chat. Operational
 dashboards stay out of the normal conversation view. Genuine tool activity and
 errors can open contextual popup windows as they occur; no findings, progress,

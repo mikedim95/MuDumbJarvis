@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T16:11:13.726463+00:00",
+  "source": "Operator-seeded retained-cwd fixture, installed Hermes resolver, then actual private SSH pwd",
+  "proof": {
+    "operator_seeded_retained_cwd": "/tmp",
+    "native_resolver_without_workdir": "/tmp",
+    "native_resolver_with_policy_workdir": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+    "actual_ssh_result": {
+      "output": "/workspace/issues/27b20fae-a51b-43ab-9f36-514199fab977",
+      "exit_code": 0,
+      "error": null
+    }
+  },
+  "initial_control_correction": "Direct standalone terminal calls did not reproduce gateway cwd recording; the initial assertion failed. This revised control explicitly seeds the native session cwd and does not claim agent execution.",
+  "model_inference_requested": false,
+  "employee_or_task_created": false,
+  "agent_execution_claimed": false,
+  "filesystem_file_modifications": false
+}

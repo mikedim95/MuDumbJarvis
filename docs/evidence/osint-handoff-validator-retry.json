@@ -1,0 +1,18 @@
+{
+  "requestId": "49c4bf91-ecda-4354-a2bc-92c2dbd27084",
+  "accepted": true,
+  "stale": false,
+  "observedRunId": "a3c43beb-b3ef-40da-84e1-c6bcbca97506",
+  "presentation": {
+    "intentId": "49c4bf91-ecda-4354-a2bc-92c2dbd27084",
+    "responsibility": "system",
+    "state": "working",
+    "nextRetryAt": null,
+    "canRetry": false,
+    "userAction": null,
+    "sourceRunIds": [
+      "a3c43beb-b3ef-40da-84e1-c6bcbca97506"
+    ],
+    "observedRunId": "a3c43beb-b3ef-40da-84e1-c6bcbca97506"
+  }
+}

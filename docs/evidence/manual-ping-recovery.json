@@ -1,0 +1,48 @@
+{
+  "checked_at": "2026-11-17T07:30:58.244352+00:00",
+  "project": {
+    "id": "b4bb4e44-148a-46be-a024-4a94da7209fa",
+    "identifier": "JAR-59",
+    "status": "done"
+  },
+  "children": [
+    {
+      "id": "256841a3-5843-4575-983f-96c35f5096e7",
+      "identifier": "JAR-60",
+      "agent": "JARVIS Systems",
+      "role": "devops",
+      "status": "done",
+      "paperclip_run_id": "c60515bd-7cf8-4f7b-bb21-d96942ff8ce2",
+      "authenticated_pong_verified": true
+    },
+    {
+      "id": "643555d3-9d24-40e8-a010-e3edfaaa40ec",
+      "identifier": "JAR-62",
+      "agent": "JARVIS Security",
+      "role": "security",
+      "status": "done",
+      "paperclip_run_id": "c13283be-de46-4b68-b21a-6a3709f5cf85",
+      "authenticated_pong_verified": true
+    },
+    {
+      "id": "130fae21-a370-4b24-82e2-30858c6dcf1e",
+      "identifier": "JAR-61",
+      "agent": "JARVIS Software",
+      "role": "engineer",
+      "status": "done",
+      "paperclip_run_id": "0038e330-5cc5-4c07-9a30-2c5fc499b73d",
+      "authenticated_pong_verified": true
+    },
+    {
+      "id": "fc93f9c7-8dbf-4151-9402-b18efe177b0e",
+      "identifier": "JAR-63",
+      "agent": "JARVIS Research",
+      "role": "researcher",
+      "status": "done",
+      "paperclip_run_id": "4d19b132-b052-4f7a-b3e1-747327b5b706",
+      "authenticated_pong_verified": true
+    }
+  ],
+  "same_original_tasks_retried": true,
+  "old_unrelated_holds_released": false
+}

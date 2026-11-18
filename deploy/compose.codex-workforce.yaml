@@ -1,0 +1,29 @@
+# Apply after compose.yaml, compose.codex-demo.yaml and compose.codex-chat.yaml.
+# Every participant borrows one native Hermes auth root and one inference lock.
+# Only the participant's own profile is mounted; sibling memory is not exposed.
+services:
+  jarvis:
+    environment:
+      JARVIS_CEO_WORKFORCE: 'true'
+  hermes:
+    environment:
+      HERMES_HOME: /opt/jarvis-codex/profiles/chat
+      JARVIS_INFERENCE_LOCK: /opt/jarvis-codex/inference.lock
+      OPENAI_API_KEY: ''
+    volumes:
+      - ../.runtime/codex-shared:/opt/jarvis-codex
+      - ../.runtime/hermes:/opt/jarvis-codex/profiles/chat
+      - ../hermes-plugin/jarvis_readonly:/opt/jarvis-codex/profiles/chat/plugins/jarvis_readonly:ro
+    networks: [agent-private, default]
+  hermes-ceo:
+    environment:
+      HERMES_HOME: /opt/jarvis-codex/profiles/ceo
+      JARVIS_INFERENCE_LOCK: /opt/jarvis-codex/inference.lock
+      JARVIS_RUNTIME_MODEL: ${JARVIS_CODEX_CEO_MODEL:?Stage configure_codex_workforce.py --apply first}
+      JARVIS_INFERENCE_CONFIGURATION: ${JARVIS_CODEX_CEO_CONFIGURATION:?Missing signed workforce authority}
+      OPENAI_API_KEY: ''
+    volumes:
+      - ../.runtime/codex-shared:/opt/jarvis-codex
+      - ../.runtime/hermes-ceo:/opt/jarvis-codex/profiles/ceo
+      - ../hermes-plugin/jarvis_readonly:/opt/jarvis-codex/profiles/ceo/plugins/jarvis_readonly:ro
+    networks: [agent-private, default]

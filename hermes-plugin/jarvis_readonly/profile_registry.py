@@ -49,7 +49,7 @@ def ready_employee(agent):
 def hire_body(turn, ceo, profile_id, name, reason, portrait=None, roster=()):
     item = profile(profile_id)
     runtime = hashlib.sha256((turn['company'] + ':' + turn['issue'] + ':' + profile_id).encode()).hexdigest()[:24]
-    return {'name': name[:80], 'role': item['role'], 'title': item['name'], 'reportsTo': ceo['id'],
+    body = {'name': name[:80], 'role': item['role'], 'title': item['name'], 'reportsTo': ceo['id'],
         'capabilities': ', '.join(item['capabilities']) + '. ' + item['authority'],
         'adapterType': 'hermes_gateway', 'adapterConfig': {},
         'permissions': {'canCreateAgents': False, 'canCreateSkills': False},
@@ -61,3 +61,6 @@ def hire_body(turn, ceo, profile_id, name, reason, portrait=None, roster=()):
             'hiring_reason': reason[:2000], 'limits': item['limits'], 'model': item['model'],
             'workspace': 'private employee container; issue-scoped directories; no host access'}},
         'sourceIssueId': turn['issue']}
+    if turn.get('inference_configuration') and turn['inference_configuration'].get('version') != 3:
+        body['metadata']['jarvis']['inference_configuration'] = turn['inference_configuration']
+    return body

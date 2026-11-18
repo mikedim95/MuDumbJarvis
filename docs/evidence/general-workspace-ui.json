@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-11-18T06:56:30.905Z",
+  "status": "passed",
+  "navigation": [
+    "Chat",
+    "Projects",
+    "General"
+  ],
+  "general_chat_history_reused": true,
+  "general_draft_isolated": true,
+  "mission_list_excludes_general_work": true,
+  "general_agent_contexts": 5,
+  "shared_work_visible": true,
+  "general_jobs": 1,
+  "mission_jobs_exclude_general": true,
+  "closed_mission_scheduling_disabled": true,
+  "reload_restores_scope": true,
+  "mobile_checks": true,
+  "native_mutations": 0,
+  "browser_errors": []
+}

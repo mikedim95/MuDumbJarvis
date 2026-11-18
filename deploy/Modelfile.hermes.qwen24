@@ -1,0 +1,10 @@
+# JARVIS-only comparison profile. Reuses installed weights and tool template.
+# Does not replace or change the source model or any PentAGI configuration.
+FROM pentagi-whiterabbitneo:7b
+PARAMETER num_thread 24
+PARAMETER num_batch 1024
+PARAMETER num_ctx 65536
+PARAMETER num_predict 768
+PARAMETER temperature 0.1
+PARAMETER top_k 40
+PARAMETER top_p 0.9

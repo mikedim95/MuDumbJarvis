@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-11-18T06:51:07.521745+00:00",
+  "status": "passed",
+  "job_id": "387ef428-5533-414a-970e-e093a01165e4",
+  "job_status": "active",
+  "work_scope": {
+    "kind": "general",
+    "mission_id": null,
+    "routine_id": "387ef428-5533-414a-970e-e093a01165e4"
+  },
+  "schedule": [
+    {
+      "cronExpression": "0 9 * * *",
+      "timezone": "Europe/Athens",
+      "enabled": true,
+      "nextRunAt": "2026-11-18T07:00:00.000Z"
+    }
+  ],
+  "history_preserved": true,
+  "new_jobs_created": 0
+}

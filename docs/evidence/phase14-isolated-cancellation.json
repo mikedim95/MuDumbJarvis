@@ -1,0 +1,42 @@
+{
+  "status": "controlled_JARVIS_cancellation_verified",
+  "checked_at": "2026-11-13T17:09:22.656660+00:00",
+  "issue_id": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+  "identifier": "JAR-44",
+  "native_run": {
+    "id": "eab7e7be-4128-4eae-b2a9-8f67d84e4b59",
+    "status": "cancelled",
+    "startedAt": "2026-11-13T16:49:16.286Z",
+    "finishedAt": "2026-11-13T17:03:27.844Z",
+    "errorCode": "cancelled"
+  },
+  "hermes_run_id": "run_584d4f45782246a39a77dd2522cc57d2",
+  "hermes_status_observed": "cancelled",
+  "completed_usage_reported": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+  },
+  "usage_limit": "Interrupted requests do not provide a completed usage measurement; zero is not proof that no inference occurred.",
+  "actual_provider_context": {
+    "complete_context_present": true,
+    "context_chars": 11414,
+    "model": "jarvis-hermes-qwen24:7b"
+  },
+  "ceo_tool_calls_recorded": 0,
+  "children_preserved": [
+    "7dc24648-d025-4450-8957-bcd8b25262d7",
+    "a6aa67b4-4cd6-454a-aa4f-747fa972bd7b"
+  ],
+  "cancellation_method": "Authenticated POST /v1/runs/{this_CEO_run}/stop; Paperclip observed cancellation. No Ollama process was killed.",
+  "network_observation": "After stop, CEO connection 172.29.0.6 closed; PentAGI connection 172.25.0.5 remained. A connection can be idle; active slot request ownership was not proven.",
+  "slot_observation": {
+    "cpu_threads": 24,
+    "parallel_sequences": 1,
+    "context_tokens": 32768,
+    "output_budget_tokens": 8192,
+    "request_owner": "unattributed; do not assign this limit or delay to Hermes based only on this observation"
+  },
+  "protected_services_modified": false,
+  "not_a_completed_acceptance_workflow": true
+}

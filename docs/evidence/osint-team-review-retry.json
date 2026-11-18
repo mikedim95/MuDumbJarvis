@@ -1,0 +1,18 @@
+{
+  "requestId": "b39b6a83-49eb-4a60-97d8-786acd13e6f9",
+  "accepted": true,
+  "stale": false,
+  "observedRunId": "1726069a-c988-4fa1-bbec-7ec1083efc3f",
+  "presentation": {
+    "intentId": "b39b6a83-49eb-4a60-97d8-786acd13e6f9",
+    "responsibility": "system",
+    "state": "working",
+    "nextRetryAt": null,
+    "canRetry": false,
+    "userAction": null,
+    "sourceRunIds": [
+      "1726069a-c988-4fa1-bbec-7ec1083efc3f"
+    ],
+    "observedRunId": "1726069a-c988-4fa1-bbec-7ec1083efc3f"
+  }
+}

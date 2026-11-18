@@ -139,8 +139,11 @@ def snapshot(root, relative):
     if not isinstance(data, dict) or not isinstance(data.get("model"), dict):
         raise ProfileError("Runtime configurations must contain a model mapping")
     model = data["model"]
+    named_local = (model.get('provider') == 'custom:jarvis-local-ollama' and data.get('providers') == {
+        'jarvis-local-ollama': {'api': LOCAL_BASE_URL, 'api_key': 'ollama-local-only',
+            'extra_body': {'max_tokens': 768}}} and not data.get('custom_providers'))
     if (not isinstance(model.get("default"), str) or not model["default"] or
-            model.get("provider") != "custom" or model.get("base_url") != LOCAL_BASE_URL):
+            (model.get("provider") != "custom" and not named_local) or model.get("base_url") != LOCAL_BASE_URL):
         raise ProfileError("Both runtimes must retain the fixed local custom provider and Ollama endpoint")
     if any(type(model.get(name)) is not int or model[name] != 65536 for name in ("context_length", "ollama_num_ctx")):
         raise ProfileError("Both runtimes must already use the 65536-token local context configuration")

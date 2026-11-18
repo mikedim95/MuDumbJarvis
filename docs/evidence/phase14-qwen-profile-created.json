@@ -1,0 +1,19 @@
+{
+  "status": "created_for_benchmark_only",
+  "at": "2026-11-13T16:11:33.763943+00:00",
+  "new_alias": {
+    "name": "jarvis-hermes-qwen24:7b",
+    "size": 4505856194,
+    "digest": "d77f020ba7430f07565ab4b53d7c2736e6e4d795ea16e1ef52985f49655bb5eb"
+  },
+  "base_model": "pentagi-whiterabbitneo:7b",
+  "weights_pulled": false,
+  "all_prior_manifests_unchanged": true,
+  "prior_model_count": 9,
+  "parameters": "num_predict                    768\nnum_thread                     24\nstop                           \"<|im_start|>\"\nstop                           \"<|im_end|>\"\ntemperature                    0.1\ntop_k                          40\ntop_p                          0.9\nnum_batch                      1024\nnum_ctx                        65536",
+  "capabilities": [
+    "completion",
+    "tools"
+  ],
+  "employee_models_changed": false
+}

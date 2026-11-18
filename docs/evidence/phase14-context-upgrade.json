@@ -1,0 +1,12 @@
+{
+  "status": "runtime_health_and_configuration_verified_not_workflow_completion",
+  "at": "2026-11-13T16:49:04.336680+00:00",
+  "ceo_id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "native_adapter_test": "pass",
+  "hook_max_chars": 32768,
+  "regression_tests_passed": 262,
+  "pre_verify_ceo_hook_removed": "Installed hook requires code edits, which CEO cannot perform",
+  "actual_payload_observer_installed": true,
+  "sensitive_action_scope_visible_in_approval": true,
+  "active_runs_before_resume": 0
+}

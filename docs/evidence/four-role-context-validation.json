@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "signed_workers_authenticated": [
+    "JAR-67",
+    "JAR-69",
+    "JAR-68",
+    "JAR-70"
+  ],
+  "method": "Read-only native receipt verification and bounded context rendering; reused previously verified bytes",
+  "full_receipt_characters": 109787,
+  "ceo_context_characters": 31453,
+  "ceo_context_limit": 32000,
+  "instruction_characters": 1258,
+  "worker_summary_characters": {
+    "JAR-67": 127,
+    "JAR-69": 127,
+    "JAR-68": 127,
+    "JAR-70": 127
+  },
+  "tool_call_counts": {
+    "JAR-67": 2,
+    "JAR-69": 15,
+    "JAR-68": 13,
+    "JAR-70": 7
+  },
+  "native_mutations": 0,
+  "actual_provider_context_observations": [
+    {
+      "source": "hermes_pre_api_request",
+      "issue_id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "paperclip_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+      "model": "gpt-6.1-sol",
+      "context_chars": 31304,
+      "complete_context_present": true,
+      "context_sha256": "57c1e88b87e26547ff8b6013856034c792b746b1ea51cdae53f2a7ea2bfc8a2a",
+      "provider": "openai-codex",
+      "endpoint_host": "chatgpt.com"
+    },
+    {
+      "source": "hermes_pre_api_request",
+      "issue_id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "paperclip_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+      "model": "gpt-6.1-sol",
+      "context_chars": 31304,
+      "complete_context_present": true,
+      "context_sha256": "57c1e88b87e26547ff8b6013856034c792b746b1ea51cdae53f2a7ea2bfc8a2a",
+      "provider": "openai-codex",
+      "endpoint_host": "chatgpt.com"
+    },
+    {
+      "source": "hermes_pre_api_request",
+      "issue_id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "paperclip_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+      "model": "gpt-6.1-sol",
+      "context_chars": 31304,
+      "complete_context_present": true,
+      "context_sha256": "57c1e88b87e26547ff8b6013856034c792b746b1ea51cdae53f2a7ea2bfc8a2a",
+      "provider": "openai-codex",
+      "endpoint_host": "chatgpt.com"
+    },
+    {
+      "source": "hermes_pre_api_request",
+      "issue_id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "paperclip_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+      "model": "gpt-6.1-sol",
+      "context_chars": 31304,
+      "complete_context_present": true,
+      "context_sha256": "57c1e88b87e26547ff8b6013856034c792b746b1ea51cdae53f2a7ea2bfc8a2a",
+      "provider": "openai-codex",
+      "endpoint_host": "chatgpt.com"
+    },
+    {
+      "source": "hermes_pre_api_request",
+      "issue_id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "paperclip_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+      "model": "gpt-6.1-sol",
+      "context_chars": 31304,
+      "complete_context_present": true,
+      "context_sha256": "57c1e88b87e26547ff8b6013856034c792b746b1ea51cdae53f2a7ea2bfc8a2a",
+      "provider": "openai-codex",
+      "endpoint_host": "chatgpt.com"
+    }
+  ],
+  "actual_context_present": true,
+  "final_ceo_run_id": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b"
+}

@@ -1,0 +1,186 @@
+{
+  "status": "native_reconciliation_recorded",
+  "at": "2026-11-13T16:31:07.255659+00:00",
+  "task_id": "a6aa67b4-4cd6-454a-aa4f-747fa972bd7b",
+  "request": {
+    "actionId": "71e90111-6f37-48d5-a81d-b38900df3176",
+    "outcome": "restored",
+    "sourceIssueStatus": "todo",
+    "resolutionNote": "Operator inspected the exact failed Hermes API run, stopped execution and preserved private workspace files. Work remains incomplete. Resume only through the native research dependency; do not report completion.",
+    "executionReconciliation": {
+      "runId": "81d2fac6-e82c-4558-9e78-74d9ab823fbd",
+      "providerStopped": true,
+      "actionOutcome": "mixed",
+      "outcomeEvidence": "Native heartbeat 81d2fac6-e82c-4558-9e78-74d9ab823fbd is failed and finished 2026-11-13T16:01:31.736Z. Exact authenticated Hermes run_c53032987ab14690a9fe414349333e36 returns failed after preserved runtime restart. Only private sandbox files core_prot.py (403 bytes, SHA256 f1c821febfbff9ddfc11ca48902ffddb589b126230733d5f6f5989cca6dbe759) and test_core_prot.py (503 bytes, SHA256 43102a98bd894bdcc3ac68652dfb3f187a8556ba54bfe41427c551c537cfd390) were retained. Observed tests/path calls failed; no successful framework evaluation occurred. Profile denies host and external actions; no background processes were admitted. New native research prerequisite 7dc24648-d025-4450-8957-bcd8b25262d7 is blocked, so work must wait for its correction."
+    }
+  },
+  "native_receipt": {
+    "issue": {
+      "id": "a6aa67b4-4cd6-454a-aa4f-747fa972bd7b",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "conversationAgentId": null,
+      "conversationUserId": null,
+      "conversationState": null,
+      "conversationSessionGeneration": 0,
+      "conversationBoundaryCommentId": null,
+      "projectId": "7d2a3c33-9561-4dfa-bc82-044dce2484ea",
+      "projectWorkspaceId": null,
+      "goalId": null,
+      "parentId": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+      "visibility": "open",
+      "privacyRootIssueId": null,
+      "privacyParentIssueId": "f79972eb-c989-4845-bafa-7bd4e11a0eef",
+      "title": "Software: Implementation and Testing",
+      "titleNeedsGeneration": false,
+      "description": "**Implement a minimal isolated demo** using results from the current Research child. The demo must include (1) a local implementation of the selected framework\u2019s core protection mechanism, written in a private container sandbox, (2) a comprehensive suite of unit tests (including edge cases), and a MD report identifying (1) working examples, (2) integration boundaries/limitations, and (3) any observed discrepancies between claims and execution. Tests must use promptfoo 0.125.1 as a baseline for deterministic assertions, unless otherwise justified by research findings. Use depends_on=[RESEARCH-CHILD UUID] to chain this task.",
+      "status": "todo",
+      "statusVersion": 4,
+      "lastStatusDecisionId": null,
+      "workMode": "standard",
+      "harnessKind": null,
+      "priority": "medium",
+      "reviewPolicy": null,
+      "assigneeAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "assigneeUserId": null,
+      "checkoutRunId": null,
+      "executionRunId": null,
+      "executionAgentNameKey": null,
+      "executionLockedAt": null,
+      "createdByAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "createdByUserId": null,
+      "responsibleUserId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+      "issueNumber": 46,
+      "identifier": "JAR-46",
+      "originKind": "manual",
+      "originId": null,
+      "originRunId": "9992ef90-ecb5-4950-8333-5a07c9f24270",
+      "originIdentityContextId": null,
+      "continuationIdentityContextId": "9becd871-9ea5-4991-aacb-212912be81e1",
+      "originFingerprint": "default",
+      "requestDepth": 0,
+      "billingCode": null,
+      "assigneeAdapterOverrides": null,
+      "executionPolicy": null,
+      "executionState": null,
+      "monitorNextCheckAt": null,
+      "monitorWakeRequestedAt": null,
+      "monitorLastTriggeredAt": null,
+      "monitorAttemptCount": 0,
+      "monitorNotes": null,
+      "monitorScheduledBy": null,
+      "executionWorkspaceId": "24ac91f9-ffa4-448e-8e62-49ae12ab7681",
+      "workspaceBindingRevision": 1,
+      "workspaceSelection": {
+        "source": "explicit",
+        "version": 1,
+        "selection": {
+          "kind": "task_directory"
+        }
+      },
+      "workspacePendingSelection": null,
+      "executionWorkspacePreference": "reuse_existing",
+      "executionWorkspaceSettings": {
+        "mode": "shared_workspace"
+      },
+      "sourceTrust": null,
+      "unblockDescriptor": null,
+      "blockedTransitionAt": null,
+      "blockedOwnerNotifiedAt": null,
+      "startedAt": "2026-11-13T15:45:59.909Z",
+      "completedAt": null,
+      "cancelledAt": null,
+      "hiddenAt": null,
+      "createdAt": "2026-11-13T15:45:55.098Z",
+      "updatedAt": "2026-11-13T16:31:06.988Z",
+      "labels": [],
+      "labelIds": [],
+      "watchdog": null,
+      "changes": {
+        "status": {
+          "from": "blocked",
+          "to": "todo"
+        },
+        "statusVersion": {
+          "from": 3,
+          "to": 4
+        },
+        "unblockDescriptor": {
+          "from": {
+            "owner": {
+              "agentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b"
+            },
+            "action": "Review the Hermes execution error, fix its cause, then explicitly retry this task."
+          },
+          "to": null
+        },
+        "blockedTransitionAt": {
+          "from": "2026-11-13T16:01:30.871Z",
+          "to": null
+        },
+        "blockedOwnerNotifiedAt": {
+          "from": "2026-11-13T16:01:31.072Z",
+          "to": null
+        }
+      },
+      "activeRecoveryAction": null
+    },
+    "recoveryAction": {
+      "id": "71e90111-6f37-48d5-a81d-b38900df3176",
+      "companyId": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+      "sourceIssueId": "a6aa67b4-4cd6-454a-aa4f-747fa972bd7b",
+      "recoveryIssueId": null,
+      "kind": "active_run_watchdog",
+      "status": "resolved",
+      "ownerType": "board",
+      "ownerAgentId": null,
+      "ownerUserId": null,
+      "previousOwnerAgentId": null,
+      "returnOwnerAgentId": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "cause": "legacy_execution_requires_reconciliation",
+      "fingerprint": "legacy-execution:81d2fac6-e82c-4558-9e78-74d9ab823fbd",
+      "evidence": {
+        "runId": "81d2fac6-e82c-4558-9e78-74d9ab823fbd",
+        "attempt": 1,
+        "adapterRecovery": "unsupported_or_unknown",
+        "originalFailureCode": "hermes_gateway_run_failed",
+        "continuationDelivery": "pending",
+        "executionReconciliation": {
+          "runId": "81d2fac6-e82c-4558-9e78-74d9ab823fbd",
+          "actorId": "HKxBH9rUsCoqmbLBel9vGPbsewYmV5wv",
+          "recordedAt": "2026-11-13T16:31:06.929Z",
+          "actionOutcome": "mixed",
+          "outcomeEvidence": "Native heartbeat 81d2fac6-e82c-4558-9e78-74d9ab823fbd is failed and finished 2026-11-13T16:01:31.736Z. Exact authenticated Hermes run_c53032987ab14690a9fe414349333e36 returns failed after preserved runtime restart. Only private sandbox files core_prot.py (403 bytes, SHA256 f1c821febfbff9ddfc11ca48902ffddb589b126230733d5f6f5989cca6dbe759) and test_core_prot.py (503 bytes, SHA256 43102a98bd894bdcc3ac68652dfb3f187a8556ba54bfe41427c551c537cfd390) were retained. Observed tests/path calls failed; no successful framework evaluation occurred. Profile denies host and external actions; no background processes were admitted. New native research prerequisite 7dc24648-d025-4450-8957-bcd8b25262d7 is blocked, so work must wait for its correction.",
+          "providerStopped": true
+        }
+      },
+      "nextAction": "Automatic recovery stopped. Recorded work is preserved; actions with unverified outcomes will not be repeated.",
+      "wakePolicy": null,
+      "monitorPolicy": null,
+      "attemptCount": 1,
+      "maxAttempts": 3,
+      "timeoutAt": null,
+      "lastAttemptAt": "2026-11-13T16:01:31.801Z",
+      "outcome": "handed_back",
+      "resolutionNote": "Operator inspected the exact failed Hermes API run, stopped execution and preserved private workspace files. Work remains incomplete. Resume only through the native research dependency; do not report completion.",
+      "resolvedAt": "2026-11-13T16:31:07.030Z",
+      "createdAt": "2026-11-13T16:01:31.745Z",
+      "updatedAt": "2026-11-13T16:31:07.030Z"
+    }
+  },
+  "after_status": "todo",
+  "after_execution_blocker": null,
+  "native_dependencies": [
+    {
+      "id": "7dc24648-d025-4450-8957-bcd8b25262d7",
+      "identifier": "JAR-45",
+      "title": "Research: AI Security Frameworks (Garak, Pyrit, promptfoo)",
+      "status": "blocked",
+      "priority": "medium",
+      "assigneeAgentId": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "assigneeUserId": null,
+      "scheduledRetry": null,
+      "activeRecoveryAction": null
+    }
+  ],
+  "live_runs": []
+}

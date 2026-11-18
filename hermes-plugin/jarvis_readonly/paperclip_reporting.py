@@ -18,6 +18,11 @@ _lock = threading.Lock()
 _request_budget = threading.local()
 _logger = logging.getLogger(__name__)
 _scope = re.compile(r'^paperclip:company:([0-9a-f-]{36}):agent:([0-9a-f-]{36}):issue:([0-9a-f-]{36})$')
+REPORT_STYLE = (
+    'Lead reports and updates with the result. One sentence is enough when it answers the request. '
+    'Include only requested facts and details essential to using the result, such as a material limit, blocker or decision. '
+    'Keep requested detail in its deliverable and refer to it once. Skip preambles, process narration and recaps.'
+)
 
 
 def current_turn():
@@ -130,8 +135,17 @@ def begin(session_id='', turn_id='', **kwargs):
             'ceo': ceo, 'reports_to': me.get('reportsTo'), 'plan_decision': decision, 'reviewed_children': [],
             'needs_inventory': ('ollama' in description and 'model' in description) or 'installed models' in description,
             'inventory_verified': False, 'started_at': time.time()}
+        saved_directions = ((me.get('metadata') or {}).get('jarvis') or {}).get('general_context') or {}
+        if isinstance(saved_directions.get('text'), str):
+            turn['general_context'] = {'text': saved_directions['text'][:8000],
+                'revision': saved_directions.get('revision'),
+                'scope':'Human-authored general directions for this agent. Current task scope and runtime authority take precedence.'}
         if ceo:
             turn['needs_report'] = bool(re.search(r'\breport\b', description))
+            turn['needs_research'] = bool((re.search(r'\bresearch\b', description) and re.search(r'\bframeworks?\b', description)) or
+                ('osint' in description and re.search(r'research|catalog|knowledge',description)))
+            turn['needs_test_execution'] = bool(re.search(r'\b(?:execute|run)\s+(?:\w+\s+){0,3}tests?\b', description))
+        records = None
         if ceo or os.environ.get('JARVIS_PROFILE'):
             from . import inference_policy, profile_registry
             base_model = profile_registry.profile(os.environ['JARVIS_PROFILE'])['model'] if os.environ.get('JARVIS_PROFILE') else profile_registry.catalog()['model']
@@ -156,6 +170,21 @@ def begin(session_id='', turn_id='', **kwargs):
                     turn['plan_decision'] = None
         if os.environ.get('JARVIS_PROFILE'):
             turn['needs_tests'] = bool(re.search(r'\btests?\b|unittest|pytest', description))
+        if (turn.get('inference_configuration') or {}).get('version')==3:
+            from . import work_scope, general_knowledge
+            if records is None:
+                records=api('GET','/companies/'+company+'/issues')
+            routines=api('GET','/companies/'+company+'/routines') if any(i.get('originKind')=='routine_execution' for i in records) else []
+            turn['work_scope']=work_scope.classify(issue,records,routines)
+            turn['_scope_issues']=records;turn['_scope_routines']=routines
+            mission_id=turn['work_scope'].get('mission_id')
+            if mission_id and mission_id!=issue_id:
+                mission=next((i for i in records if i['id']==mission_id and i.get('companyId')==company),None)
+                if mission:
+                    turn['mission_context']={k:mission.get(k) for k in ('id','identifier','title','description','status')}
+                    turn['mission_context']['description']=str(turn['mission_context'].get('description') or '')[:2500]
+            try:turn['shared_knowledge']=general_knowledge.brief(turn,records,routines)
+            except Exception:turn['shared_knowledge']={'available':False,'source':'General knowledge could not be read; do not invent its contents.'}
         with _lock:
             _turns[key] = turn
         if ceo:
@@ -170,7 +199,10 @@ def begin(session_id='', turn_id='', **kwargs):
                 sorted(updates, key=lambda c: c.get('createdAt') or '') if comment.get('authorUserId')][-3:]
             for update in turn['operator_updates']:
                 update['body'] = str(update.get('body') or '')[:1200]
-            return {'context': employee_tools.prepare_turn_context(turn, issue)}
+            context = employee_tools.prepare_turn_context(turn, issue)
+            turn['preflight_context_text'] = context
+            turn['preflight_context_sha256'] = hashlib.sha256(context.encode()).hexdigest()
+            return {'context': context}
     except Exception as exc:
         if turn is not None:
             for name in ('delivered_children', 'delivery_run_id', 'delivery_context_sha256', 'child_evidence'):
@@ -227,9 +259,13 @@ def tool_result(tool_name='', result='', task_id='', turn_id='', **kwargs):
         return
 
 
+def inventory_fingerprint(models):
+    return hashlib.sha256(json.dumps(models, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
 def journal_ceo_inventory(turn, models):
     """Publish observed progress; never schedule work or alter task status."""
-    fingerprint = hashlib.sha256(json.dumps(models, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    fingerprint = inventory_fingerprint(models)
     with _lock:
         attempted = turn.setdefault('inventory_journal_attempted', set())
         if fingerprint in attempted:
@@ -295,7 +331,7 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
                 selected = employee_tools.profile_registry.profile(os.environ['JARVIS_PROFILE'])
                 if selected['sandbox'] and turn.get('needs_artifact'):
                     employee_work.deliver_workspace(turn)
-                if turn.get('needs_report') and not any(a['originalFilename'].endswith('.md') for a in turn.get('artifacts', {}).values()):
+                if turn.get('needs_report') and not employee_tools.has_report(turn):
                     employee_work.deliver_report(turn)
             except Exception as error:
                 turn['delivery_error'] = str(error) if isinstance(error, (ValueError, PermissionError)) else 'Native deliverable storage failed; inspect the runtime log'
@@ -306,15 +342,14 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
     success = success and not missing_tool
     comment = turn['response'] if success else 'Hermes execution failed or was interrupted. ' + str(turn_exit_reason)
     if success and turn.get('report_kind') == 'source_module_inventory' and turn.get('source_inventory_report'):
-        comment = (turn['source_inventory_report'] + '\nThe task result is the observed tool inventory above. '
-            'The model narrative is retained in the native run log and is not used as inventory evidence.')
+        comment = turn['source_inventory_report'].strip()
     if missing_tool:
         comment = 'Verification failed: no successful local_ollama_models call was recorded. Task is blocked; the response is not accepted as a retrieved inventory.\n\nRuntime response:\n' + turn['response']
     if missing_execution:
         comment = 'Execution verification failed: ' + missing_execution + '\nTask is blocked; the model response is not accepted as completed work.\n\nRuntime response:\n' + turn['response']
     if worker_blocker:
         comment = turn['response'].strip()
-    if success and turn.get('inventory') is not None:
+    if success and turn.get('inventory') is not None and not os.environ.get('JARVIS_PROFILE'):
         verified = [{k: model.get(k) for k in ('name', 'size_bytes', 'size_gib')} for model in turn['inventory']]
         comment += '\n\nVerified local_ollama_models data (exact tool output; recommendations above are model-generated):\n```json\n' + json.dumps(verified, indent=2) + '\n```'
         if os.environ.get('JARVIS_EXECUTION_PROOF_KEY'):
@@ -328,10 +363,6 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
             status = 'in_review' if approval['status'] in ('pending', 'revision_requested') else 'blocked'
             comment = ('Sensitive-action approval ' + approval['id'] + ' is ' + approval['status'] +
                 '. No sensitive action was executed and runtime permissions remain unchanged.\n\n' + turn['response'])
-        comment += ('\n\nVerified runtime identity: employee ' + turn['agent'] + '; issue ' + turn['issue'] +
-            '; execution ' + turn['run'] + '. Generated narrative above is not an execution receipt.')
-        if turn.get('runtime_deliveries'):
-            comment += '\n\nRuntime output delivery stored actual final text or existing workspace files in Paperclip. This storage does not imply a model publishing tool call.'
         comment += '\n\nJARVIS_EXECUTION_EVIDENCE=' + json.dumps(employee_tools.signed_execution(turn, status), separators=(',', ':'))
     # One atomic Paperclip update records final disposition and the real runtime reply.
     payload = {'status': status, 'comment': comment}
@@ -348,6 +379,8 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
             from . import blocker_review
         payload['unblockDescriptor'] = {'owner': {'agentId': turn['agent']},
             'action': (blocker_review.REPORT if report_to_manager else '') + action[:1900]}
+    elif status == 'done':
+        payload['unblockDescriptor'] = None
     api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
     if status == 'blocked' and report_to_manager:
         blocker_review.report(api, turn, current, action)

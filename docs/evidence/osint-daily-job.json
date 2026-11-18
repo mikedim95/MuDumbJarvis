@@ -1,0 +1,24 @@
+{
+  "id": "387ef428-5533-414a-970e-e093a01165e4",
+  "title": "Daily OSINT tools and techniques research",
+  "description": "Run one bounded batch of the owner's ongoing OSINT tools and techniques research.\nUse the existing JARVIS OSINT employee, with Jarvis CEO orchestrating and reviewing\nthe result. The separate native daily cron job supplies future runs: complete this\nbatch, report actual results, and remain dormant until Paperclip dispatches work.\n\nDelegate a substantive cumulative-catalog batch to JARVIS OSINT. Copy these\nacceptance criteria into its assignment. Read prior catalogs with research_sources\naction=knowledge, then retrieve actual official tool documentation using action=fetch\nwith up to six HTTPS repository/documentation URLs per call. action=search discovers\nadditional public GitHub tool repositories. The former three-framework restriction\nhas been removed. No shell, installations, scans or investigations of people or\nlive targets are requested; this work researches tools and methods.\n\nMaintain a cumulative catalog with at least 15 distinct tools across at least six\ncategories. OSINT_MIN_TOOLS=15 OSINT_MIN_CATEGORIES=6. Preserve the three documented\nAI-assurance entries as adjacent tools, and add real OSINT coverage. On later daily\nruns, prioritize at least three previously uncovered tools, expand category gaps,\nor refresh changed/outdated documentation using at least three current sources.\nDo not repeat an unchanged catalog and call it new work.\n\nOfficial starting repositories, covering several categories:\n- https://github.com/sherlock-project/sherlock\n- https://github.com/soxoj/maigret\n- https://github.com/smicallef/spiderfoot\n- https://github.com/lanmaster53/recon-ng\n- https://github.com/laramies/theHarvester\n- https://github.com/owasp-amass/amass\n- https://github.com/projectdiscovery/subfinder\n- https://github.com/exiftool/exiftool\n- https://github.com/Exiv2/exiv2\n- https://github.com/QGIS/QGIS\n- https://github.com/openstreetmap/iD\n- https://github.com/apache/tika\n- https://github.com/gephi/gephi\n- https://github.com/webrecorder/browsertrix\n- https://github.com/internetarchive/wayback\n\nPublish the next osint-catalog-vNNN.json. Use preserve_previous=true with new or\nupdated entries to have the runtime retain complete prior entries automatically.\nFollow the prior entry schema: key, name, category, purpose,\ndocumented_capabilities, safe_usage_guidance,\ndocumented_access_and_cost_prerequisites, limitations, sources=[{url,...}],\nsource_retrieval_date_utc, validation_status=documented_only, actually_tested=false.\nUnknown access/cost requirements must be labeled unknown. Sources must be retrieved\nnow or come from a hash-checked prior native catalog. Deduplicate aliases.\n\nAlso publish an updated category index, a substantive comparison explaining which\ntools fit which jobs and their limits, and a batch-evidence report with retrieved\nURLs, source dates, actual counts, gaps and proposed next coverage. Exceed the old\n180-word comparison limit as needed for this knowledge base. No tool has been\nhands-on tested merely because its documentation was read. JSON schema, provenance\nand coverage are checked by the runtime.\n\nCEO: review signed worker evidence and persisted artifact IDs, then publish your\nconsolidated report with actual catalog counts and source/quality limitations.\nDo not mark an incomplete or blocked coverage goal as done. The daily schedule is\nmanaged in Cron Jobs; this single batch must not create duplicate schedules or\nrun a polling loop. Preserve prior research and every batch's native history.",
+  "status": "active",
+  "projectId": "1ee7d003-0cfc-4dd1-8275-e78d18be5f5a",
+  "assigneeAgentId": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+  "concurrencyPolicy": "skip_if_active",
+  "createdAt": "2026-11-17T09:12:33.868Z",
+  "updatedAt": "2026-11-17T09:12:34.677Z",
+  "triggers": [
+    {
+      "id": "7164006d-0463-4730-a631-e3aaf91f42c5",
+      "enabled": true,
+      "cronExpression": "0 9 * * *",
+      "timezone": "Europe/Athens",
+      "nextRunAt": "2026-11-18T07:00:00.000Z",
+      "lastFiredAt": null,
+      "lastResult": null
+    }
+  ],
+  "last_run": null,
+  "active_issue": null
+}

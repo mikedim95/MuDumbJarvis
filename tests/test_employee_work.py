@@ -197,19 +197,29 @@ def test_derived_worker_key_cannot_sign_another_employee(work):
     assert not module.authentic_evidence({**signed, 'issue_id': ARTIFACT})
 
 
-def test_runtime_report_delivery_preserves_generated_prose_and_exact_source_provenance(work):
+def test_runtime_report_delivery_preserves_short_prose_and_native_source_provenance(work):
     source = {'framework': 'garak', 'repository': 'NVIDIA/garak', 'source_url': 'https://github.com/NVIDIA/garak',
         'blob_sha': 'a' * 40, 'sha256': 'b' * 64}
-    work.turn.update({'source_refs': {'garak': source}, 'response': 'garak capabilities and architecture are discussed using retrieved primary-source data. ' * 4})
+    work.turn.update({'source_refs': {'garak': source}, 'response': 'garak uses probes and detectors.'})
     writes = []
     work.monkeypatch.setattr(work.module, 'upload', lambda turn, name, data: writes.append((name, data)) or {'id': ARTIFACT})
     work.module.deliver_report(work.turn)
-    assert work.turn['response'].strip() in writes[0][1].decode()
-    assert 'Git blob SHA-1: ' + 'a' * 40 in writes[0][1].decode()
+    assert writes == [('technical-report.md', work.turn['response'].encode())]
+    assert work.turn['source_refs']['garak'] == source
+    work.turn['response'] += ' Git blob SHA-1: ' + source['blob_sha']
+    work.module.deliver_report(work.turn)
+    assert writes[-1][1].decode() == work.turn['response']
     assert work.turn['runtime_deliveries'][0]['type'] == 'final_model_report'
     assert 'no model publishing tool call' in work.turn['runtime_deliveries'][0]['source']
     work.turn['response'] += ' Fabricated SHA256: ' + 'c' * 24
     with pytest.raises(ValueError, match='unverified or truncated hash'):
+        work.module.deliver_report(work.turn)
+
+
+@pytest.mark.parametrize('response', ['', 'Done.', 'Task completed.', '**Waiting** for the worker.'])
+def test_runtime_report_rejects_a_bare_status(work, response):
+    work.turn['response'] = response
+    with pytest.raises(ValueError, match='completed report'):
         work.module.deliver_report(work.turn)
 
 
@@ -249,7 +259,7 @@ def test_source_inventory_is_actual_api_data_and_does_not_accept_model_spellings
     work.module.research_sources({'frameworks': ['garak']})
     assert writes[1][0] == 'source-module-inventory.md'
     assert '"analyze"' in writes[1][1].decode() and '"analyse"' not in writes[1][1].decode()
-    assert 'no model-authored analysis' in writes[1][1].decode()
+    assert 'Observed in the GitHub API' in writes[1][1].decode()
     assert work.turn['runtime_deliveries'][0]['type'] == 'observed_source_inventory'
     work.turn['report_kind'] = 'model_analysis'; writes.clear()
     work.module.research_sources({'frameworks': ['garak']})

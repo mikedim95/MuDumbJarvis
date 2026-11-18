@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-11-17T09:42:30.121260+00:00",
+  "status": "passed",
+  "routine": {
+    "id": "387ef428-5533-414a-970e-e093a01165e4",
+    "title": "Daily OSINT tools and techniques research",
+    "status": "active",
+    "concurrencyPolicy": "skip_if_active",
+    "catchUpPolicy": "skip_missed"
+  },
+  "schedule": [
+    {
+      "id": "7164006d-0463-4730-a631-e3aaf91f42c5",
+      "cronExpression": "0 9 * * *",
+      "timezone": "Europe/Athens",
+      "enabled": true,
+      "nextRunAt": "2026-11-18T07:00:00.000Z"
+    }
+  ],
+  "first_run": {
+    "id": "2d03b440-28f2-48d1-85a3-8dc793f5e28e",
+    "status": "completed",
+    "linkedIssueId": "e86c7aea-b0b9-44c7-850c-0396d1f8dd46",
+    "failureReason": null,
+    "completedAt": "2026-11-17T09:38:47.486Z"
+  },
+  "ceo_review": {
+    "id": "e86c7aea-b0b9-44c7-850c-0396d1f8dd46",
+    "identifier": "JAR-71",
+    "status": "done",
+    "unblockDescriptor": null
+  },
+  "catalog": {
+    "tools": 16,
+    "categories": 9,
+    "documented_only": true,
+    "fresh_sources": 20,
+    "coverage_met": true,
+    "artifact_id": "9f97262b-30c1-408f-b04e-14eed3a6f666"
+  }
+}

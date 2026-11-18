@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T16:51:58.873Z",
+  "negative_fixture": {
+    "task_id": "6630d400-4d6c-4bd9-a23d-737bbce9829a",
+    "identifier": "JAR-47",
+    "approval_id": "61a68c62-a3e6-44f4-abd5-f514a7f6912c",
+    "type": "hire_agent",
+    "status": "rejected",
+    "decisionNote": "Operator negative acceptance test: reject the unnecessary hire. Existing employees cover this objective. No new employee or runtime is authorized.",
+    "decidedAt": "2026-11-13T16:51:57.293Z"
+  },
+  "negative_source": "Automated operator-authored hire proposal and HUD rejection; not a claim of autonomous CEO hiring or a new human decision.",
+  "positive_human_approved_hire": {
+    "id": "80bebd62-f765-421e-bab7-9ebbf313e9df",
+    "status": "approved",
+    "decidedAt": "2026-11-13T05:41:03.118Z",
+    "human_attribution_present": true
+  },
+  "roster_unchanged": [
+    "09f66b7a-d435-4332-be9a-9223055d0bef",
+    "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+    "a5780699-e4d4-4256-b93e-2bbcf46da59b"
+  ],
+  "no_employee_created": true,
+  "no_runtime_provisioned": true,
+  "no_inference_requested": true,
+  "browser_refresh_preserved_rejection": true
+}

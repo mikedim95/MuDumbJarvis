@@ -55,7 +55,7 @@ adapter = {'apiBaseUrl': 'https://hermes-tls:8644',
            'apiKey': {'type': 'secret_ref', 'secretId': secret['id'], 'version': 'latest'},
            'paperclipApiUrl': 'http://paperclip:3100', 'sessionKeyStrategy': 'issue',
            'timeoutSec': 1800, 'instructions': (root / 'deploy/CEO_POLICY.md').read_text(),
-           'payloadTemplate': {'input': 'Execute the current CEO objective supplied by the authenticated Paperclip preflight. Plan and delegate through native tools, review verified results, and return the consolidated report or real blockers.', 'conversation_history': [
+           'payloadTemplate': {'input': None, 'conversation_history': [
                {'role': 'user', 'content': 'Where is authoritative task context?'},
                {'role': 'assistant', 'content': 'Paperclip. I will use the current authenticated objective and verified results supplied for this turn.'}]}}
 if ceo is None:

@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-11-17T07:39:55.140Z",
+  "status": "passed",
+  "project": "JAR-57",
+  "whole_row_opens": true,
+  "no_right_arrows": true,
+  "delete_does_not_open_context": true,
+  "removal_persists_across_browser_views": true,
+  "history_and_artifacts_preserved": true,
+  "undo_restored_original_project": true,
+  "mobile_delete_target_visible": true,
+  "browser_errors": []
+}

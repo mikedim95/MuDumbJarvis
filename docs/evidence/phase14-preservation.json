@@ -1,0 +1,114 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T16:13:05.380651+00:00",
+  "baseline": "Original container identities/start times and Phase 11 configuration checksums",
+  "protected_containers": [
+    {
+      "name": "ollama",
+      "id_unchanged": true,
+      "started_at_unchanged": true,
+      "configuration_unchanged": true,
+      "comparison": "exact",
+      "running": true,
+      "paused": false
+    },
+    {
+      "name": "pentagi",
+      "id_unchanged": true,
+      "started_at_unchanged": true,
+      "configuration_unchanged": true,
+      "comparison": "exact",
+      "running": true,
+      "paused": false
+    },
+    {
+      "name": "aigoat-ollama-1",
+      "id_unchanged": true,
+      "started_at_unchanged": true,
+      "configuration_unchanged": true,
+      "comparison": "exact",
+      "running": true,
+      "paused": false
+    },
+    {
+      "name": "aigoat-backend-1",
+      "id_unchanged": true,
+      "started_at_unchanged": true,
+      "configuration_unchanged": true,
+      "comparison": "same values; Docker mount-array order differs",
+      "running": true,
+      "paused": false
+    },
+    {
+      "name": "aigoat-frontend-1",
+      "id_unchanged": true,
+      "started_at_unchanged": true,
+      "configuration_unchanged": true,
+      "comparison": "exact",
+      "running": true,
+      "paused": false
+    }
+  ],
+  "original_model_manifests_unchanged": true,
+  "explicitly_added_model_manifests": [
+    {
+      "name": "jarvis-hermes-qwen24:7b",
+      "size": 4505856194,
+      "digest": "d77f020ba7430f07565ab4b53d7c2736e6e4d795ea16e1ef52985f49655bb5eb"
+    }
+  ],
+  "models": [
+    {
+      "name": "jarvis-hermes-qwen24:7b",
+      "size": 4505856194,
+      "digest": "d77f020ba7430f07565ab4b53d7c2736e6e4d795ea16e1ef52985f49655bb5eb"
+    },
+    {
+      "name": "jarvis-hermes-aigoat24:3b",
+      "size": 2953840525,
+      "digest": "d407fe1dccfbc7e2e09a052925d11dcd235561a6bf0c297b520a078d1bbbabc8"
+    },
+    {
+      "name": "jarvis-hermes:3b",
+      "size": 2953840466,
+      "digest": "6e3ec91cb7400df0dde0dd9c4fd37da8d4994c77535597ac447d265c55c19a9e"
+    },
+    {
+      "name": "pentagi-basilisk:7b",
+      "size": 4683075812,
+      "digest": "c6762a7785835b9b3d9f753f9d6ba43aa33e6ee11450784538c8ef1ab84a517e"
+    },
+    {
+      "name": "pentagi-whiterabbitneo:7b",
+      "size": 4505856135,
+      "digest": "201c994e8e1aa4e50feac900eaa744b7eefd5e5611dd93f517f97849c7e11ac1"
+    },
+    {
+      "name": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B:latest",
+      "size": 4505855004,
+      "digest": "09a59953597386d63be95e71f40456a5136147c5751cc51330f0d03d2887b3c4"
+    },
+    {
+      "name": "ministral-3:3b",
+      "size": 2953840808,
+      "digest": "f04aa1c738f64e13c625b82ae92504fc0260fa6723b509ed1ece0fa188179b1d"
+    },
+    {
+      "name": "granite-code:3b",
+      "size": 1997354777,
+      "digest": "becc94fe18760be2de6f1c8b0a5ce3656bcf1f3a6b8a2e48519098fa214a149b"
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "size": 274302450,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+    },
+    {
+      "name": "llama3.2:3b",
+      "size": 2019393189,
+      "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72"
+    }
+  ],
+  "inference_requested": false,
+  "protected_service_mutations": 0
+}

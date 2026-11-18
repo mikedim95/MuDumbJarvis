@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "agent_system_prompt_saved": true,
+  "agent_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+  "agent_name": "JARVIS OSINT",
+  "prompt_sha256": "4c461468f5f6efe534dda55f82545fe47b891b309c2242ce1bbd3346ae624429",
+  "standing_directions_saved_for": [
+    {
+      "id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+      "name": "JARVIS Software",
+      "revision": 3
+    },
+    {
+      "id": "5c82ec12-85e9-40be-99bb-158f0ea5e012",
+      "name": "JARVIS Systems",
+      "revision": 1
+    },
+    {
+      "id": "50a7204d-39f5-4e4a-98bb-ff07cf4e526e",
+      "name": "JARVIS",
+      "revision": 3
+    },
+    {
+      "id": "364450b8-c2b3-4afc-970e-ec6c0ea81618",
+      "name": "JARVIS Security",
+      "revision": 1
+    },
+    {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS OSINT",
+      "revision": 1
+    }
+  ],
+  "actual_tools": [
+    "jarvis_administrator",
+    "jarvis_administrator",
+    "general_context",
+    "general_context",
+    "general_context",
+    "jarvis_administrator"
+  ],
+  "runtime": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "route_source": "raw_request",
+    "model_lock": "confirmed"
+  },
+  "no_project_requested": true
+}

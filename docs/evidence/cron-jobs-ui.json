@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-17T09:42:39.298Z",
+  "approval_lifecycle_uses_browser_fixture": true,
+  "status": "passed",
+  "daily_native_job_id": "387ef428-5533-414a-970e-e093a01165e4",
+  "cron_navigation_and_reload": true,
+  "existing_goal_form": true,
+  "mobile_checks": true,
+  "progress_and_chat_events_do_not_popup": true,
+  "only_pending_approval_opens": true,
+  "decision_closes_popup": true,
+  "native_mutations": 0,
+  "browser_errors": []
+}

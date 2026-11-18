@@ -1,10 +1,16 @@
 model:
-  provider: custom
+  provider: custom:jarvis-local-ollama
   default: jarvis-hermes:3b
   base_url: http://ollama-models:11434/v1
   context_length: 65536
   ollama_num_ctx: 65536
   streaming: false
+providers:
+  jarvis-local-ollama:
+    api: http://ollama-models:11434/v1
+    api_key: ollama-local-only
+    extra_body:
+      max_tokens: 768
 agent:
   max_turns: 8
   gateway_timeout: 900
@@ -17,6 +23,9 @@ tools:
     enabled: 'off'
 plugins:
   enabled: [jarvis_readonly]
+hooks:
+  output_spill:
+    max_chars: 32768
 compression:
   enabled: false
 memory:

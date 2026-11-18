@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-11-18T06:52:23.021Z",
+  "status": "passed",
+  "job_id": "387ef428-5533-414a-970e-e093a01165e4",
+  "task_id": "e86c7aea-b0b9-44c7-850c-0396d1f8dd46",
+  "task_identifier": "JAR-71",
+  "actual_open_latest_run_button": true,
+  "published_reply_restored": true,
+  "report_matches_native_bytes": true,
+  "report_characters": 4490,
+  "worker_catalog_matches_native_bytes": true,
+  "files": 28,
+  "no_result_popups": true,
+  "repeated_navigation_without_duplicate_reply": true,
+  "evicted_reply_restored": true,
+  "reload_restores_result": true,
+  "mobile_checks": true,
+  "native_mutations": 0,
+  "browser_errors": []
+}

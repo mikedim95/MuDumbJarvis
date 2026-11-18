@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "worker_id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+  "worker_issue": "72b09b3a-4915-4595-b65a-374bd216551a",
+  "signed_receipt_authenticated": true,
+  "catalog": {
+    "tools": 16,
+    "categories": 9,
+    "documented_only": true,
+    "fresh_sources": 20,
+    "coverage_met": true,
+    "artifact_id": "9f97262b-30c1-408f-b04e-14eed3a6f666"
+  },
+  "actual_catalog_entries": 16,
+  "actual_categories": 9,
+  "full_artifact_receipts": 27,
+  "full_source_references": 20,
+  "ceo_context_characters": 25056,
+  "ceo_context_maximum": 32000
+}

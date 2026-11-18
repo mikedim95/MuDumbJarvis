@@ -38,6 +38,50 @@ def employees(turn):
             if a.get('reportsTo') == turn['agent'] and a.get('status') not in ('terminated', 'pending_approval')]
 
 
+def check_research_dependency(turn, employee, items, dependencies):
+    """Validate the declared pipeline; never choose or create an assignment."""
+    if not (turn.get('needs_research') and turn.get('needs_test_execution')):
+        return
+    profile = profile_registry.employee_profile(employee)
+    if (turn.get('inference_configuration') or {}).get('version') == 3 and profile != 'software_development':
+        return  # Independent systems/QA work is not a research implementation pipeline.
+    tools = set(profile_registry.profile(profile)['tools']) if profile else set()
+    if 'terminal' not in tools or 'research_sources' in tools:
+        return
+    by_id = {a['id']: a for a in employees(turn)}
+    research = []
+    for item in items:
+        person = by_id.get(item.get('assigneeAgentId'), {})
+        role = profile_registry.employee_profile(person)
+        if role and 'research_sources' in profile_registry.profile(role)['tools']:
+            research.append(item['id'])
+    if not research:
+        raise ValueError('Create the actual primary-source research child first; its returned UUID is the prerequisite for this implementation.')
+    if not set(dependencies).intersection(research):
+        raise ValueError('Supply depends_on as a STRUCTURED tool argument containing the actual research child UUID: ' +
+            ', '.join(research) + '. Mentioning a dependency in task prose does not record a Paperclip dependency.')
+
+
+def dependency_corrections(turn, verified):
+    if not (turn.get('needs_research') and turn.get('needs_test_execution')):
+        return []
+    sources = {v['issue_id'] for v in verified if any(t.get('tool') == 'research_sources' and t.get('success')
+        for t in v['evidence'].get('tool_calls', []))}
+    corrections = []
+    for v in verified:
+        if (turn.get('inference_configuration') or {}).get('version') == 3 and v['evidence'].get('profile') != 'software_development':
+            continue
+        if v['issue_id'] in sources or not any(t.get('tool') == 'terminal' and t.get('success')
+                for t in v['evidence'].get('tool_calls', [])):
+            continue
+        child = reporting.api('GET', '/issues/' + v['issue_id'])
+        depends = {item['id'] for item in child.get('blockedBy') or []}
+        if not depends.intersection(sources):
+            corrections.append({'child_id': v['issue_id'], 'required_source_child_ids': sorted(sources),
+                'reason': 'No native research dependency was recorded. Correct this same child with structured depends_on, read completed sibling results and rerun its tests.'})
+    return corrections
+
+
 def audit(turn, action, result, tool_name='paperclip_ceo'):
     from hermes_constants import get_hermes_home
     record = {'timestamp': time.time(), 'issue_id': turn['issue'], 'paperclip_run_id': turn['run'],
@@ -70,6 +114,9 @@ def context_snapshot(turn, issue=None, comments=None):
         (c.get('authorAgentId') == turn['agent'] and c.get('body', '').startswith(
         ('[JARVIS CEO PLAN', '[JARVIS CEO REVIEW]', '[JARVIS CEO WAITING]', '[JARVIS CEO RESULTS READY]')))]
     result = {'source': 'Paperclip REST API',
+        'reporting_style': reporting.REPORT_STYLE,
+        'general_directions': turn.get('general_context'),
+        'work_scope':turn.get('work_scope'),'mission_context':turn.get('mission_context'),'shared_knowledge':turn.get('shared_knowledge'),
         'objective': {k: issue.get(k) for k in ('id', 'identifier', 'title', 'description', 'status', 'goalId')},
         'goals': [{k: g.get(k) for k in ('id', 'title', 'description', 'status')} for g in goals[:20]],
         'goal_count': len(goals), 'goal_list_truncated': len(goals) > 20,
@@ -103,6 +150,9 @@ def context_snapshot(turn, issue=None, comments=None):
         goal['description'] = str(goal.get('description') or '')[:1000]
     for employee in result['employees']:
         employee['capabilities'] = str(employee.get('capabilities') or '')[:1600]
+    if turn.get('work_scope'):
+        from . import work_scope
+        result['scope_guidance']=work_scope.guidance(turn['work_scope'])
     return result, items
 
 
@@ -146,13 +196,35 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
             snapshot['current_action'] = (
                 'VERIFIED RESULTS READY: every child listed above is DONE. The signed tool data and succeeded worker runs '
                 'have been independently validated by the runtime. This is delivery FOR YOUR REVIEW, not model approval. '
-                'Analyze the verified tool data, worker reports, artifact receipts and test output into the FINAL technical report NOW. '
-                'For inventory include exact names, size_bytes and size_gib. For research/code work compare retrieved sources and actual tested deliverables. '
+                'Review the verified evidence and give the FINAL technical report NOW in the requested format. '
+                'The runtime signs receipts after the worker final response and has verified them here. A worker saying it could not see a signature is not a missing-signature blocker. '
+                'For inventory report the requested fields from verified data. For research/code work include the relevant finding or test result. '
                 'Check source_refs/code_components against generated worker claims; analogies to nmap/metasploit are not integrations. '
                 'If a report needs factual correction, use action=request_correction with that child_id and exact feedback, then let Paperclip resume it. '
-                'State source, completed work and unresolved limits. Do not wait, delegate again, or retrieve a competing inventory. '
+                'Mention source or limitations when needed to interpret the result. Do not wait, delegate again, or retrieve a competing inventory. '
                 'You may use the explicit review tool, but the validated facts are already available here. '
                 'For delegated research/code report work call publish_artifact(name="technical-report.md", content=your consolidated Markdown report) before your final response.')
+            corrections = dependency_corrections(turn, verified)
+            if corrections:
+                snapshot['required_dependency_corrections'] = corrections
+                snapshot['current_action'] = (
+                    'THE OBJECTIVE IS NOT COMPLETE. Actual worker tools ran, but native dependency review found the '
+                    'missing relationships listed above. Use paperclip_ceo action=request_correction for the existing '
+                    'implementation child with depends_on=[the actual source child UUID], and text requiring it to '
+                    'read the completed sibling results, verify/reuse the actual demo and rerun its tests. '
+                    'Then wait for Paperclip. Do not create a replacement child, employee or final completion claim.')
+            quality = [{'child_id': item['issue_id'], 'note_count': len(item['operator_review_notes']),
+                'notes_in': 'verified_child_results.operator_review_notes'}
+                for item in verified if item.get('operator_review_notes')]
+            if quality:
+                snapshot['required_factual_corrections'] = quality
+                snapshot['current_action'] = (
+                    'THE OBJECTIVE IS NOT COMPLETE. Native human quality reviews reject generated claims in the '
+                    'listed children, despite their valid tool provenance. Use paperclip_ceo action=request_correction '
+                    'on the SAME research child with concrete feedback from those notes. Also correct the same '
+                    'implementation child if a native dependency is missing: depends_on must contain the actual '
+                    'research UUID, so it waits for corrected research before reading sibling artifacts and rerunning '
+                    'tests. Do not create replacement tasks or employees. Then wait for Paperclip.')
         elif items:
             snapshot['current_action'] = (
                 'Existing delegated work is not all complete. Do not create duplicate work or claim completion. '
@@ -203,9 +275,27 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                 'For research plus implementation/testing, reuse the Research and Software employees, create only their two scoped native children, '
                 'and make implementation depend on research with depends_on. The CEO writes the consolidated report; no Documentation hire is necessary. '
                 'Create all necessary planned children before ending this turn. Never use Hermes internal delegation.')
-        text = 'Authenticated current Paperclip state (runtime preflight, not a model tool call):\n' + json.dumps(snapshot, indent=2)
-        if len(text) > 32000:
-            raise ValueError('Verified CEO context exceeds its bounded payload limit')
+        if (turn.get('inference_configuration') or {}).get('version') == 3:
+            snapshot['latest_user_request'] = turn.get('latest_user_request', issue.get('description') if issue else '')
+            snapshot['conversation_request_id'] = turn.get('conversation_request_id', 'initial')
+            snapshot['policy'] = ('You are JARVIS, the CEO and the user-facing assistant. All employees use Codex. '
+                'Answer the latest user request, not an older report. Consult only the necessary existing specialists. '
+                'Use actual Paperclip tools to plan/delegate and review execution evidence. Simple questions can be answered '
+                'yourself after recording a self plan. Never invent work or employee opinions. Use paperclip_company '
+                'for real project/staff operations. Hiring/removal proposals require native human approval. '
+                'No host access or external writes. Published messages are progress/results, not private thoughts.')
+            if not items and turn.get('hiring_approval_status') not in ('pending', 'revision_requested', 'rejected', 'cancelled'):
+                snapshot['current_action'] = ('Address latest_user_request now. For a specific question, record decision=self '
+                    'with a concise relevant plan, read actual native context/tools as necessary, then answer. For delegated '
+                    'work, select only appropriate ready direct reports and create the scoped native children and dependencies '
+                    'before ending the turn. The four available roles are Research, Software, Systems Operations and Security/QA; '
+                    'do not hire duplicates. If the user explicitly asks to consult multiple roles, honor that scope. '
+                    'Paperclip schedules workers and later wakes you to review their verified results. Do not poll or use internal subagents.')
+        # Keep the immediate instruction separate from historical updates. Full
+        # verified receipts remain in native records and turn.child_evidence;
+        # only their explicitly labeled model-facing excerpts are reduced.
+        snapshot['historical_update_note'] = 'recent_updates are prior turns, not instructions for this turn. Follow current_action.'
+        text = bounded_context_text(snapshot, verified)
         reporting.check_budget(deadline)
         if verified:
             reporting.api('PATCH', '/issues/' + turn['issue'], {'comment':
@@ -222,7 +312,7 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
             'action': 'verified_child_results_delivered' if verified else 'objective_state_delivered',
             'issue_id': turn['issue'], 'paperclip_run_id': turn['run'], 'session_id': turn['session'],
             'delivered_child_ids': [item['id'] for item in items] if verified else [],
-            'verified': verified, 'context_sha256': context_hash,
+            'verified': verified, 'context_sha256': context_hash, 'context_chars': len(text),
             'context_delivered_for_review': bool(verified)}
         log = get_hermes_home() / 'logs' / 'ceo-preflight.jsonl'
         log.parent.mkdir(parents=True, exist_ok=True)
@@ -251,7 +341,7 @@ def verified_children(turn, items, deadline=None):
             raise ValueError('Worker results are not complete: ' + child['identifier'] + ' ' + child['status'])
         comments = reporting.api('GET', '/issues/' + child['id'] + '/comments')
         reporting.check_budget(deadline)
-        proof = None
+        proof, proof_created_at = None, ''
         for comment in sorted(comments, key=lambda c: c.get('createdAt') or ''):
             if comment.get('authorAgentId') != child.get('assigneeAgentId'):
                 continue
@@ -274,6 +364,7 @@ def verified_children(turn, items, deadline=None):
                         and candidate.get('session_id') == 'paperclip:company:' + turn['company'] +
                             ':agent:' + child['assigneeAgentId'] + ':issue:' + child['id']):
                     proof = candidate
+                    proof_created_at = comment.get('createdAt') or ''
         if proof is None:
             raise ValueError('No successful, issue-correlated worker tool evidence: ' + child['identifier'])
         # Wait for THIS evidence's adapter run, never an older succeeded retry.
@@ -294,14 +385,20 @@ def verified_children(turn, items, deadline=None):
             raise ValueError('Worker execution has not succeeded: ' + child['identifier'])
         reporting.check_budget(deadline)
         entry = {'issue_id': child['id'], 'identifier': child['identifier'], 'evidence': proof}
+        entry['operator_review_notes'] = [c['body'][:1500] for c in comments if c.get('authorUserId') and
+            (c.get('createdAt') or '') > proof_created_at and
+            c.get('body', '').startswith('[JARVIS OPERATOR QUALITY REVIEW]')][:3]
         if proof['version'] == 3:
             validate_execution_receipt(turn, child, proof)
             reports = [c for c in comments if c.get('authorAgentId') == child['assigneeAgentId']
                 and c.get('createdByRunId') == proof['paperclip_run_id'] and 'JARVIS_EXECUTION_EVIDENCE=' in c.get('body', '')]
-            entry['worker_summary'] = reports[-1]['body'].split('\n\nVerified runtime identity:')[0][:4000]
+            entry['worker_summary'] = re.split(r'^(?:JARVIS_EXECUTION_EVIDENCE=|Verified runtime identity:|Verified local_ollama_models data)',
+                reports[-1]['body'], maxsplit=1, flags=re.M)[0].strip()[:4000]
             entry['deliverables'] = []
             from . import employee_work
-            for artifact in proof.get('artifacts', [])[:8]:
+            reports=[a for a in proof.get('artifacts',[]) if a['originalFilename'].endswith(('.md','.txt')) or
+                re.fullmatch(r'osint-catalog-v\d+\.json',a['originalFilename'])]
+            for artifact in reports[:8]:
                 raw = employee_work.attachment_bytes(artifact['id'])
                 if hashlib.sha256(raw).hexdigest() != artifact['sha256'] or len(raw) != artifact['byteSize']:
                     raise ValueError('Native deliverable bytes do not match the signed receipt')
@@ -316,13 +413,38 @@ def validate_execution_receipt(turn, child, proof):
     employee = reporting.api('GET', '/agents/' + child['assigneeAgentId'])
     meta = (employee.get('metadata') or {}).get('jarvis') or {}
     profile = profile_registry.profile(meta.get('profile'))
+    from . import inference_policy
+    actual_model = inference_policy.proof_model(proof, employee, profile['model'], os.environ.get('JARVIS_EXECUTION_PROOF_KEY', ''))
     if (proof.get('profile') != profile['id'] or proof.get('profile_sha256') != profile['sha256'] or
-            meta.get('profile_sha256') != profile['sha256'] or proof.get('model') != profile['model']):
+            meta.get('profile_sha256') != profile['sha256'] or proof.get('model') != actual_model):
         raise ValueError('Worker proof differs from its registered capability/model')
     successful = [c for c in proof['tool_calls'] if c.get('success') is True and c.get('tool') in profile['tools']]
-    if not any(c['tool'] not in ('publish_artifact', 'request_action_approval') for c in successful):
+    acknowledgement = proof.get('task_kind') == 'acknowledgement'
+    if acknowledgement:
+        from . import acknowledgements
+        parent = reporting.api('GET', '/issues/' + turn['issue'])
+        if not acknowledgements.assignment(child, parent):
+            raise ValueError('A communication acknowledgment cannot complete a substantive work assignment')
+        calls = [c for c in proof['tool_calls'] if c.get('success') is True]
+        if any(c.get('tool') not in ('agent_identity', 'publish_artifact') for c in calls):
+            raise ValueError('Communication proof contains unrelated capability execution')
+        ack = proof.get('acknowledgement') or {}
+        identity = acknowledgements.observed_identity(calls)
+        if identity != ack.get('identity'):
+            raise ValueError('Acknowledgment lacks the actual identity tool receipt')
+        # A signed historical contact remains valid after an owner renames the same agent.
+        registered_names = {employee['name'], *(entry.get('name') for entry in
+            ((employee.get('metadata') or {}).get('jarvis') or {}).get('name_history', []) if isinstance(entry, dict))}
+        receipt_name = identity.get('name') if isinstance(identity, dict) else None
+        error = acknowledgements.identity_error(identity, {'agent': child['assigneeAgentId'],
+            'company': turn['company'], 'issue': child['id'], 'run': proof['paperclip_run_id'],
+            'profile': profile['id'], 'name': receipt_name if receipt_name in registered_names else employee['name'],
+            'role': employee['role']}, ack.get('reply'))
+        if error:
+            raise ValueError(error)
+    if not acknowledgement and not any(c['tool'] not in ('publish_artifact', 'request_action_approval') for c in successful):
         raise ValueError('Worker has no successful capability work tool')
-    if profile['id'] == 'software_development':
+    if profile['id'] == 'software_development' and not acknowledgement:
         terminal = [c for c in successful if c['tool'] == 'terminal' and c.get('result', {}).get('exit_code') == 0]
         if not terminal:
             raise ValueError('Software deliverable lacks real successful terminal execution')
@@ -338,7 +460,7 @@ def validate_execution_receipt(turn, child, proof):
                         for a in proof.get('artifacts', [])) for e in evaluations):
                 raise ValueError('Software deliverable lacks verified actual Promptfoo result bytes')
     persisted = {a['id']: a for a in reporting.api('GET', '/issues/' + child['id'] + '/attachments')}
-    if not proof.get('artifacts'):
+    if not proof.get('artifacts') and not acknowledgement:
         raise ValueError('Delegated work lacks native persisted deliverables')
     for artifact in proof['artifacts']:
         native = persisted.get(artifact.get('id'))
@@ -351,16 +473,140 @@ def validate_execution_receipt(turn, child, proof):
             raise ValueError('Worker deliverable authorship/run mismatch')
 
 
-def review_projection(item):
+def _text_excerpt(value, limit):
+    """Keep both ends of observed text; never summarize or invent its contents."""
+    text = value if isinstance(value, str) else str(value or '')
+    if len(text) <= limit:
+        return text
+    if not limit:
+        return ''
+    head = limit // 2
+    return text[:head] + '\n[... excerpt omitted ...]\n' + text[-(limit - head):]
+
+
+def review_projection(item, excerpt_chars=1000, output_chars=1600, compact_indexes=False):
+    """Compact delivery for model review, after full server-side verification.
+
+    Identity, inventory values and human quality decisions are retained. Large
+    OSINT source indexes are summarized after full verification; the original
+    signed receipts remain in native records and the in-memory review evidence.
+    """
     proof = item['evidence']
     if proof['version'] == 2:
         return item
-    return {'issue_id': item['issue_id'], 'identifier': item['identifier'], 'worker_summary': item.get('worker_summary'),
-        'deliverables': item.get('deliverables', []),
-        'verified_receipt_projection': {'note': 'Full signed receipt was verified server-side; this bounded projection is not itself a signed proof.',
-            **{k: proof.get(k) for k in ('agent_id', 'paperclip_run_id', 'model', 'profile', 'inventory', 'signature', 'artifacts', 'source_refs', 'framework_evaluations')},
-            'tools': [{'tool': c['tool'], 'success': c['success'], 'result': c.get('result') if c['tool'] == 'terminal' else
-                      {'source': c.get('result', {}).get('source'), 'result_sha256': c.get('result_sha256')}} for c in proof['tool_calls']]}}
+    tools = []
+    for call in proof['tool_calls']:
+        observed = call.get('result') or {}
+        result = {key: observed[key] for key in ('source', 'exit_code', 'error', 'verified', 'result_truncated')
+                  if key in observed}
+        if call['tool'] == 'agent_identity':
+            result.update({key: observed.get(key) for key in ('agent_id', 'company_id', 'issue_id',
+                'paperclip_run_id', 'profile', 'name', 'role')})
+        if call['tool'] == 'terminal':
+            output = observed.get('output', '')
+            result.update(output=_text_excerpt(output, output_chars),
+                output_excerpt_truncated=len(output) > output_chars,
+                output_chars=len(output))
+        tools.append({'tool': call['tool'], 'tool_call_id': call.get('tool_call_id'),
+            'success': call['success'], 'result_sha256': call.get('result_sha256'),
+            'command_excerpt': _text_excerpt((call.get('args') or {}).get('command'), min(excerpt_chars, 500))
+                if call['tool'] == 'terminal' else None,
+            'result': result})
+    artifacts = [{key: artifact.get(key) for key in ('id', 'issueId', 'originalFilename', 'byteSize',
+        'sha256', 'createdByAgentId', 'originatingRunId')} for artifact in proof.get('artifacts', [])]
+    source_refs=proof.get('source_refs',[])
+    index={}
+    if proof.get('osint_catalog') or compact_indexes:
+        index={'artifact_count':len(artifacts),'source_reference_count':len(source_refs),
+            'tool_call_count':len(tools),
+            'full_artifact_index_sha256':hashlib.sha256(json.dumps(artifacts,sort_keys=True).encode()).hexdigest(),
+            'full_source_index_sha256':hashlib.sha256(json.dumps(source_refs,sort_keys=True).encode()).hexdigest(),
+            'full_tool_index_sha256':hashlib.sha256(json.dumps(proof['tool_calls'],sort_keys=True).encode()).hexdigest(),
+            'source_indexes_compacted':True}
+        artifacts=[a for a in artifacts if not a['originalFilename'].startswith(('osint-source-','osint-discovery-','research-sources-'))]
+        source_refs=[{k:s.get(k) for k in ('framework','source_url','sha256','snapshot_artifact_id',
+            'blob_sha','code_components')} for s in source_refs[:8]]
+        if compact_indexes:
+            index['structured_indexes_compacted']=True
+            artifacts=[{k:a.get(k) for k in ('id','originalFilename','byteSize','sha256')} for a in artifacts]
+            for source in source_refs:
+                components=source.get('code_components') or []
+                if len(components)>8:
+                    source['code_component_count']=len(components)
+                    source['code_components']=components[:8]
+                    source['code_components_truncated']=True
+            outcomes={}
+            for tool in tools:
+                counts=outcomes.setdefault(tool['tool'],{'successful':0,'failed':0})
+                counts['successful' if tool['success'] else 'failed']+=1
+            index['tool_outcomes']=outcomes
+        if compact_indexes or len(tools)>12:
+            identity=next((t for t in tools if t['tool']=='agent_identity'),None)
+            if compact_indexes:
+                # Retain every tool kind and failure, plus the latest test/fixture
+                # executions, instead of a long series of repeated file writes.
+                latest={t['tool']:t for t in tools if t['success']}
+                retained={id(t) for t in tools if not t['success'] or t is identity}
+                retained.update(id(t) for t in latest.values())
+                retained.update(id(t) for t in [t for t in tools if t['success'] and t['tool']=='terminal'][-2:])
+                tools=[t for t in tools if id(t) in retained]
+                index['tool_calls_sampled']=len(tools)<index['tool_call_count']
+            else:tools=([identity] if identity else [])+[t for t in tools if t['tool']!='agent_identity'][-10:]
+    return {'issue_id': item['issue_id'], 'identifier': item['identifier'],
+        'worker_summary': _text_excerpt(item.get('worker_summary'), excerpt_chars),
+        'worker_summary_excerpt_truncated': len(item.get('worker_summary') or '') > excerpt_chars,
+        'operator_review_notes': item.get('operator_review_notes', []),
+        'deliverables': [{key: value for key, value in artifact.items() if key != 'excerpt'} |
+            {'excerpt': _text_excerpt(artifact.get('excerpt'), excerpt_chars),
+             'excerpt_truncated': len(artifact.get('excerpt') or '') > excerpt_chars}
+            for artifact in item.get('deliverables', [])],
+        'verified_receipt_projection': {'note': 'Full signed receipt was verified server-side; this projection is not a signed proof. '
+                'Text excerpts may omit facts. Use paperclip_ceo action=review for original verified receipts and report excerpts; '
+                'full report/source bytes remain in the referenced native artifacts.',
+            'receipt_sha256': hashlib.sha256(json.dumps(proof, sort_keys=True, separators=(',', ':')).encode()).hexdigest(),
+            **{k: proof.get(k) for k in ('version', 'kind', 'task_status', 'company_id', 'issue_id', 'agent_id',
+                'paperclip_run_id', 'session_id', 'model', 'profile', 'profile_sha256', 'signature', 'source_refs', 'framework_evaluations', 'task_kind','osint_catalog')},
+            **index,'source_refs':source_refs,
+            'inventory': [{k: model.get(k) for k in ('name', 'size_bytes', 'size_gib')} for model in proof.get('inventory', [])],
+            'artifacts': artifacts, 'tools': tools}}
+
+
+def bounded_context_text(snapshot, verified):
+    """Fit text excerpts to the preflight budget without weakening verification.
+
+    Retain irreducible structured evidence and quality notes or fail closed.
+    Compact JSON also avoids spending the bound on repeated indentation.
+    """
+    prefix = 'Authenticated current Paperclip state (runtime preflight, not a model tool call):\n'
+    for excerpt_chars, output_chars, compact_indexes in (
+            (1000,1600,False),(600,900,False),(300,450,False),(0,0,False),
+            (600,900,True),(300,450,True),(200,300,True),(100,180,True),(0,0,True)):
+        if verified:
+            snapshot['verified_child_results'] = [review_projection(item, excerpt_chars, output_chars, compact_indexes) for item in verified]
+        candidate=snapshot
+        if compact_indexes and snapshot.get('latest_user_request') and (snapshot.get('objective') or {}).get('description')==snapshot['latest_user_request']:
+            # Initial objectives repeat the same human text in two fields.
+            # Reference its complete copy rather than spending the budget twice.
+            candidate={**snapshot,'objective':{**snapshot['objective'],
+                'description':'Identical to latest_user_request below.',
+                'description_same_as_latest_user_request':True}}
+        if compact_indexes and verified:
+            # Completed-work review needs role identity and authority. Repeated
+            # role descriptions and earlier CEO planning prose add no new facts.
+            updates=snapshot.get('recent_updates',[])
+            candidate={**candidate,
+                'employees':[{k:v for k,v in employee.items() if k!='capabilities'} for employee in snapshot.get('employees',[])],
+                'capability_profiles':[{k:v for k,v in profile.items() if k!='capabilities'} for profile in snapshot.get('capability_profiles',[])],
+                'recent_updates':[update for update in updates if not update.get('authorAgentId')],
+                'historical_agent_updates_omitted':sum(bool(update.get('authorAgentId')) for update in updates)}
+        text = prefix + json.dumps(candidate, separators=(',', ':'))
+        if len(text) <= 32000:
+            return text
+    knowledge=snapshot.get('shared_knowledge') or {}
+    if knowledge.get('entries'):
+        reduced={**snapshot,'shared_knowledge':{**knowledge,'entries':[],'entries_omitted_for_context_budget':True}}
+        return bounded_context_text(reduced,verified)
+    raise ValueError('Verified CEO context exceeds its bounded payload limit')
 
 
 def manage(args, **kwargs):
@@ -403,9 +649,21 @@ def manage(args, **kwargs):
         marker = '[JARVIS CEO CORRECTION ' + hashlib.sha256(text.encode()).hexdigest()[:16] + ']'
         if marker in (child.get('description') or ''):
             raise ValueError('This correction was already requested; review the new evidence before repeating it')
+        dependencies = [str(UUID(value)) for value in args.get('depends_on', [])]
+        related = children(turn)
+        if len(dependencies) > 5 or len(set(dependencies)) != len(dependencies) or any(
+                value == child_id or value not in {c['id'] for c in related} for value in dependencies):
+            raise PermissionError('Correction dependencies must be distinct other children of this objective')
+        employee = next((a for a in employees(turn) if a['id'] == child['assigneeAgentId']), None)
+        if not employee:
+            raise PermissionError('Correction employee is no longer an existing direct report')
+        if not dependencies:
+            dependencies = [item['id'] for item in child.get('blockedBy') or []]
+        check_research_dependency(turn, employee, related, dependencies)
         revised = reporting.api('PATCH', '/issues/' + child_id,
             {'description': (child.get('description') or '')[:6000] + '\n\n' + marker + '\n' + text,
-             'status': 'todo', 'unblockDescriptor': None, 'comment': marker + '\nCEO review feedback: ' + text + ('\n' + review_marker if review_marker else '')}, turn['run'])
+             'status': 'todo', 'unblockDescriptor': None, 'comment': marker + '\nCEO review feedback: ' + text + ('\n' + review_marker if review_marker else ''),
+             **({'blockedByIssueIds': dependencies} if dependencies else {})}, turn['run'])
         return audit(turn, action, {'child_id': child_id, 'identifier': revised['identifier'], 'status': revised['status'],
             'next': 'End with the actual waiting state. Paperclip owns the correction assignment and continuation; do not poll or create duplicate work.'})
     if action == 'plan':
@@ -447,11 +705,12 @@ def manage(args, **kwargs):
         if not title or not 20 <= len(text) <= 6000:
             raise ValueError('A clear title, responsibility and acceptance criteria are required')
         dependencies = [str(UUID(value)) for value in args.get('depends_on', [])]
-        related = {child['id']: child for child in children(turn)} if dependencies else {}
+        related = {child['id']: child for child in children(turn)}
         if len(dependencies) > 5 or len(set(dependencies)) != len(dependencies) or any(value not in related for value in dependencies):
             raise PermissionError('Dependencies must be distinct existing children of this same objective/project')
         if any(related[value].get('assigneeAgentId') == agent_id for value in dependencies):
             raise ValueError('Do not create a same-employee dependency cycle')
+        check_research_dependency(turn, employee, list(related.values()), dependencies)
         if turn.get('plan_decision') != 'delegate':
             plan = str(args.get('plan', '')).strip()
             if plan and not 10 <= len(plan) <= 4000:
@@ -464,6 +723,10 @@ def manage(args, **kwargs):
                           {'comment': '[JARVIS CEO PLAN decision=delegate]\n' + plan}, turn['run'])
             turn['plan_decision'] = 'delegate'
         key = 'jarvis-ceo:' + turn['issue'] + ':' + agent_id
+        if (turn.get('inference_configuration') or {}).get('version') == 3:
+            cycle = turn.get('conversation_request_id', 'initial')
+            key += ':' + cycle
+            text = '[JARVIS REQUEST ' + cycle + ']\n' + text
         child = reporting.api('POST', '/companies/' + turn['company'] + '/issues',
                     {'title': title[:120], 'description': text, 'parentId': turn['issue'],
                      'projectId': turn['project'], 'goalId': issue.get('goalId'), 'status': 'todo',
@@ -582,6 +845,11 @@ def request_profile_hire(turn, me, args, tool_name='paperclip_ceo'):
         'next': 'End this turn and report the pending human approval. No tools or runtime are granted before approval. Paperclip will deliver the decision.'})
 
 
+def required_work_tools(turn):
+    return ({'research_sources'} if turn.get('needs_research') else set()) | (
+        {'terminal'} if turn.get('needs_test_execution') else set())
+
+
 def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_reason=''):
     items = children(turn)
     success = completed and not failed and not interrupted and bool(turn['response'].strip())
@@ -589,7 +857,7 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
     if turn.get('child_evidence'):
         models = [m for child in turn['child_evidence'] for m in child['evidence'].get('models', child['evidence'].get('inventory', []))]
     names = {m['name'] for m in models if isinstance(m, dict) and isinstance(m.get('name'), str)}
-    missing_report = bool(names) and (len(turn['response'].strip()) < 100 or
+    missing_report = turn.get('needs_inventory') and bool(names) and (
         sum(name in turn['response'] for name in names) < min(2, len(names)))
     governed_decision = turn.get('action_approval') or (turn.get('plan_decision') == 'hire' and turn.get('hiring_approval'))
     turn['completion_blocker'] = blocker_review.objective_blocker(turn['response']) if success and not governed_decision else None
@@ -634,12 +902,48 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
         comment = 'CEO report incomplete: the final prose does not identify the retrieved models.\n\n' + comment
     elif not items and turn.get('company_operation_verified'):
         status = 'done'
+    elif not items and turn.get('needs_research') and not turn.get('source_refs'):
+        comment = 'CEO verification blocked: the assigned research has no retrieved primary sources or executed worker task.\n\n' + comment
+    elif not items and turn.get('needs_test_execution'):
+        comment = 'CEO verification blocked: no actual isolated test execution was recorded for the assigned objective.\n\n' + comment
     elif items:
         if (set(turn.get('reviewed_children', [])) == {i['id'] for i in items} or
                 (set(turn.get('delivered_children', [])) == {i['id'] for i in items} and
                  turn.get('delivery_run_id') == turn['run'] and turn.get('delivery_context_sha256'))):
             # Re-read canonical evidence before accepting final CEO completion.
             verified = verified_children(turn, items)
+            incomplete=[v['identifier'] for v in verified if v['evidence'].get('osint_catalog') and not v['evidence']['osint_catalog'].get('coverage_met')]
+            if incomplete:
+                reporting.api('PATCH','/issues/'+turn['issue'],{'status':'blocked',
+                    'comment':'OSINT coverage remains incomplete in '+', '.join(incomplete)+'.\n\n'+comment,
+                    'unblockDescriptor':{'owner':{'agentId':turn['agent']},'action':'Complete the documented source and catalog coverage gaps.'}},turn['run'])
+                return
+            rejected = [item['identifier'] for item in verified if item.get('operator_review_notes')]
+            if rejected:
+                reporting.api('PATCH', '/issues/' + turn['issue'], {'status': 'blocked',
+                    'comment': 'CEO verification blocked: unresolved native human quality review for ' + ', '.join(rejected) + '.\n\n' + comment,
+                    'unblockDescriptor': {'owner': {'agentId': turn['agent']},
+                        'action': 'Review the native quality notes and request a correction on each existing child.'}}, turn['run'])
+                return
+            observed = {tool.get('tool') for child in verified for tool in child['evidence'].get('tool_calls', [])
+                if tool.get('success')}
+            missing_work = required_work_tools(turn) - observed
+            if missing_work:
+                # Failed capability coverage remains a native blocker. No new
+                # assignment, retry or execution is created by this validator.
+                payload = {'status': 'blocked', 'comment': 'CEO verification blocked: required actual work is missing: ' +
+                    ', '.join(sorted(missing_work)) + '.\n\n' + comment,
+                    'unblockDescriptor': {'owner': {'agentId': turn['agent']},
+                        'action': 'Review the missing work and complete the necessary scoped Paperclip assignments.'}}
+                reporting.api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
+                return
+            corrections = dependency_corrections(turn, verified)
+            if corrections:
+                reporting.api('PATCH', '/issues/' + turn['issue'], {'status': 'blocked',
+                    'comment': 'CEO verification blocked: native dependency corrections are required.\n' + json.dumps(corrections) + '\n\n' + comment,
+                    'unblockDescriptor': {'owner': {'agentId': turn['agent']},
+                        'action': 'Correct the existing implementation child with its actual research dependency and verify its rerun.'}}, turn['run'])
+                return
             if turn.get('needs_report') and any(child['evidence']['version'] == 3 for child in verified) and not any(
                     artifact['originalFilename'].endswith('.md') for artifact in turn.get('artifacts', {}).values()):
                 from . import employee_work
@@ -652,19 +956,18 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
                     artifact['originalFilename'].endswith('.md') for artifact in turn.get('artifacts', {}).values()):
                 comment = 'CEO report is not persisted: call publish_artifact with the consolidated Markdown report before completion.\n\n' + comment
             else:
+                # The signed records and attachments are available on each native child.
                 status = 'done'
-                comment += '\n\nVerified delegated execution data:\n```json\n' + json.dumps(verified, indent=2) + '\n```'
-                if turn.get('artifacts'):
-                    comment += '\n\nCEO Paperclip deliverables:\n```json\n' + json.dumps(list(turn['artifacts'].values()), indent=2) + '\n```'
         else:
             comment = 'CEO review or authenticated result delivery is required before objective completion.\n\n' + comment
     elif turn.get('plan_decision') == 'self' and (not turn['needs_inventory'] or turn['inventory_verified']):
         status = 'done'
-        if turn.get('inventory') is not None:
+        if turn.get('inventory') is not None and turn.get('inventory_journaled') != reporting.inventory_fingerprint(turn['inventory']):
             comment += '\n\nVerified local_ollama_models data:\n```json\n' + json.dumps(turn['inventory'], indent=2) + '\n```'
     else:
         comment = 'CEO has not completed the planned execution or is awaiting human approval.\n\n' + comment
     payload = {'status': status, 'comment': comment}
+    if status=='done':payload['unblockDescriptor']=None
     if status == 'blocked':
         action = 'Review the CEO/worker execution, request any required operator decision, then explicitly retry this task.'
         if comment.startswith(blocker_review.WAITING):
@@ -673,9 +976,18 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
             action = 'Await completion of ' + ', '.join(i['identifier'] for i in items) + '; Paperclip will wake this CEO to review their execution evidence and consolidate the result.'
         payload['unblockDescriptor'] = {'owner': {'agentId': turn['agent']}, 'action': action}
     reporting.api('PATCH', '/issues/' + turn['issue'], payload, turn['run'])
+    context=turn.get('work_scope') or {}
+    if status=='done' and context.get('kind')=='project' and context.get('mission_id')==turn['issue']:
+        from . import work_scope
+        for routine in reporting.api('GET','/companies/'+turn['company']+'/routines'):
+            scoped=work_scope.routine_scope(routine)
+            if routine.get('companyId')==turn['company'] and routine.get('assigneeAgentId')==turn['agent'] and routine.get('status')=='active' and scoped['kind']=='project' and scoped['mission_id']==turn['issue']:
+                reporting.api('PATCH','/routines/'+routine['id'],{'status':'paused'})
 
 
 def register(ctx):
+    # Hermes pre_verify only runs after code edits; the CEO has no code-edit
+    # tools. Finalization below remains the fail-closed completion validator.
     from . import employee_work
     employee_work.register(ctx, ceo=True)
     def request_employee(args, **kwargs):
@@ -699,12 +1011,13 @@ def register(ctx):
         schema={'name': 'paperclip_context', 'description': 'Read your actual assigned Paperclip objective, company goals, existing employees and child task states. Authenticated current context is automatically supplied; call for additional reads.',
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}}, handler=context)
     ctx.register_tool(name='paperclip_ceo', toolset='jarvis_ceo',
-        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. A blocked direct report needs request_correction(child_id, text) for an executable fix or ask_owner(child_id, plan=reason, text=question) for a human decision. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. End turn after delegation. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
+        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. A blocked direct report needs request_correction(child_id, text) for an executable fix or ask_owner(child_id, plan=reason, text=question) for a human decision. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. Create ALL necessary minimum-team children before ending the turn; depends_on binds prerequisite child UUIDs. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
                 'parameters': {'type': 'object', 'properties': {
                     'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire', 'request_correction', 'ask_owner']},
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},
                     'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
                     'child_id': {'type': 'string', 'format': 'uuid'},
                     'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])}, 'portrait': portrait_field,
-                    'depends_on': {'type': 'array', 'items': {'type': 'string', 'format': 'uuid'}, 'maxItems': 5}},
+                    'depends_on': {'type': 'array', 'items': {'type': 'string', 'format': 'uuid'}, 'maxItems': 5,
+                        'description': 'Actual prerequisite child UUIDs as a structured argument. Never put depends_on placeholders in the task description. Also supported when correcting an existing child.'}},
                     'required': ['action'], 'additionalProperties': False}}, handler=manage)

@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-11-17T08:13:29.661Z",
+  "status": "passed",
+  "projects": 2,
+  "project_ids": [
+    "b4bb4e44-148a-46be-a024-4a94da7209fa",
+    "59d715bc-cda5-40eb-8455-87cb8ce0b4f1"
+  ],
+  "list_replaces_dropdown": true,
+  "list_hidden_in_context": true,
+  "new_project_empty_until_prompt": true,
+  "selected_scope_restored_after_reload": true,
+  "per_project_drafts_isolated": true,
+  "general_context_agents": 5,
+  "mobile_checks": true,
+  "api_mutations": 0,
+  "browser_errors": []
+}

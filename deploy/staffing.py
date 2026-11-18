@@ -6,6 +6,8 @@ runtime reconciler manages labeled containers and reports runtime readiness.
 No Docker socket or board credential is given to an AI runtime or sandbox.
 """
 import argparse
+import copy
+import datetime
 import fcntl
 import hashlib
 import hmac
@@ -24,13 +26,25 @@ from uuid import UUID
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+_lock_spec=importlib.util.spec_from_file_location('jarvis_agent_config_lock',ROOT/'server/agent_config_lock.py')
+_configuration_lock=importlib.util.module_from_spec(_lock_spec)
+_lock_spec.loader.exec_module(_configuration_lock)
 spec = importlib.util.spec_from_file_location('jarvis_profiles', ROOT / 'hermes-plugin/jarvis_readonly/profile_registry.py')
 registry = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(registry)
+inference_spec = importlib.util.spec_from_file_location('jarvis_inference_policy', ROOT / 'hermes-plugin/jarvis_readonly/inference_policy.py')
+inference_policy = importlib.util.module_from_spec(inference_spec)
+inference_spec.loader.exec_module(inference_policy)
 HERMES_IMAGE = 'nousresearch/hermes-agent:v0.23.1@sha256:1a355ebc8981a4b72a28f4e47e347ba4f0f172b43dc876e5768d175a07c67b22'
 SANDBOX_IMAGE = 'jarvis-command-center:employee-sandbox-v3'
 MANAGED = 'io.jarvis.employee'
 RUNTIME_SPEC = 'phase12-v1'
+CODEX_ROOT = '/opt/jarvis-codex'
+CODEX_PROFILE_HOME = CODEX_ROOT + '/profiles/employee'
+WORKFORCE_AUTHORIZATION = 'user_requested_jarvis_ceo_four_codex_staff_20261116'
+WORKFORCE_HIRING_REASON = ('Operator applying the explicit human request in this session: '
+    'MAKE JARVIS THE CEO, with at least four specialist agents, all using Codex. '
+    'This approves the initial missing roles only. Future hires and sensitive actions require human approval.')
 
 
 def settings():
@@ -87,6 +101,83 @@ def same_runtime_config(observed, expected):
     return {key: value for key, value in observed.items() if key != '_config_version'} == expected
 
 
+def codex_config(config):
+    """Change inference only; retain the frozen tools, isolation and limits."""
+    config = copy.deepcopy(config)
+    config['model'] = {'provider': 'openai-codex', 'default': 'gpt-6.1-sol',
+        'base_url': inference_policy.CODEX_ENDPOINT, 'context_length': 65536, 'streaming': False}
+    for name in ('providers', 'custom_providers', 'fallback_models'):
+        config.pop(name, None)
+    config.update(fallback_model=None, fallback_providers=[])
+    config['compression'] = {'enabled': False, 'prepare_ahead': False}
+    config.setdefault('memory', {}).update(memory_enabled=False, user_profile_enabled=False)
+    config.setdefault('auxiliary', {})['title_generation'] = {'enabled': False, 'model_upgrade_enabled': False}
+    # These named profiles run in separate containers behind the existing TLS
+    # gateway. Pinned Hermes requires its supported standalone compatibility flag.
+    config.setdefault('gateway', {})['standalone'] = True
+    return config
+
+
+def selected_inference(agent, item, env):
+    meta = (agent.get('metadata') or {}).get('jarvis') or {}
+    record = meta.get('inference_configuration')
+    if isinstance(record, dict) and record.get('version') == 3:
+        inference_policy.validate(record, env['PAPERCLIP_COMPANY_ID'], env['JARVIS_EXECUTION_PROOF_KEY'])
+        inference_policy._workforce_identity(record, agent)
+        if record['profile'] != item['id']:
+            raise ValueError('Codex role differs from its approved capability')
+        return record['model'], record
+    model = env.get('JARVIS_RUNTIME_MODEL') or item['model']
+    record = json.loads(env['JARVIS_INFERENCE_CONFIGURATION']) if env.get('JARVIS_INFERENCE_CONFIGURATION') else None
+    if record:
+        inference_policy.validate(record, env['PAPERCLIP_COMPANY_ID'], env['JARVIS_EXECUTION_PROOF_KEY'])
+        if record != meta.get('inference_configuration') or model != record['model']:
+            raise ValueError('Native employee and operator inference selection differ')
+    elif model != item['model']:
+        raise ValueError('A model-only override requires its signed operator selection')
+    return model, record
+
+
+def workforce_record(agent, env, item=None):
+    profile = item['id'] if item else 'ceo'
+    prior = inference_policy.agent_record(agent)
+    if isinstance(prior, dict) and prior.get('version') == 3:
+        inference_policy.validate(prior, env['PAPERCLIP_COMPANY_ID'], env['JARVIS_EXECUTION_PROOF_KEY'])
+        inference_policy._workforce_identity(prior, agent)
+        return prior
+    record = {'version': 3, 'company_id': env['PAPERCLIP_COMPANY_ID'], 'agent_id': agent['id'],
+        'profile': profile, 'provider': 'openai-codex', 'model': 'gpt-6.1-sol',
+        'endpoint': inference_policy.CODEX_ENDPOINT, 'context_length': 65536,
+        'inference_slots': 1, 'fallback_allowed': False, 'user_authorized': True,
+        'source': 'operator_authorized_codex_workforce',
+        'authority_scope': 'ceo_orchestration' if item is None else 'approved_capability_profile',
+        'hiring_approval_required': True, 'sensitive_action_approval_required': True,
+        'selected_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    if item:
+        record['profile_sha256'] = item['sha256']
+    record['signature'] = inference_policy.signature(record, env['JARVIS_EXECUTION_PROOF_KEY'])
+    inference_policy.validate(record, env['PAPERCLIP_COMPANY_ID'], env['JARVIS_EXECUTION_PROOF_KEY'])
+    inference_policy._workforce_identity(record, agent)
+    return record
+
+
+def stage_workforce_employee(board, agent, item):
+    """After native approval, provision future hires with a fresh identity-bound grant."""
+    if not (ROOT / 'deploy/codex-workforce.env').exists():
+        return agent
+    record = workforce_record(agent, board.env, item)
+    if inference_policy.agent_record(agent) == record:
+        return agent
+    meta = (agent.get('metadata') or {}).get('jarvis') or {}
+    history = list(meta.get('inference_configuration_history') or [])
+    if meta.get('inference_configuration'):
+        history.append(meta['inference_configuration'])
+    board.api('POST', '/agents/' + agent['id'] + '/pause', {})
+    runtime_patch(board,agent['id'],jarvis_updates={'inference_configuration':record,
+        'inference_configuration_history':history,'provisioned':False,'operator_inference_upgrade_pending':True})
+    return board.api('GET', '/agents/' + agent['id'])
+
+
 def validate_agent(agent, approvals, env):
     meta = (agent.get('metadata') or {}).get('jarvis') or {}
     if not meta.get('managed'):
@@ -99,14 +190,37 @@ def validate_agent(agent, approvals, env):
         raise ValueError('Approved capability snapshot or runtime identifier differs')
     if agent.get('status') in ('pending_approval', 'terminated'):
         return None
-    if agent.get('status') == 'paused' and (meta.get('provisioned') or agent.get('pauseReason') not in (None, 'setup')):
+    upgrading = meta.get('operator_inference_upgrade_pending') is True and not meta.get('provisioned')
+    if upgrading:
+        inference_policy.validate(meta.get('inference_configuration'), env['PAPERCLIP_COMPANY_ID'], env['JARVIS_EXECUTION_PROOF_KEY'])
+    if agent.get('status') == 'paused' and not upgrading and (meta.get('provisioned') or agent.get('pauseReason') not in (None, 'setup')):
         return None
     if (meta.get('origin') == 'existing_worker' and agent['id'] == env['PAPERCLIP_AGENT_ID']
             and item['id'] == 'research'):
         return item
-    approved = next((a for a in approvals if a.get('type') == 'hire_agent' and a.get('status') == 'approved'
-        and a.get('requestedByAgentId') == env['PAPERCLIP_CEO_AGENT_ID']
-        and (a.get('payload') or {}).get('agentId') == agent['id']), None)
+    def approved_request(approval):
+        if (approval.get('type') != 'hire_agent' or approval.get('status') != 'approved'
+                or (approval.get('payload') or {}).get('agentId') != agent['id']):
+            return False
+        if approval.get('requestedByAgentId') == env['PAPERCLIP_CEO_AGENT_ID']:
+            return True
+        # Initial staffing is explicitly requested by the human, not invented
+        # as an autonomous CEO hire. Keep native operator attribution truthful.
+        snapshot = (((approval.get('payload') or {}).get('metadata') or {}).get('jarvis') or {})
+        if (approval.get('requestedByAgentId') is None and approval.get('requestedByUserId')
+                and approval.get('decidedByUserId')
+                and meta.get('origin') == snapshot.get('origin') == 'operator_authorized_workforce'
+                and meta.get('hiring_reason') == snapshot.get('hiring_reason') == WORKFORCE_HIRING_REASON
+                and (meta.get('bootstrap_request') is None or
+                     meta.get('bootstrap_request') == snapshot.get('bootstrap_request') == WORKFORCE_AUTHORIZATION)):
+            # Older setup metadata used a key containing "authorization";
+            # Paperclip redacts that value in both native response snapshots.
+            # Bind truthful operator provenance and the exact approved reason,
+            # then verify the signed employee/profile selection instead.
+            selected_inference(agent, item, env)
+            return True
+        return False
+    approved = next((a for a in approvals if approved_request(a)), None)
     if not approved:
         return None
     snapshot = ((approved['payload'].get('metadata') or {}).get('jarvis') or {})
@@ -138,7 +252,71 @@ def container(name, argv, runtime_id, refresh=False):
     run(['docker', 'start', name])
 
 
-def provision(board, agent, item, refresh=False):
+def verify_adapter(board, agent_id, adapter):
+    """Retry the native health probe while a new private DNS route settles."""
+    result = None
+    for attempt in range(8):
+        result = board.api('POST', '/companies/' + board.env['PAPERCLIP_COMPANY_ID'] +
+            '/adapters/hermes_gateway/test-environment', {'agentId': agent_id, 'adapterConfig': adapter})
+        if result.get('status') == 'pass':
+            return result
+        if attempt < 7:
+            time.sleep(2)
+    return result
+
+
+def stop_terminated_employee(board, agent):
+    """Retire owned compute only; Paperclip and private state retain history."""
+    meta = (agent.get('metadata') or {}).get('jarvis') or {}
+    if agent.get('status') != 'terminated' or not meta.get('managed'):
+        return False
+    if agent.get('companyId') != board.env['PAPERCLIP_COMPANY_ID']:
+        raise ValueError('Terminated employee belongs to another company')
+    UUID(agent['id'])
+    rid = meta.get('runtime_id', '')
+    if not re.fullmatch(r'[a-f0-9]{24}', rid):
+        raise ValueError('Terminated employee has no valid managed runtime identifier')
+    stopped = []
+    for prefix in ('jarvis-employee-', 'jarvis-sandbox-'):
+        name = prefix + rid
+        observed = inspect('container', name)
+        if not observed:
+            continue
+        if (observed['Config'].get('Labels') or {}).get(MANAGED) != rid:
+            raise ValueError('Terminated employee resource is not operator-owned')
+        if observed['State']['Running']:
+            run(['docker', 'stop', '--timeout', '30', name])
+            stopped.append(name)
+    print(json.dumps({'agent_id': agent['id'], 'status': 'terminated',
+        'stopped_owned_containers': stopped, 'history_deleted': False}))
+    return True
+
+
+def configured_agent_prompt(agent, default):
+    saved=(((agent.get('metadata') or {}).get('jarvis') or {}).get('system_prompts') or {}).get('agent')
+    if saved is None:
+        return default
+    text=saved.get('text')
+    if not isinstance(text,str) or not 1<=len(text)<=20000 or hashlib.sha256(text.encode()).hexdigest()!=saved.get('sha256'):
+        raise ValueError('Saved owner system prompt is invalid; review before reconciling')
+    return text
+
+
+def runtime_patch(board, agent_id, *, fields=None, jarvis_updates=None):
+    """Merge only runtime-owned fields under the same cross-process lock as chat edits."""
+    with _configuration_lock.lock(agent_id):
+        current=board.api('GET','/agents/'+agent_id)
+        patch=copy.deepcopy(fields or {})
+        if 'adapterConfig' in patch:
+            patch['adapterConfig']['instructions']=configured_agent_prompt(current,patch['adapterConfig']['instructions'])
+            patch['adapterConfig']={**(current.get('adapterConfig') or {}),**patch['adapterConfig']}
+        if jarvis_updates:
+            metadata=current.get('metadata') or {}
+            patch['metadata']={**metadata,'jarvis':{**(metadata.get('jarvis') or {}),**jarvis_updates}}
+        return board.api('PATCH','/agents/'+agent_id,patch)
+
+
+def provision(board, agent, item, refresh=False, allow_resume=True):
     env, meta = board.env, agent['metadata']['jarvis']
     rid = meta['runtime_id']
     home = ROOT / '.runtime/employees' / agent['id']
@@ -159,7 +337,9 @@ def provision(board, agent, item, refresh=False):
         secret = board.api('POST', '/companies/' + env['PAPERCLIP_COMPANY_ID'] + '/secrets',
             {'name': secret_name, 'value': credentials['api_key']})
     config = yaml.safe_load((ROOT / 'deploy/hermes.config.example.yaml').read_text())
-    config['model']['default'] = item['model']
+    runtime_model, inference_record = selected_inference(agent, item, env)
+    codex = bool(inference_record and inference_record.get('version') == 3)
+    config['model']['default'] = runtime_model
     config['agent']['max_turns'] = item['limits']['max_turns']
     config['agent']['gateway_timeout'] = item['limits']['timeout_seconds']
     config['agent']['disabled_toolsets'] = [name for name in config['agent']['disabled_toolsets'] if name not in item['toolsets']]
@@ -167,6 +347,8 @@ def provision(board, agent, item, refresh=False):
     config['terminal'] = {'env_type': 'ssh', 'backend': 'ssh', 'ssh_host': 'jarvis-sandbox-' + rid,
         'ssh_port': 2222, 'ssh_user': 'employee', 'ssh_key': '/opt/data/.ssh/id_ed25519',
         'cwd': '/workspace', 'timeout': 120, 'env_passthrough': [], 'credential_files': []}
+    if codex:
+        config = codex_config(config)
     config_path = home / 'config.yaml'
     if not config_path.exists():
         write_private(config_path, yaml.safe_dump(config, sort_keys=False))
@@ -174,13 +356,30 @@ def provision(board, agent, item, refresh=False):
         observed = yaml.safe_load(config_path.read_text())
         observed.pop('_config_version', None)
         observed.setdefault('terminal', {})['backend'] = 'ssh'
+        # An explicit idle-runtime refresh may add the reviewed hook output
+        # bound. Never replace a different operator hook configuration.
+        if refresh and 'hooks' not in observed:
+            observed['hooks'] = config['hooks']
+        if (refresh and not codex and observed.get('model', {}).get('provider') == 'custom'
+                and observed['model'].get('base_url') == 'http://ollama-models:11434/v1'
+                and not observed.get('providers') and not observed.get('custom_providers')):
+            observed['model']['provider'] = config['model']['provider']
+            observed['providers'] = config['providers']
+        if inference_record and refresh:
+            observed['model']['default'] = runtime_model
+        if codex and refresh:
+            observed = codex_config(observed)
         if not refresh or observed != config:
             raise ValueError('Existing employee runtime configuration differs; review before changing authority')
         write_private(config_path, yaml.safe_dump(config, sort_keys=False))
-    soul = ('You are ' + agent['name'] + ', the ' + item['name'] + ' employee reporting to JARVIS-CEO.\n'
+    soul = ('You are ' + agent['name'] + ', the ' + item['name'] + ' employee reporting to JARVIS, the CEO.\n'
         'Paperclip owns your assigned issue, dependencies and execution evidence.\n' + item['authority'] + '\n'
         'Use only your assigned issue context. Never use internal subagents. Do not perform host or external changes.\n'
         'Use actual tools, publish deliverables with publish_artifact, and report real tests/errors. Do not invent evidence.\n')
+    if codex:
+        soul += ('Your inference is OpenAI Codex through the configured Hermes provider and shared slot. '
+            'Do not call an LLM provider directly from fixture code or shell commands. '
+            'Restrictions on cloud providers in test fixtures do not prohibit your authorized Codex runtime.\n')
     (home / 'SOUL.md').write_text(soul)
     for skill in item['skills']:
         directory = home / 'skills' / skill
@@ -190,7 +389,7 @@ def provision(board, agent, item, refresh=False):
             'Distinguish retrieved facts from interpretation. Test generated code in the isolated workspace. '
             'Use only the authenticated current issue workspace, not another task directory. '
             + ('The sandbox includes Python unittest and promptfoo 0.125.1 for offline echo/deterministic-assertion demos. '
-            'Never use cloud providers, remote generation, or model-graded assertions. '
+            'Never call cloud providers or remote generation from fixture code, or use model-graded assertions. '
             'Use promptfoo eval --no-cache --max-concurrency 1 with a JSON output file when a real framework demonstration is needed; '
             'also run actual Python unittest checks. ' if 'terminal' in item['tools'] else '') +
             'Publish the actual source/config/results as Paperclip attachments.\n')
@@ -228,9 +427,18 @@ def provision(board, agent, item, refresh=False):
         'JARVIS_AGENT_PROOF_KEY': hmac.new(env['JARVIS_EXECUTION_PROOF_KEY'].encode(),
             ('jarvis-employee-proof-v3:' + agent['id']).encode(), hashlib.sha256).hexdigest(), 'API_SERVER_ENABLED': 'true',
         'API_SERVER_HOST': '0.0.0.0', 'API_SERVER_PORT': '8642', 'HERMES_DASHBOARD': 'false',
-        'HERMES_UID': '1000', 'HERMES_GID': '1000', 'OPENAI_API_KEY': 'ollama-local-only',
+        'HERMES_UID': '1000', 'HERMES_GID': '1000', 'OPENAI_API_KEY': '' if codex else 'ollama-local-only',
         'HERMES_API_TIMEOUT': str(item['limits']['timeout_seconds']), 'JARVIS_OLLAMA_URL': 'http://ollama-models:11434',
         'JARVIS_AGENT_ROLE': item['id'], 'JARVIS_PAPERCLIP_AGENT_ID': agent['id'], 'JARVIS_PROFILE': item['id']}
+    if inference_record:
+        runtime_env.update({'JARVIS_RUNTIME_MODEL': runtime_model,
+            'JARVIS_INFERENCE_CONFIGURATION': json.dumps(inference_record, sort_keys=True, separators=(',', ':'))})
+    if codex:
+        shared = ROOT / '.runtime/codex-shared'
+        if not (shared / 'auth.json').exists():
+            raise ValueError('Stage the shared Codex credential root before provisioning')
+        runtime_env.update(HERMES_HOME=CODEX_PROFILE_HOME,
+            JARVIS_INFERENCE_LOCK=CODEX_ROOT + '/inference.lock')
     if item['sandbox']:
         runtime_env.update({'TERMINAL_ENV': 'ssh', 'TERMINAL_SSH_HOST': 'jarvis-sandbox-' + rid,
             'TERMINAL_SSH_USER': 'employee', 'TERMINAL_SSH_PORT': '2222',
@@ -240,8 +448,13 @@ def provision(board, agent, item, refresh=False):
     args = ['--network', 'jarvis-command-center_agent-private', '--restart', 'unless-stopped',
         '--security-opt', 'no-new-privileges:true', '--cap-drop', 'NET_RAW', '--pids-limit', str(item['limits']['pids']),
         '--cpus', str(item['limits']['cpus']), '--memory', str(item['limits']['memory_mb']) + 'm',
-        '--env-file', str(env_file), '--tmpfs', '/workspace:rw,nosuid,nodev,noexec,size=1m,mode=0755', '-v', str(home) + ':/opt/data',
-        '-v', str(ROOT / 'hermes-plugin/jarvis_readonly') + ':/opt/data/plugins/jarvis_readonly:ro',
+        '--env-file', str(env_file), '--tmpfs', '/workspace:rw,nosuid,nodev,noexec,size=1m,mode=0755', '-v', str(home) + ':/opt/data']
+    plugin_home = '/opt/data'
+    if codex:
+        args += ['-v', str(shared) + ':' + CODEX_ROOT,
+                 '-v', str(home) + ':' + CODEX_PROFILE_HOME]
+        plugin_home = CODEX_PROFILE_HOME
+    args += ['-v', str(ROOT / 'hermes-plugin/jarvis_readonly') + ':' + plugin_home + '/plugins/jarvis_readonly:ro',
         HERMES_IMAGE, 'gateway', 'run']
     runtime_name = 'jarvis-employee-' + rid
     container(runtime_name, args, rid, refresh)
@@ -249,7 +462,7 @@ def provision(board, agent, item, refresh=False):
         state = inspect('container', runtime_name)
         if network not in state['NetworkSettings']['Networks']:
             run(['docker', 'network', 'connect', network, runtime_name])
-    if 'research_sources' in item['tools']:
+    if codex or 'research_sources' in item['tools']:
         state = inspect('container', runtime_name)
         if 'jarvis-command-center_default' not in state['NetworkSettings']['Networks']:
             run(['docker', 'network', 'connect', 'jarvis-command-center_default', runtime_name])
@@ -264,38 +477,42 @@ def provision(board, agent, item, refresh=False):
     if not healthy:
         print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'starting'}))
         return False
+    # Container checks may take seconds. Reread native owner edits before deciding
+    # whether the adapter needs reconciliation; runtime_patch rereads under lock.
+    agent=board.api('GET','/agents/'+agent['id'])
+    meta=(agent.get('metadata') or {}).get('jarvis') or {}
     adapter = {'apiBaseUrl': 'https://hermes-tls:8645/runtimes/' + rid,
         'apiKey': {'type': 'secret_ref', 'secretId': secret['id'], 'version': 'latest'},
         'paperclipApiUrl': 'http://paperclip:3100', 'sessionKeyStrategy': 'issue',
-        'timeoutSec': item['limits']['timeout_seconds'], 'instructions': soul,
+        'timeoutSec': item['limits']['timeout_seconds'], 'instructions': configured_agent_prompt(agent,soul),
         'payloadTemplate': {'input': 'Execute the current Paperclip assignment supplied by the authenticated preflight context. Use actual approved tools, then return the completed result or real blocker. The runtime persists actual deliverables; never claim an unexecuted tool call.', 'conversation_history': [
             {'role': 'user', 'content': 'Where is authoritative task context?'},
             {'role': 'assistant', 'content': 'Paperclip. I use only the current authenticated issue and approved tools.'}]}}
-    updated_meta = {**meta, 'provisioned': True, 'runtime_name': runtime_name, 'dormancy': 'No timer heartbeats or inference while idle'}
+    runtime_updates = {'provisioned': True, 'runtime_name': runtime_name, 'dormancy': 'No timer heartbeats or inference while idle',
+        'operator_inference_upgrade_pending': False}
     capabilities = ', '.join(item['capabilities']) + '. ' + item['authority']
     if (not meta.get('provisioned') or any(agent.get('adapterConfig', {}).get(key) != value for key, value in adapter.items())
             or agent.get('capabilities') != capabilities or agent.get('role') != item['role']):
-        board.api('PATCH', '/agents/' + agent['id'], {'adapterConfig': adapter,
-            'role': item['role'], 'title': item['name'], 'capabilities': capabilities,
-            'metadata': {**(agent.get('metadata') or {}), 'jarvis': {**updated_meta, 'provisioned': False}}})
-        tested = board.api('POST', '/companies/' + env['PAPERCLIP_COMPANY_ID'] + '/adapters/hermes_gateway/test-environment',
-            {'agentId': agent['id'], 'adapterConfig': adapter})
+        updated=runtime_patch(board,agent['id'],fields={'adapterConfig':adapter,
+            'role':item['role'],'title':item['name'],'capabilities':capabilities},
+            jarvis_updates={**runtime_updates,'provisioned':False})
+        adapter=updated['adapterConfig']
+        tested = verify_adapter(board, agent['id'], adapter)
         if tested.get('status') != 'pass':
             print(json.dumps({'agent_id': agent['id'], 'runtime': 'awaiting_native_verification'}))
             return
         current = board.api('GET', '/agents/' + agent['id'])
-        if current.get('status') == 'paused':
+        if current.get('status') == 'paused' and allow_resume:
             board.api('POST', '/agents/' + agent['id'] + '/resume', {})
-        board.api('PATCH', '/agents/' + agent['id'], {'metadata': {**(agent.get('metadata') or {}), 'jarvis': updated_meta}})
+        runtime_patch(board,agent['id'],jarvis_updates=runtime_updates)
     source = meta.get('source_issue_id')
-    if source and not meta.get('ready_notice_sent'):
+    if source and not meta.get('ready_notice_sent') and not meta.get('suppress_historical_readiness_notice'):
         comments = board.api('GET', '/issues/' + source + '/comments')
         marker = '[JARVIS RUNTIME READY ' + rid + ']'
         if not any(c.get('body', '').startswith(marker) for c in comments):
             board.api('POST', '/issues/' + source + '/comments', {'body': marker + '\nHuman-approved ' +
                 item['name'] + ' employee ' + agent['name'] + ' (' + agent['id'] + ') has an authenticated isolated Hermes runtime. Reuse this employee for the approved capability. No task was assigned by the runtime provisioner.'})
-        board.api('PATCH', '/agents/' + agent['id'], {'metadata': {**agent.get('metadata', {}),
-            'jarvis': {**updated_meta, 'ready_notice_sent': True}}})
+        runtime_patch(board,agent['id'],jarvis_updates={'ready_notice_sent':True})
     print(json.dumps({'agent_id': agent['id'], 'profile': item['id'], 'runtime': 'ready', 'inference_slots': 1}))
     return True
 
@@ -322,6 +539,7 @@ def main():
     parser.add_argument('--adopt-existing', choices=['research'])
     parser.add_argument('--refresh-idle-runtimes', action='store_true', help='Explicit reviewed runtime upgrade; never interrupts native live/queued work')
     parser.add_argument('--agent-id', type=lambda value: str(UUID(value)), help='Restrict operator reconciliation to one existing native employee')
+    parser.add_argument('--leave-paused', action='store_true', help='Verify runtimes without resuming employees; useful for an atomic team rollout')
     args = parser.parse_args()
     if not args.apply:
         print(json.dumps({'action': 'plan_only', 'profiles': list(registry.catalog()['profiles']), 'employees_created': 0}))
@@ -338,8 +556,11 @@ def main():
         for agent in agents:
             if args.agent_id and agent['id'] != args.agent_id:
                 continue
+            if stop_terminated_employee(board, agent):
+                continue
             item = validate_agent(agent, approvals, board.env)
             if item:
+                agent = stage_workforce_employee(board, agent, item)
                 live = board.api('GET', '/companies/' + company + '/live-runs')
                 owned = [r for r in live if r['agentId'] == agent['id'] and r['status'] in ('queued', 'running')]
                 if owned and ((agent.get('metadata') or {}).get('jarvis', {}).get('provisioned') or
@@ -350,14 +571,13 @@ def main():
                     # Native pause holds assignments while the reviewed runtime
                     # restarts. It is used only after confirming no live work.
                     board.api('POST', '/agents/' + agent['id'] + '/pause', {})
-                ready = provision(board, agent, item, args.refresh_idle_runtimes)
+                ready = provision(board, agent, item, args.refresh_idle_runtimes, allow_resume=not args.leave_paused)
                 if args.refresh_idle_runtimes and ready:
                     current = board.api('GET', '/agents/' + agent['id'])
-                    tested = board.api('POST', '/companies/' + company + '/adapters/hermes_gateway/test-environment',
-                        {'agentId': agent['id'], 'adapterConfig': current['adapterConfig']})
+                    tested = verify_adapter(board, agent['id'], current['adapterConfig'])
                     if tested.get('status') != 'pass':
                         raise ValueError('Reviewed upgrade remains paused: native adapter verification failed')
-                    if current.get('status') == 'paused':
+                    if current.get('status') == 'paused' and not args.leave_paused:
                         board.api('POST', '/agents/' + agent['id'] + '/resume', {})
 
 

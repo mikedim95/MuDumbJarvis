@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "at": "2026-11-13T15:56:23.674188+00:00",
+  "authenticated_health": true,
+  "native_adapter_test": {
+    "adapterType": "hermes_gateway",
+    "status": "pass",
+    "checks": [
+      {
+        "code": "hermes_gateway_health_ok",
+        "level": "info",
+        "message": "Hermes Gateway health endpoint is reachable."
+      }
+    ],
+    "testedAt": "2026-11-13T15:56:23.590Z"
+  },
+  "reloaded_services": [
+    "jarvis-hermes-ceo",
+    "jarvis-hud"
+  ],
+  "worker_runs_not_interrupted": [
+    "2d05d054-01d7-443c-b3a5-d622b82498bb",
+    "81d2fac6-e82c-4558-9e78-74d9ab823fbd"
+  ],
+  "changes": [
+    "Native human review notes retained for CEO and block provenance-only completion",
+    "HUD current-completion receipt requires latest native assignee run; receipts sorted by actual comment time"
+  ]
+}

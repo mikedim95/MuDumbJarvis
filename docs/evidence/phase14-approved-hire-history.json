@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-13T15:45:15.307072+00:00",
+  "approval_id": "80bebd62-f765-421e-bab7-9ebbf313e9df",
+  "agent_id": "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+  "profile": "software_development",
+  "profile_sha256": "9fe3f3c26948c92287dcd90767fea9fcd3b0c8721c5b065ee2ee9b7afedeeffe",
+  "model": "jarvis-hermes-aigoat24:3b",
+  "limits": {
+    "cpus": 2,
+    "pids": 256,
+    "max_turns": 16,
+    "memory_mb": 2048,
+    "timeout_seconds": 1800
+  },
+  "human_approved_at": "2026-11-13T05:41:03.118Z",
+  "native_human_actor_recorded": true,
+  "explicit_user_authorization": "User approve message during Phase11 Software hire review; retained native approved hire, no additional employee approved by this test.",
+  "current_status": "idle",
+  "current_lifecycle": "ready",
+  "current_provisioned": true,
+  "native_approval_snapshot_checks": {
+    "hermes_gateway": true,
+    "empty_unprovisioned_adapter": true,
+    "native_snapshot_empty_adapter": true,
+    "runtime_snapshot_matches": true
+  }
+}

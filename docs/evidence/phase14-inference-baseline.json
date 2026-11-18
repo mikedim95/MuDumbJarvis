@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-13T15:36:52.032922+00:00",
+  "model": "jarvis-hermes-aigoat24:3b",
+  "parameters": "num_thread                     24\ntemperature                    0.1\ntop_k                          40\ntop_p                          0.9\nnum_batch                      1024\nnum_ctx                        65536\nnum_predict                    768",
+  "concurrency_environment": {
+    "OLLAMA_NUM_PARALLEL": null,
+    "OLLAMA_MAX_LOADED_MODELS": null,
+    "OLLAMA_MAX_QUEUE": null
+  },
+  "loaded_models": [],
+  "observed_configuration_only": true,
+  "configuration_modified": false,
+  "inference_requested_by_audit": false,
+  "observed_runner_configuration": [
+    "cmn  common_param: system_info: n_threads = 24 (n_threads_batch = 24) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | REPACK = 1 | ",
+    "llama_context: n_seq_max             = 1",
+    "cmn          init: llama threadpool init, n_threads = 24"
+  ],
+  "observed_runner_arguments": [
+    "1172584             /usr/lib/ollama/llama-server --model /root/.ollama/models/blobs/sha256-910e4bf4e2338f181e99796d7452404e85c1b6bbbf8cd0bb094672cf9b6f2f22 --port 40871 --host 127.0.0.1 --no-webui --offline -c 65536 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj /root/.ollama/models/blobs/sha256-910e4bf4e2338f181e99796d7452404e85c1b6bbbf8cd0bb094672cf9b6f2f22 --load-mode none --flash-attn auto -b 1024 -ub 1024 -t 24 --context-shift --keep 4"
+  ],
+  "actual_single_inference_slot_verified": true
+}

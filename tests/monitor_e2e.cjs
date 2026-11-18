@@ -48,6 +48,20 @@ async function board(method, path, data) {
     const current = await api('tasks/' + taskId);
     const run = current.runs.find(r => r.runId === 'f6b5e6f7-8c3d-42a6-a5b5-0cf056d6db57'); assert(run);
     const log = await api('tasks/' + taskId + '/runs/' + run.runId + '/log'); assert(log.content);
+    // Selecting another task must remove the old task's action controls while
+    // its authenticated monitoring request is still loading.
+    if (process.argv.includes('--phase14')) {
+    const rootTask = 'f79972eb-c989-4845-bafa-7bd4e11a0eef';
+    await page.route('**/api/tasks/' + rootTask + '/monitor', async route => {
+      await new Promise(resolve => setTimeout(resolve, 1200)); await route.continue();
+    });
+    await page.locator('#taskHistory button').filter({hasText: /^JAR-44 ·/}).click();
+    assert.equal(await page.locator('#taskActions button').count(), 0);
+    await page.waitForFunction(id => document.getElementById('taskActions').dataset.taskId === id, rootTask);
+    await page.unrouteAll({behavior: 'wait'});
+    await page.locator('#taskHistory button').filter({hasText: /^JAR-42 ·/}).click();
+    await page.waitForFunction(id => document.getElementById('taskActions').dataset.taskId === id, taskId);
+    }
     await page.locator('#logMonitor').evaluate(el => { el.open = true; });
     await page.locator('#runList .monitor-card').filter({hasText: run.runId}).getByRole('button', {name: 'Read execution log'}).click();
     await page.waitForFunction(id => document.getElementById('runLog').textContent.includes('Execution ' + id), run.runId);
@@ -110,7 +124,8 @@ async function board(method, path, data) {
     await page.locator('#taskHistory button').filter({hasText: /^JAR-42 ·/}).click();
     await page.waitForFunction(() => document.getElementById('taskDetail').textContent.startsWith('JAR-42 · done'));
     for (const id of ['evidenceMonitor', 'artifactMonitor']) await page.locator('#' + id).evaluate(el => { el.open = true; });
-    await page.screenshot({path: root + '/docs/evidence/phase13-hud.png', fullPage: true});
+    const evidencePrefix = process.argv.includes('--phase14') ? 'phase14-monitor-regression' : 'phase13';
+    await page.screenshot({path: root + '/docs/evidence/' + evidencePrefix + '-hud.png', fullPage: true});
     const evidence = {status: 'passed', checked_at: new Date().toISOString(), source: 'Real Chromium HUD and native Paperclip APIs',
       verified_existing_task: taskId, native_run_id: run.runId, signed_receipts_verified: true,
       artifact_hash_checked: a.sha256, authenticated_native_log_visible: true, secrets_absent: true,
@@ -118,7 +133,11 @@ async function board(method, path, data) {
       cancellation: 'Native task-tree cancellation; no inference was started for the unassigned fixture',
       controlled_monitoring_outage_recovered: true, browser_refresh_preserved_history: true,
       inference_status: dashboard.inference, browser_errors: errors};
-    fs.writeFileSync(root + '/docs/evidence/phase13-browser.json', JSON.stringify(evidence, null, 2));
+    fs.writeFileSync(root + '/docs/evidence/' + evidencePrefix + '-browser.json', JSON.stringify(evidence, null, 2));
     console.log(JSON.stringify(evidence, null, 2));
   } finally { await browser.close(); }
-})().catch(e => { console.error(e.message); process.exitCode = 1; });
+})().catch(e => {
+  let message=String(e.message||e).split('Call log:')[0].trim();
+  for(const [key,value] of Object.entries(process.env)) if(/KEY|TOKEN|PASSWORD|SECRET/.test(key)&&value.length>=12) message=message.replaceAll(value,'[REDACTED]');
+  console.error(message); process.exitCode = 1;
+});

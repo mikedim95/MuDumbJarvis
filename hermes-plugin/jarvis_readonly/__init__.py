@@ -1,4 +1,4 @@
-"""Narrow read-only tool; no model-controlled URL, path, command or credentials."""
+"""Scoped Jarvis tools: observed facts and explicit user-directed general notes."""
 import json
 import os
 import time
@@ -61,11 +61,13 @@ def local_ollama_models(args: dict, **kwargs) -> str:
         stream.write(json.dumps(record) + '\n')
     result = {'source': 'Ollama /api/tags', 'models': models}
     if os.environ.get('JARVIS_AGENT_ROLE') == 'ceo':
-        result['next'] = 'The local tool succeeded. Produce the FINAL technical inventory report NOW: source Ollama /api/tags; a table of each exact model name, provided size_gib and size_bytes; completion and blockers. Copy the provided sizes exactly without recalculation. Do not invent retrieval times, commands or extra capabilities. This is direct CEO execution: do not wait for Paperclip confirmation or nonexistent children.'
+        result['next'] = 'Produce the FINAL technical inventory report NOW. Answer the inventory question using the relevant exact model names and requested fields from this result. Copy requested sizes exactly. Mention a blocker only if it affects the answer.'
     return json.dumps(result)
 
 
 def register(ctx):
+    from . import inference_slot
+    inference_slot.register(ctx)
     if os.environ.get('JARVIS_PROFILE'):
         from . import employee_tools
         employee_tools.register(ctx)

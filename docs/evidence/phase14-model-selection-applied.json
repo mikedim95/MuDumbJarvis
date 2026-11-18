@@ -1,0 +1,28 @@
+{
+  "selected_model": "jarvis-hermes-qwen24:7b",
+  "base_capability_templates_changed": false,
+  "human_hiring_approvals_changed": false,
+  "shared_inference_slots": 1,
+  "agents": [
+    "a5780699-e4d4-4256-b93e-2bbcf46da59b",
+    "09f66b7a-d435-4332-be9a-9223055d0bef",
+    "50a7204d-39f5-4e4a-98bb-ff07cf4e526e"
+  ],
+  "record": {
+    "version": 1,
+    "company_id": "1da0bc85-d81f-4e61-b73e-1569f5eced85",
+    "provider": "local_ollama",
+    "model": "jarvis-hermes-qwen24:7b",
+    "model_digest": "d77f020ba7430f07565ab4b53d7c2736e6e4d795ea16e1ef52985f49655bb5eb",
+    "inference_slots": 1,
+    "cpu_threads": 24,
+    "context_length": 65536,
+    "source": "operator_model_selection",
+    "selected_at": "2026-11-13T16:21:00.451795+00:00",
+    "signature": "71f23f12f3ee605af69cd6f17e197942464f7db180ca66278d1bbb0a51dcb205"
+  },
+  "apply": true,
+  "backup": ".runtime/backups/phase14/inference-20261113T162100Z-1a6f53",
+  "employees_left_paused": true,
+  "next": "Refresh owned employee runtimes, recreate CEO/direct-chat env from Compose, pass health/native checks, then resume only these selected employees and restart the operator timer."
+}

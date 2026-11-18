@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-11-17T07:59:44.764Z",
+  "apply_setup": true,
+  "native_changes": {
+    "renamed_agent": {
+      "id": "09f66b7a-d435-4332-be9a-9223055d0bef",
+      "name": "JARVIS OSINT"
+    },
+    "saved_direct_prompt": true,
+    "rename_tools": [
+      "jarvis_administrator",
+      "jarvis_administrator",
+      "jarvis_administrator"
+    ],
+    "prompt_tools": [
+      "jarvis_administrator",
+      "jarvis_administrator",
+      "jarvis_administrator"
+    ],
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol"
+  },
+  "status": "passed_after_followup_verification",
+  "initial_browser_failure": "Expected values to be strictly equal:\n\n1 !== 0\n",
+  "followup_browser_evidence": "administrator.json",
+  "configuration_evidence": "administrator-configuration.json",
+  "reconciliation_evidence": "administrator-reconciliation.json"
+}

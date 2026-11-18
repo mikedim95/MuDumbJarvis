@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -36,7 +37,8 @@ def test_model_cannot_override_private_execution_backend(employee, args):
 
 
 def test_private_terminal_call_is_allowed_in_its_assigned_issue(employee):
-    assert employee.guard(tool_name='terminal', args={'command': 'python3 -V'}, session_id='issue-session') is None
+    assert employee.guard(tool_name='terminal', args={'command': 'python3 -V'}, session_id='issue-session') == {
+        'action': 'modify', 'args': {'workdir': '/workspace'}}
     assert employee.workspace_bindings == [('issue-session', {'cwd': '/workspace'})]
 
 
@@ -54,6 +56,45 @@ def test_foreign_issue_and_nonapproved_tools_are_denied(employee):
 def test_research_profile_has_no_shell(employee, monkeypatch):
     monkeypatch.setenv('JARVIS_PROFILE', 'research')
     assert employee.guard(tool_name='terminal', args={'command': 'id'}, session_id='issue-session')['action'] == 'block'
+
+
+def test_brief_report_instruction_preserves_worker_directions_and_assignment(employee, monkeypatch):
+    monkeypatch.setenv('JARVIS_PROFILE', 'research')
+    directions = {'text': 'Cite the official manual.'}
+    objective = 'Report the documented file formats.'
+    turn = {'issue': 'native-issue', 'run': 'native-run', 'general_context': directions}
+    context = json.loads(employee.prepare_turn_context(turn, {'description': objective}).split('\n', 1)[1])
+    assert context['reporting_style'] == employee.reporting.REPORT_STYLE
+    assert context['general_directions'] == directions and context['objective'] == objective
+
+
+def test_existing_record_handoff_does_not_require_new_sources_from_a_historical_limitation(employee, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    monkeypatch.setitem(sys.modules, 'hermes_constants', SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    monkeypatch.setenv('JARVIS_PROFILE', 'research')
+    turn = {'issue': 'native-issue', 'run': 'native-run'}
+    employee.prepare_turn_context(turn, {'description':
+        'Inspect existing JAR-64 and JAR-65 records and published artifacts. Do not restart research. '
+        'Call research_sources with action=records. The older assistant statements about a '
+        'three-framework-only schema are stale. Publish the requested handoff.'})
+    turn['employee_execution'] = [{'tool': 'research_sources', 'success': True,
+        'args': {'action': 'records', 'issue_ids': ['JAR-64', 'JAR-65']}, 'result': {'issues': []}}]
+    turn['artifacts'] = {'report': {'originalFilename': 'handoff.txt'}}
+    assert turn['required_framework_count'] == 0
+    assert employee.missing_execution(turn) is None
+
+
+@pytest.mark.parametrize('objective', ['Research three open-source AI security frameworks.',
+    'Retrieve 3 frameworks and compare their capabilities.'])
+def test_explicit_three_framework_research_still_requires_actual_source_retrieval(employee, monkeypatch, tmp_path, objective):
+    from types import SimpleNamespace
+    monkeypatch.setitem(sys.modules, 'hermes_constants', SimpleNamespace(get_hermes_home=lambda: tmp_path))
+    monkeypatch.setenv('JARVIS_PROFILE', 'research')
+    turn = {'issue': 'native-issue', 'run': 'native-run'}
+    employee.prepare_turn_context(turn, {'description': objective})
+    turn['employee_execution'] = [{'tool': 'research_sources', 'success': True, 'result': {}}]
+    assert turn['required_framework_count'] == 3
+    assert 'Not all requested frameworks' in employee.missing_execution(turn)
 
 
 @pytest.mark.parametrize('path', ['/opt/data/config.yaml', '/home/kali/.ssh/id_ed25519', '../../config.yaml', '/workspace/', '.', ''])
@@ -126,7 +167,7 @@ def test_actual_admitted_test_result_is_required_for_completion(employee, monkey
         result={'output': 'Ran 2 tests in 0.001s\n\nOK', 'exit_code': 0})
     assert 'No successful terminal' in employee.missing_execution(turn)
     assert employee.guard(tool_name='terminal', tool_call_id='real', session_id='issue-session',
-        args={'command': 'python3 /workspace/test.py'}) is None
+        args={'command': 'python3 /workspace/test.py'})['action'] == 'modify'
     employee.capture(tool_name='terminal', tool_call_id='real', session_id='foreign',
         result={'output': 'Ran 2 tests in 0.001s\n\nOK', 'exit_code': 0})
     assert 'No successful terminal' in employee.missing_execution(turn)
@@ -176,6 +217,38 @@ def test_retry_can_reuse_verified_files_without_instructions_to_regenerate_them(
     assert 'offline_framework_reference' not in payload
 
 
+@pytest.mark.parametrize(('filename', 'reply', 'status'), [
+    ('research.txt', 'Blocked: primary evidence is unavailable.\n\nSee the limitations report.', 'blocked'),
+    ('research.md', '**Incomplete:** primary evidence is unavailable.', 'blocked'),
+    ('research.txt', 'Two matching records were verified.', 'done'),
+])
+def test_published_worker_report_remains_evidence_of_its_actual_outcome(employee, monkeypatch, filename, reply, status):
+    artifact = {'id': 'receipt', 'originalFilename': filename}
+    turn = {'session': 'issue-session', 'issue': 'issue', 'run': 'run', 'company': 'company',
+        'agent': '22222222-2222-4222-8222-222222222222', 'needs_inventory': False, 'inventory_verified': False,
+        'needs_artifact': True, 'needs_report': True, 'response': reply, 'artifacts': {'receipt': artifact},
+        'employee_execution': [{'tool': 'research_sources', 'tool_call_id': 'read', 'success': True,
+                                'args': {}, 'result': {'source': 'primary'}}]}
+    monkeypatch.setenv('JARVIS_PROFILE', 'research')
+    monkeypatch.setenv('JARVIS_EXECUTION_PROOF_KEY', 'test-signing-key')
+    monkeypatch.setitem(employee.reporting._turns, ('issue-session', 'turn'), turn)
+    calls = []
+    monkeypatch.setattr(employee.reporting, 'api', lambda *args: calls.append(args))
+    employee.reporting.finish(session_id='issue-session', turn_id='turn', completed=True)
+    payload = calls[-1][2]
+    assert [call[0] for call in calls] == ['GET', 'PATCH']
+    assert payload['status'] == status
+    narrative, signed = payload['comment'].split('\n\nJARVIS_EXECUTION_EVIDENCE=')
+    assert narrative == reply
+    proof = json.loads(signed)
+    assert employee.reporting.authentic_evidence(proof)
+    assert proof['artifacts'] == [artifact] and proof['task_status'] == status
+    if status == 'blocked':
+        assert 'primary evidence is unavailable.' in payload['unblockDescriptor']['action']
+    else:
+        assert payload['unblockDescriptor'] is None
+
+
 def test_managed_completion_callback_blocks_the_observed_text_only_failure(employee, monkeypatch):
     turn = {'session': 'issue-session', 'issue': 'issue', 'run': 'run', 'agent': 'employee',
         'needs_inventory': False, 'inventory_verified': False, 'needs_tests': True,
@@ -209,3 +282,22 @@ def test_native_multiline_comment_contract_preserves_json_escapes(employee, monk
     assert receipt['result']['output'] == 'line\nnext'
     assert receipt['args']['command'] == 'printf "line\\n"'
     assert employee.reporting.authentic_evidence(receipt)
+
+
+@pytest.mark.parametrize('command', ['cd /workspace/issues/truncated-uuid && pwd',
+    'cat /workspace/issues/current/../foreign/result.json'])
+def test_terminal_rejects_mistyped_or_foreign_issue_paths(employee, monkeypatch, command):
+    turn = {'agent': 'employee', 'session': 'issue-session', 'workspace': '/workspace/issues/current'}
+    monkeypatch.setattr(employee.reporting, 'current_turn', lambda: turn)
+    result = employee.guard(tool_name='terminal', args={'command': command}, session_id='issue-session')
+    assert result['action'] == 'block' and employee.workspace_bindings == []
+
+
+def test_terminal_cwd_is_enforced_every_call_and_effective_args_are_recorded(employee, monkeypatch):
+    turn = {'agent': 'employee', 'session': 'issue-session', 'workspace': '/workspace/issues/current'}
+    monkeypatch.setattr(employee.reporting, 'current_turn', lambda: turn)
+    for n in range(2):
+        result = employee.guard(tool_name='terminal', args={'command': 'python3 test_demo.py'},
+            session_id='issue-session', tool_call_id=str(n))
+        assert result == {'action': 'modify', 'args': {'workdir': turn['workspace']}}
+        assert turn['scoped_calls'][str(n)]['args']['workdir'] == turn['workspace']

@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-11-17T10:04:40.032491+00:00",
+  "status": "passed",
+  "goals": [
+    {
+      "id": "defa1a49-e0ea-4370-97d5-312ff5a89753",
+      "identifier": "JAR-66",
+      "status": "done",
+      "unblockDescriptor": null
+    },
+    {
+      "id": "fa2ba90a-626d-4b57-a054-094a5caf708c",
+      "identifier": "JAR-67",
+      "status": "done",
+      "unblockDescriptor": null
+    },
+    {
+      "id": "e86c7aea-b0b9-44c7-850c-0396d1f8dd46",
+      "identifier": "JAR-71",
+      "status": "done",
+      "unblockDescriptor": null
+    },
+    {
+      "id": "72b09b3a-4915-4595-b65a-374bd216551a",
+      "identifier": "JAR-72",
+      "status": "done",
+      "unblockDescriptor": null
+    }
+  ],
+  "team_review_run": {
+    "runId": "4f27f097-5c7a-4b1e-8c58-34b505b9dc8b",
+    "status": "succeeded",
+    "startedAt": "2026-11-17T10:02:12.989Z",
+    "finishedAt": "2026-11-17T10:03:59.013Z"
+  },
+  "daily_job": {
+    "id": "387ef428-5533-414a-970e-e093a01165e4",
+    "title": "Daily OSINT tools and techniques research",
+    "status": "active",
+    "triggers": [
+      {
+        "id": "7164006d-0463-4730-a631-e3aaf91f42c5",
+        "enabled": true,
+        "cronExpression": "0 9 * * *",
+        "timezone": "Europe/Athens",
+        "nextRunAt": "2026-11-18T07:00:00.000Z",
+        "lastFiredAt": null,
+        "lastResult": null
+      }
+    ],
+    "last_run": {
+      "id": "2d03b440-28f2-48d1-85a3-8dc793f5e28e",
+      "status": "completed",
+      "triggeredAt": "2026-11-17T09:17:29.738Z",
+      "completedAt": "2026-11-17T09:38:47.486Z",
+      "linkedIssueId": "e86c7aea-b0b9-44c7-850c-0396d1f8dd46",
+      "failureReason": null
+    }
+  },
+  "catalog": {
+    "tools": 16,
+    "categories": 9,
+    "documented_only": true,
+    "fresh_sources": 20,
+    "coverage_met": true,
+    "artifact_id": "9f97262b-30c1-408f-b04e-14eed3a6f666"
+  },
+  "checks": {
+    "python_passed": 624,
+    "python_skipped": 1,
+    "javascript_passed": 23,
+    "browser": "passed"
+  }
+}
