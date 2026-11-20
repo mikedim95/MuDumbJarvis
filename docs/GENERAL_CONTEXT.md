@@ -1,8 +1,10 @@
 # General Context
 
-Open **General → Context** and select an agent to see its standing directions
-and system prompt. Use the message bar below to request changes for that agent.
-These directions apply across missions.
+Open an agent's profile and choose **Context** to see its standing directions
+and system prompt. General directions apply across missions; project directions
+belong only to the selected mission. Saved directions supplement the system prompt;
+they are not its replacement. See [prompt architecture v2](PROMPT_ARCHITECTURE_V2.md)
+for the complete runtime resolution and explicit migration procedure.
 
 Ask explicitly to save a direction, for example:
 
@@ -36,6 +38,15 @@ Notes are limited to 8,000 characters per agent.
 Saved changes are read on the agent's next turn; they do not interrupt or
 restart work already in progress.
 
+Clicking an agent shows its current native assignment and a short last-activity
+summary in both General and project views. Project filtering happens before
+history retrieval. Only the selected profile reads recent assignment histories
+(the three most recently updated jobs plus its current job). Published updates
+are labelled separately from signed tool actions; raw payloads and private model
+reasoning are excluded. Native activity is refreshed every eight seconds while
+the agents column is visible. Pending owner questions stay first, and opening a
+long question brings both its input and Reply action into the scrollable view.
+
 Backend tests cover explicit versus conversational requests, per-agent scope,
 metadata-policy preservation, revision conflicts and callback isolation.
 `tests/project_navigation_e2e.cjs` verifies the actual General Context viewer.
@@ -59,3 +70,14 @@ registered role before accepting each receipt.
 The same four children were retried using native retry receipts. All four
 completed, the CEO reviewed their actual signed responses, and JAR-59 completed.
 Unrelated old objectives and stop holds were not released.
+
+## General chat knowledge
+
+Ask in General, for example, “Save the findings from JAR-84 in General knowledge.”
+JARVIS can publish excerpts of the named project's public CEO replies. A request
+referring to the only active project resolves against visible CEO missions.
+A publication receipt identifies the source and the durable copy in the CEO's
+native Paperclip metadata (`jarvis.knowledge_publications`). General chat
+retrieves those notes in every conversation, including new threads. Publication
+does not create a mission or change standing directions. Retried excerpts are
+deduplicated. A new research assignment can still run as General work.

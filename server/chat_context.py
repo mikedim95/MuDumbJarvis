@@ -14,6 +14,7 @@ import os
 import re
 from uuid import UUID
 
+from fastapi import HTTPException
 from task_api import Paperclip
 
 MAX_CONTEXT_CHARS = 24000
@@ -162,6 +163,18 @@ async def _snapshot(client, user_text, task_id, result):
             'leadAgentId': 64}) for p in projects[:MAX_PROJECTS]],
         goals=[issue_summary(i) for i in goals[:MAX_GOALS]], selected_tasks=[],
         truncated=len(agents) > MAX_AGENTS or len(projects) > MAX_PROJECTS or len(goals) > MAX_GOALS)
+    # General chat can answer from live bridge facts even when it makes no project-search tool call.
+    import project_runtime
+    from project_workspace import team
+    runtime = project_runtime.containers(company) if workforce else None
+    index = {i['id']: i for i in issues}
+    def add_container(view, issue):
+        if workforce:
+            root = team.membership(issue, index, {}, company, issue.get('projectId'), getattr(client, 'ceo', None))
+            if root:
+                view['project_container'] = project_runtime.details(runtime, root)
+    for goal in result['goals']:
+        add_container(goal, index[goal['id']])
     if missing:
         result['unavailable_sections'] = missing
         if len(missing) == len(paths):
@@ -176,6 +189,24 @@ async def _snapshot(client, user_text, task_id, result):
         except (ValueError, TypeError, AttributeError):
             result['selected_task_unavailable'] = True
     ids = list(dict.fromkeys(ids))[:MAX_DETAILS]
+    package_progress = {}
+    if workforce and (ids or re.search(r'\b(?:block\w*|install\w*|packag\w*|nmap)\b', user_text, re.I)):
+        import blocker_delivery
+        parents = [g for g in goals[:MAX_GOALS] if g.get('assigneeAgentId') == getattr(client,'ceo',None)
+                   and g.get('status') == 'blocked' and any(i.get('parentId') == g['id'] and i.get('status') == 'blocked'
+                       and not i.get('hiddenAt') and (not ids or g['id'] in ids or i['id'] in ids)
+                       and blocker_delivery.has_package_blocker(i) for i in issues)]
+        for parent in parents[:MAX_DETAILS]:
+            try:
+                async with asyncio.timeout(1):
+                    decisions = await blocker_delivery.owner_decisions(client, parent['id'])
+                    await blocker_delivery.load_package_receipts(client, parent, index, decisions)
+                    package_progress.update(blocker_delivery.package_blockers(parent, index, decisions))
+            except (TimeoutError, HTTPException):
+                continue
+        for goal in result['goals']:
+            if goal.get('id') in package_progress:
+                goal['next_action'] = package_progress[goal['id']]['progress']
     for issue_id in ids:
         try:
             issue_id = str(UUID(str(issue_id)))
@@ -189,10 +220,14 @@ async def _snapshot(client, user_text, task_id, result):
             public = [p for p in (public_comment(c) for c in comments if isinstance(c, dict)) if p]
             public.sort(key=lambda c: c.get('createdAt', ''))
             detail = issue_summary(issue)
+            add_container(detail, issue)
             detail.update(description=text(issue.get('description'), 1500), comments=public[-3:],
                 runs=[fields(r, {'runId': 64, 'status': 40, 'startedAt': 40, 'finishedAt': 40,
                     'errorCode': 100, 'error': 300}) for r in runs[:4] if isinstance(r, dict)],
                 children=[issue_summary(i) for i in issues if i.get('parentId') == issue_id][:6])
+            for item in [detail, *detail['children']]:
+                if item.get('status') == 'blocked' and item['id'] in package_progress:
+                    item['next_action'] = package_progress[item['id']]['progress']
             result['selected_tasks'].append(detail)
         except Exception:
             result['selected_task_unavailable'] = True

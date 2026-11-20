@@ -94,9 +94,11 @@ class ContextRequest:
     owner_message: str = ''
     selected_agent: str | None = None
     selected_scope: str = 'agent'
+    mission_id: str | None = None
+    conversation_id: str | None = None
 
 
-async def begin_request(reference, message, selected=None, *, administration=False, request_key='', selected_scope='agent'):
+async def begin_request(reference, message, selected=None, *, administration=False, request_key='', selected_scope='agent', mission_id=None, conversation_id=None):
     for key in list(_requests):
         if _requests[key].expires < time.monotonic():
             _requests.pop(key, None)
@@ -107,7 +109,7 @@ async def begin_request(reference, message, selected=None, *, administration=Fal
     allowed = {agent['id'] for agent in data['agents']} if administration else authorized_targets(message, data['agents'], data['ceo_id'], selected)
     grant = ContextRequest(allowed, administration or bool(re.search(r'\b(?:replace|rewrite|reset|set|change)\b',message,re.I)),
         administration or bool(re.search(r'\b(?:clear|delete|remove)\b',message,re.I)), time.monotonic()+920,
-        administration=administration,request_key=request_key,owner_message=message,selected_agent=selected,selected_scope=selected_scope)
+        administration=administration,request_key=request_key,owner_message=message,selected_agent=selected,selected_scope=selected_scope,mission_id=mission_id,conversation_id=conversation_id)
     _requests[reference] = grant
     instruction = {'request_id': reference, 'write_authorized_agent_ids': sorted(allowed),
         'agents': [{'id': a['id'], 'name': a['name'], 'revision': a['general_context']['revision']} for a in data['agents']],
@@ -127,6 +129,9 @@ async def begin_request(reference, message, selected=None, *, administration=Fal
             'Administrative changes do not alter runtime tool permissions.')
     elif request_key:
         instruction['project_tool'] = 'Use jarvis_administrator with start_project for a new owner assignment.'
+    if mission_id:
+        instruction['mission_id'] = mission_id
+        instruction['project_instruction'] = 'This chat is bound to this mission. Use project_context for local directions and continue_project for work on this project. Save global directions only if explicitly requested.'
     own = next((a['general_context'] for a in data['agents'] if a['id']==data['ceo_id']), {})
     return instruction, own
 
@@ -160,6 +165,9 @@ async def tool_call(body):
             if not data['agents']:
                 raise HTTPException(404, 'Agent is outside the Jarvis team')
         return data
+    from general_knowledge import transfer_clause
+    if grant.administration and transfer_clause(grant.owner_message):
+        raise HTTPException(409, 'Publish findings through jarvis_administrator start_general_work to save them as General knowledge')
     target = str(body.agent_id or '')
     if target not in grant.allowed:
         raise HTTPException(403, 'The latest user message did not authorize this general-context update')

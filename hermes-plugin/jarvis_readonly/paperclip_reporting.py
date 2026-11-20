@@ -88,6 +88,25 @@ def api(method, path, body=None, run_id=None):
     return data
 
 
+def inventory_required(description):
+    """Require inventory evidence for the objective, not its capability list/history."""
+    body=str(description or '')
+    fields=re.findall(r'(?ims)^\s*(OBJECTIVE|EXPECTED OUTCOME):\s*(.*?)'
+        r'(?=^\s*[A-Z][A-Z _]+:\s*|^\[JARVIS |\Z)',body)
+    if fields:
+        body='\n'.join(value for _,value in fields)
+    else:
+        body=re.split(r'(?im)^\s*(?:AVAILABLE TOOLS:|\[JARVIS CEO CORRECTION)',body)[0]
+    for clause in re.split(r'[\n.!?;]+|\bbut\b',body,flags=re.I):
+        clause=clause.replace('local_ollama_models','Ollama models').lower()
+        if re.search(r"\b(?:do not|don't|never|no|not|without|avoid)\b.*\b(?:ollama|inventory|models?)\b",clause):
+            continue
+        subject=('ollama' in clause and re.search(r'\bmodels?\b',clause)) or 'installed models' in clause
+        intent=re.search(r'\b(?:inventory|list|enumerate|retrieve|inspect|show|report|check|audit|collect|fetch|use|call|which|what)\b',clause)
+        if subject and (intent or 'installed models' in clause):return True
+    return False
+
+
 def begin(session_id='', turn_id='', **kwargs):
     key = (session_id, turn_id)
     with _lock:
@@ -133,8 +152,14 @@ def begin(session_id='', turn_id='', **kwargs):
         turn = {'session': session_id, 'issue': issue_id, 'run': run_id, 'response': '',
             'agent': agent, 'company': company, 'project': issue.get('projectId'),
             'ceo': ceo, 'reports_to': me.get('reportsTo'), 'plan_decision': decision, 'reviewed_children': [],
-            'needs_inventory': ('ollama' in description and 'model' in description) or 'installed models' in description,
+            'needs_inventory': inventory_required(issue.get('description')),
             'inventory_verified': False, 'started_at': time.time()}
+        if ceo or os.environ.get('JARVIS_PROFILE'):
+            from . import prompt_context
+            turn['prompt_policy_version'] = 2 if prompt_context.enabled(me) else 1
+            turn['registered_identity'] = {k: me.get(k) for k in ('id', 'name', 'role', 'title')}
+            if turn['prompt_policy_version'] == 2:
+                turn['role_procedure'] = prompt_context.procedure('ceo' if ceo else os.environ.get('JARVIS_PROFILE'))
         saved_directions = ((me.get('metadata') or {}).get('jarvis') or {}).get('general_context') or {}
         if isinstance(saved_directions.get('text'), str):
             turn['general_context'] = {'text': saved_directions['text'][:8000],
@@ -159,7 +184,7 @@ def begin(session_id='', turn_id='', **kwargs):
                 turn['conversation_request_id'] = latest['id'] if latest else 'initial'
                 turn['latest_user_request'] = latest['body'].split('\n', 1)[1] if latest else issue.get('description', '')
                 effective = turn['latest_user_request'].lower()
-                turn['needs_inventory'] = ('ollama' in effective and 'model' in effective) or 'installed models' in effective
+                turn['needs_inventory'] = inventory_required(turn['latest_user_request'])
                 turn['needs_report'] = bool(re.search(r'\breport\b', effective))
                 turn['needs_research'] = bool((re.search(r'\bresearch\b', effective) and re.search(r'\bframeworks?\b', effective)) or
                     ('osint' in effective and re.search(r'research|catalog|knowledge',effective)))
@@ -174,17 +199,77 @@ def begin(session_id='', turn_id='', **kwargs):
             from . import work_scope, general_knowledge
             if records is None:
                 records=api('GET','/companies/'+company+'/issues')
-            routines=api('GET','/companies/'+company+'/routines') if any(i.get('originKind')=='routine_execution' for i in records) else []
+            # Routine executions may be absent from Paperclip's ordinary issue list.
+            records=list(records)
+            current=issue;visited=set()
+            while current.get('parentId') and current['parentId'] not in {i['id'] for i in records}:
+                parent_id=current['parentId']
+                if parent_id in visited or len(visited)>=24:break
+                visited.add(parent_id)
+                try:parent=api('GET','/issues/'+parent_id)
+                except Exception:break
+                if parent.get('companyId')!=company or parent.get('projectId')!=issue.get('projectId'):break
+                records.append(parent);current=parent
+            routines=api('GET','/companies/'+company+'/routines') if issue.get('originKind')=='routine_execution' or any(i.get('originKind')=='routine_execution' for i in records) else []
             turn['work_scope']=work_scope.classify(issue,records,routines)
             turn['_scope_issues']=records;turn['_scope_routines']=routines
+            routine_id=turn['work_scope'].get('routine_id') or (issue.get('originId') if issue.get('originKind')=='routine_execution' else None)
+            routine=next((r for r in routines if r['id']==routine_id),None)
+            if routine:
+                focus=next((v.get('defaultValue') for v in routine.get('variables') or [] if v.get('name')=='jarvis_agent_id'),None)
+                if focus:
+                    turn['scheduled_agent']={'agent_id':focus,'instruction':'The owner scheduled this work for this agent. Delegate the work to this team member using their registered tools and include any necessary supporting agents.'}
             mission_id=turn['work_scope'].get('mission_id')
+            if mission_id:
+                try:
+                    doc = api('GET','/issues/'+mission_id+'/documents/jarvis-context-'+agent)
+                    turn['project_directions'] = {'text':str(doc.get('body') or '')[:8000],
+                        'revision':doc.get('latestRevisionId'),'mission_id':mission_id}
+                except Exception as exc:
+                    if getattr(exc,'code',None) != 404 and '404' not in str(exc):
+                        turn['project_directions'] = {'available':False,'mission_id':mission_id,
+                            'source':'Project directions unavailable; do not invent their contents.'}
             if mission_id and mission_id!=issue_id:
                 mission=next((i for i in records if i['id']==mission_id and i.get('companyId')==company),None)
                 if mission:
                     turn['mission_context']={k:mission.get(k) for k in ('id','identifier','title','description','status')}
                     turn['mission_context']['description']=str(turn['mission_context'].get('description') or '')[:2500]
+            if mission_id:
+                from . import team_workspace, employee_work
+                # Optional reference reads must leave time for required preflight work.
+                prior_budget = getattr(_request_budget, 'deadline', None)
+                shared_budget = time.monotonic() + 2
+                _request_budget.deadline = min(prior_budget - 1, shared_budget) if prior_budget else shared_budget
+                try:
+                    shared = team_workspace.read_for_turn(turn, issue, records, routines, api,
+                        lambda aid: employee_work.attachment_bytes(aid, timeout=check_budget()))
+                    if shared:
+                        turn['team_workspace'] = shared
+                except Exception as exc:
+                    _logger.warning('Project workspace unavailable (%s)', type(exc).__name__)
+                finally:
+                    _request_budget.deadline = prior_budget
             try:turn['shared_knowledge']=general_knowledge.brief(turn,records,routines)
             except Exception:turn['shared_knowledge']={'available':False,'source':'General knowledge could not be read; do not invent its contents.'}
+            from . import publication_notes
+            try:
+                owner_id = agent if ceo else turn.get('reports_to')
+                library = me if ceo else (api('GET', '/agents/' + owner_id) if owner_id else {})
+                if library.get('id') == owner_id and library.get('companyId') == company:
+                    notes = publication_notes.overview(library, str(issue.get('title') or '') + ' ' +
+                        str(issue.get('description') or '')[:1800], budget=1500, relevant_only=True)
+                    if notes.get('excerpts'):
+                        turn['shared_knowledge']['published_references'] = notes['excerpts']
+            except Exception as exc:
+                _logger.warning('General reference notes unavailable (%s)', type(exc).__name__)
+            from . import project_cli
+            if os.path.isfile('/opt/jarvis-codex/project-findings-available'):
+                try:
+                    findings = project_cli.reference(turn).get('findings', [])
+                    if findings:
+                        turn['shared_knowledge']['reported_project_findings'] = findings
+                except Exception as exc:
+                    _logger.warning('Published project findings unavailable (%s)', type(exc).__name__)
         with _lock:
             _turns[key] = turn
         if ceo:
@@ -363,6 +448,13 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
             status = 'in_review' if approval['status'] in ('pending', 'revision_requested') else 'blocked'
             comment = ('Sensitive-action approval ' + approval['id'] + ' is ' + approval['status'] +
                 '. No sensitive action was executed and runtime permissions remain unchanged.\n\n' + turn['response'])
+            if approval.get('kind') == 'jarvis_package_install':
+                status = 'in_review' if approval['status'] in ('approved', 'pending', 'revision_requested') else 'blocked'
+                comment = f"Package {approval['package']}: {approval['status']}. Approval {approval['id']}."
+        if turn.get('package_reviews'):
+            from . import blocker_review
+            status = 'blocked'
+            comment = blocker_review.PACKAGE_REQUEST + ', '.join(sorted(turn['package_reviews']))
         comment += '\n\nJARVIS_EXECUTION_EVIDENCE=' + json.dumps(employee_tools.signed_execution(turn, status), separators=(',', ':'))
     # One atomic Paperclip update records final disposition and the real runtime reply.
     payload = {'status': status, 'comment': comment}
@@ -374,6 +466,8 @@ def finish(session_id='', turn_id='', completed=False, failed=False, interrupted
             action = 'Respect the recorded approval decision: ' + approval['status']
         if worker_blocker and not turn.get('action_approval'):
             action = ('Resolve the reported blocker before retrying: ' + worker_blocker)[:2000]
+        if turn.get('package_reviews'):
+            action = blocker_review.PACKAGE_REQUEST + ', '.join(sorted(turn['package_reviews']))
         report_to_manager = os.environ.get('JARVIS_PROFILE') and current and current.get('parentId') and turn.get('reports_to')
         if report_to_manager:
             from . import blocker_review
@@ -427,12 +521,17 @@ def observe_model_context(session_id='', request_messages=None, model='', api_re
             extra = extra if isinstance(extra, dict) else {}
             record['request_max_tokens'] = request.get('max_tokens') or extra.get('max_tokens')
             record['available_function_names'] = []
+            record['available_function_parameters'] = {}
             for tool in request.get('tools', []):
                 if not isinstance(tool, dict):
                     continue
                 function = tool.get('function') if isinstance(tool.get('function'), dict) else tool
                 if isinstance(function.get('name'), str):
                     record['available_function_names'].append(function['name'])
+                    parameters = function.get('parameters')
+                    properties = parameters.get('properties') if isinstance(parameters, dict) else None
+                    if isinstance(properties, dict):
+                        record['available_function_parameters'][function['name']] = sorted(properties)
             choice = request.get('tool_choice')
             record['tool_choice'] = choice if isinstance(choice, str) else None
         from hermes_constants import get_hermes_home

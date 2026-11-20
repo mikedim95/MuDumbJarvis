@@ -65,7 +65,7 @@
     el('approvalList').replaceChildren();
     if (!data.approvals.length) el('approvalList').append(text('div', 'No approval requests for this project.', 'monitor-muted'));
     for (const a of data.approvals) {
-      const node = card((a.proposal.name || a.proposal.title || a.type) + ' · ' + a.status,
+      const node = card((a.proposal.name || a.proposal.title || a.type) + ' · ' + (a.installation?.status?.replaceAll('_',' ') || a.status),
         'Approval ID: ' + a.id + '\nTasks: ' + a.issue_ids.join(', ') + '\n' + (a.hiring_reason || a.proposal.summary || a.proposal.proposal || a.decisionNote || ''));
       if (['pending', 'revision_requested'].includes(a.status)) node.append(button('Review request', () => review(a)));
       el('approvalList').append(node);
@@ -75,7 +75,7 @@
   function review(a) {
     const node = el('approvalReview'); node.replaceChildren(); node.hidden = false; reviewing = a.id;
     node.append(text('div', 'HUMAN DECISION · ' + a.type), text('pre', json({approval_id: a.id, employee: a.proposal, capability: a.capability, reason: a.hiring_reason, tasks: a.issue_ids})),
-      text('div', a.type === 'hire_agent' ? 'Approval authorizes only this scoped employee profile. Provisioning is performed by the operator runtime service.' :
+      text('div', a.proposal.kind === 'jarvis_package_install' ? a.proposal.execution : a.type === 'hire_agent' ? 'Approval authorizes only this scoped employee profile. Provisioning is performed by the operator runtime service.' :
         'Approval records a decision. Sensitive host or external actions still require operator execution; no host tool access is granted.', 'monitor-muted'));
     const note = document.createElement('textarea'); note.setAttribute('aria-label', 'Approval decision note'); note.placeholder = 'Reason for approval or rejection'; node.append(note);
     const row = text('div', '', 'monitor-row');
@@ -95,14 +95,10 @@
       if (!window.confirm(`Cancel ${n} task(s), including their active or queued executions? Completed history remains available.`)) return;
       await post('tasks/' + current.id + '/cancel', {reason: 'Human cancelled this task tree through the authenticated JARVIS HUD.'});
     })));
-    if (monitor.interruption?.canRetry || current.status === 'blocked') el('taskActions').append(button('Retry same task', () => action(async () => {
+    if(monitor.owner_recovery?.needs_reconciliation&&window.JarvisRecovery)el('taskActions').append(window.JarvisRecovery.control({...current,recovery:monitor.owner_recovery},'monitor'));
+    else if (monitor.interruption?.canRetry || current.status === 'blocked') el('taskActions').append(button('Retry same task', () => action(async () => {
       const observed = monitor.interruption?.observedRunId ?? current.runs?.[0]?.runId ?? null;
-      const key = current.id + ':' + observed;
-      if (!retryIds.has(key)) {
-        retryIds.set(key, crypto.randomUUID());
-        localStorage.setItem('jarvis-retry-nonces', json([...retryIds].slice(-20)));
-      }
-      const result = await post('tasks/' + current.id + '/retry', {request_id: retryIds.get(key), observed_run_id: observed});
+      const result = await window.JarvisTasks.retry(current.id,observed);
       el('runLog').textContent = json(result);
     })));
   }

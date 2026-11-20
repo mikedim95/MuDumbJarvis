@@ -18,7 +18,8 @@
     const {agents,ceoId}=window.JarvisTasks.snapshot();
     const roster=new Map(agents.map(agent=>[agent.id,agent.name]));
     const shape=['id','identifier','title','status','assigneeAgentId','originKind','brief','progress','result','children',
-      'scheduled_runs','state','active_agent_id','cron_job','run_issue','schedules','enabled','mission_id'];
+      'scheduled_runs','state','active_agent_id','cron_job','run_issue','schedules','enabled','mission_id',
+      'recovery','run_id','can_retry','reason','next_action','next_actor','action_id','needs_reconciliation'];
     const signature=JSON.stringify(task,shape)+JSON.stringify([ceoId,...roster]);
     if(signature===treeSignature&&treePanel.isConnected)return;
     treeSignature=signature;
@@ -57,7 +58,7 @@
       const status=text('span','','job-state');
       const stateLabel=statusNames[job.status]||String(job.status||'Unknown').replaceAll('_',' ');
       let activity=stateLabel;
-      if(job.state==='blocked')activity='Blocked';
+      if(job.state==='blocked')activity=job.brief?.next_actor==='package_service'?'Package setup':'Blocked';
       else if(job.status==='blocked'&&job.state==='waiting')activity='Waiting';
       else if(job.state==='active')activity+=' · Working now';
       else if(job.status==='in_progress'&&job.state==='waiting')activity+=' · Waiting';
@@ -82,7 +83,9 @@
         if(job.state==='active')runningTimers.add(job.cron_job.id);
         card.append(routine);
       }
-      if(job.brief?.progress)card.append(text('p',job.brief.progress,'job-progress'));
+      const recovery=window.JarvisRecovery?.control(job);
+      if(recovery)card.append(recovery);
+      else if(job.brief?.progress)card.append(text('p',job.brief.progress,'job-progress'));
       if(job.brief?.result){
         const result=text('p','','job-result');
         result.append(text('strong','Result '),document.createTextNode(job.brief.result));

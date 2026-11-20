@@ -1,0 +1,26 @@
+# Build context is empty. Only the acquisition step needs a network.
+FROM jarvis-command-center:employee-sandbox-v3
+USER root
+WORKDIR /
+ARG INDEX_DAY
+RUN test -n "$INDEX_DAY" && sed -i 's|http://deb.debian.org/|https://deb.debian.org/|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o APT::Update::Error-Mode=any -o Acquire::Retries=2 update
+ARG PACKAGE
+RUN set -eu; export LC_ALL=C; \
+    version="$(apt-cache policy "$PACKAGE" | awk '$1 == "Candidate:" {print $2}')"; \
+    if [ -z "$version" ] || [ "$version" = "(none)" ] || ! apt-cache show "$PACKAGE=$version" | grep -Fxq "Package: $PACKAGE"; then \
+        echo JARVIS_NO_EXACT_CANDIDATE >&2; exit 3; \
+    fi; \
+    apt-get --print-uris --yes --no-install-recommends --no-remove install "$PACKAGE=$version" > /tmp/jarvis-archives; \
+    bytes="$(awk '/^\x27/ {s+=$3} END {printf "%.0f",s}' /tmp/jarvis-archives)"; \
+    budget="$(df -PB1 / | awk 'NR==2 {printf "%.0f",$4/8}')"; \
+    if [ "$bytes" -gt "$budget" ]; then echo JARVIS_PACKAGE_SPACE >&2; exit 4; fi; \
+    rm /tmp/jarvis-archives; printf '%s' "$version" > /tmp/jarvis-package-version; \
+    apt-get -y --download-only --no-install-recommends --no-remove install "$PACKAGE=$version"
+RUN --network=none set -eu; export DEBIAN_FRONTEND=noninteractive; \
+    version="$(cat /tmp/jarvis-package-version)"; \
+    apt-get -y --no-download --no-install-recommends --no-remove install "$PACKAGE=$version"; \
+    test "$(dpkg-query -W -f='${Status}' "$PACKAGE")" = 'install ok installed'; \
+    test "$(dpkg-query -W -f='${Version}' "$PACKAGE")" = "$version"; \
+    apt-get check; rm -f /tmp/jarvis-package-version; rm -rf /var/lib/apt/lists/*
+USER 1000:1000

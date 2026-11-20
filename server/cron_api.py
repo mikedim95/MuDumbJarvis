@@ -20,6 +20,7 @@ class Job(BaseModel):
     project_id:UUID|None=None
     work_scope:Literal['general','project']='general'
     mission_id:UUID|None=None
+    agent_id:UUID|None=None
 
 
 class JobStatus(BaseModel):
@@ -28,6 +29,12 @@ class JobStatus(BaseModel):
 
 class JobRun(BaseModel):
     request_id:UUID
+
+
+def agent_focus(row):
+    value = next((v.get('defaultValue') for v in row.get('variables') or [] if v.get('name')=='jarvis_agent_id'), None)
+    try:return str(UUID(str(value)))
+    except ValueError:return None
 
 
 def projection(row):
@@ -40,6 +47,7 @@ def projection(row):
     scope=work_scope.routine_scope(row)
     result.update(work_scope=scope['kind'],mission_id=scope['mission_id'])
     result['description']=work_scope.clean_description(result['description'])
+    if agent_focus(row):result['agent_id']=agent_focus(row)
     return result
 
 
@@ -71,6 +79,10 @@ async def scoped(client,identifier):
 
 
 async def save(client,body,identifier=None):
+    if body.agent_id:
+        from general_context import team
+        if str(body.agent_id) not in {a['id'] for a in await team(client)}:
+            raise HTTPException(404,'Agent unavailable')
     if len(body.cron_expression.split())!=5 or any(c not in '0123456789*,-/ ' for c in body.cron_expression):
         raise HTTPException(422,'Use a five-field numeric cron expression, for example 0 9 * * *')
     try:ZoneInfo(body.timezone)
@@ -87,6 +99,7 @@ async def save(client,body,identifier=None):
         if row is None:
             existing=await client.request('GET','companies/'+client.company+'/routines')
             row=next((r for r in existing if r.get('assigneeAgentId')==client.ceo and r.get('projectId')==project
+                and agent_focus(r)==(str(body.agent_id) if body.agent_id else None)
                 and r.get('title','').casefold()==body.title.strip().casefold() and r.get('status')!='archived'
                 and work_scope.routine_scope(r)['kind']==body.work_scope
                 and (work_scope.routine_scope(r)['mission_id'] or None)==(str(body.mission_id) if body.mission_id else None)),None)
@@ -98,6 +111,8 @@ async def save(client,body,identifier=None):
         fields={'title':body.title.strip(),'description':work_scope.description(body.description.strip(),body.work_scope,body.mission_id),'projectId':project,
             'assigneeAgentId':client.ceo,'concurrencyPolicy':'skip_if_active','catchUpPolicy':'skip_missed','activityGatePolicy':'always'}
         fields['variables']=work_scope.variables((row or {}).get('variables'),body.work_scope,body.mission_id)
+        fields['variables']=[v for v in fields['variables'] if v.get('name')!='jarvis_agent_id']
+        if body.agent_id:fields['variables'].append({'name':'jarvis_agent_id','type':'text','required':False,'defaultValue':str(body.agent_id)})
         if row:
             await scoped(client,row['id'])
             await client.request('PATCH','routines/'+row['id'],{'status':'paused'})
@@ -121,13 +136,26 @@ def build_router(require_auth):
         try:yield native
         finally:await native.http.aclose()
     @router.get('')
-    async def listing(scope:Literal['general','project']|None=None,mission_id:UUID|None=None,native:Paperclip=Depends(client)):
+    async def listing(scope:Literal['general','project']|None=None,mission_id:UUID|None=None,agent_id:UUID|None=None,native:Paperclip=Depends(client)):
         rows=await native.request('GET','companies/'+native.company+'/routines')
         projects=await native.request('GET','companies/'+native.company+'/projects')
         issues=await native.request('GET','companies/'+native.company+'/issues')
+        selected_agent=None;related=set()
+        if agent_id:
+            from general_context import team
+            import agent_work
+            selected_agent=next((a for a in await team(native) if a['id']==str(agent_id)),None)
+            if not selected_agent:raise HTTPException(404,'Agent unavailable')
+            index=await agent_work.issue_index(native)
+            links=agent_work.WorkLinks(native.company,native.ceo,index,rows)
+            for issue in index.values():
+                if str(agent_id) in (issue.get('assigneeAgentId'),(issue.get('activeRun') or {}).get('agentId')):
+                    job=links.for_issue(issue).get('cron_job')
+                    if job:related.add(job['id'])
         jobs=[]
         for row in rows:
             if row.get('companyId')!=native.company or row.get('assigneeAgentId')!=native.ceo or row.get('status')=='archived':continue
+            if agent_id and str(agent_id) not in (row.get('assigneeAgentId'),agent_focus(row)) and row['id'] not in related:continue
             view=projection(row);identifier=(view.get('active_issue') or {}).get('id') or (view.get('last_run') or {}).get('linkedIssueId')
             if scope and view['work_scope']!=scope:continue
             if mission_id and view['mission_id']!=str(mission_id):continue
@@ -138,7 +166,7 @@ def build_router(require_auth):
                     c.get('parentId')==task['id'] and (c.get('executionRunId') or c.get('status') in ('todo','in_progress')) for c in issues):phase='waiting_for_workers'
                 view['execution']={**{k:task.get(k) for k in ('id','identifier','status')},'display_status':phase}
             jobs.append(view)
-        return {'jobs':jobs,
+        return {'jobs':jobs,**({'agent':{k:selected_agent.get(k) for k in ('id','name')}} if selected_agent else {}),
             'projects':[{k:p.get(k) for k in ('id','name')} for p in projects if p.get('companyId')==native.company],
             'missions':[{**{k:i.get(k) for k in ('id','identifier','title','status','projectId')},'closed':work_scope.closed(i)} for i in issues
                 if i.get('companyId')==native.company and i.get('assigneeAgentId')==native.ceo and not i.get('parentId') and work_scope.classify(i,issues,rows)['kind']=='project' and work_scope.classify(i,issues,rows)['mission_id']==i['id']],

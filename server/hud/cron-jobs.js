@@ -2,11 +2,11 @@
 (() => {
   if(!document.body.classList.contains('ai-minimal'))return;
   const el=id=>document.getElementById(id);
-  const context=()=>{const view=window.JarvisModes?.snapshot();return view?.mode==='general'&&view.generalView==='cron'?{kind:'general',missionId:null}:
-    view?.mode==='projects'&&view.projectView==='cron'?{kind:'project',missionId:view.missionId}:null;};
+  const context=()=>{const view=window.JarvisModes?.snapshot();return view?.mode==='general'&&view.generalView==='cron'?{kind:'general',missionId:null,agentId:view.cronAgentId,agentName:view.cronAgentName}:
+    view?.mode==='projects'&&view.projectView==='cron'?{kind:'project',missionId:view.missionId,agentId:view.cronAgentId,agentName:view.cronAgentName}:null;};
   const active=()=>!!context(),key=()=>JSON.stringify(context());
   let jobs=[],editing=null,busy=false,loading=null,projects=[],missions=[],runIds={},loadedKey='',editingProject=null;
-  let selectedJob=null,focusRequested=false;
+  let selectedJob=null,focusRequested=false,editingAgent=null;
   try{runIds=JSON.parse(localStorage.getItem('jarvis-cron-pending-runs')||'{}');}catch{}
   const date=(value,zone)=>value?new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',...(zone?{timeZone:zone}:{})}).format(new Date(value)):'—';
   async function api(path='',options={}){
@@ -25,10 +25,10 @@
     const scope=context();if(!scope)return;
     const mission=missions.find(m=>m.id===scope.missionId);
     const focusedCard=el('cronList').querySelector('[data-selected="true"]')===document.activeElement;
-    el('cronHeading').textContent=scope.kind==='general'?'General cron jobs':'Mission cron jobs';
+    el('cronHeading').textContent=scope.agentName?scope.agentName+' · Cron jobs':scope.kind==='general'?'General cron jobs':'Mission cron jobs';
     el('cronDescription').textContent=scope.kind==='general'?'Recurring work that builds knowledge across missions.':
       mission?.closed?'This mission has ended. Its schedules remain paused.':'Recurring work and knowledge for this mission only.';
-    el('cronBackBtn').hidden=scope.kind!=='project';
+    el('cronBackBtn').hidden=false;el('cronBackBtn').textContent=scope.agentId?'← Agent':scope.kind==='project'?'← Overview':'← Agents';
     el('cronList').replaceChildren(...jobs.map(job=>{
       const card=document.createElement('article');card.className='cron-card';card.dataset.jobId=job.id;
       if(job.id===selectedJob){
@@ -41,7 +41,8 @@
       const schedule=job.triggers.find(t=>t.enabled)||job.triggers[0];
       card.append(line(schedule?schedule.cronExpression+' · '+schedule.timezone:'No schedule configured','cron-schedule'));
       card.append(line(job.status==='active'&&schedule?'Next run: '+date(schedule.nextRunAt,schedule.timezone):'Schedule paused.','cron-meta'));
-      card.append(line(job.work_scope==='project'?'Scope: this mission · Jarvis CEO':'Scope: General · all missions','cron-meta'));
+      card.append(line(job.work_scope==='project'?'Scope: this mission':'Scope: General · all missions','cron-meta'));
+      card.append(line(job.agent_id?'Agent schedule · orchestrated by Jarvis':'Team schedule · orchestrated by Jarvis','cron-meta'));
       const run=job.last_run;
       const phase=job.execution?.display_status,working=['todo','in_progress','waiting_for_workers'].includes(phase);
       if(working)card.append(line('Current run: '+job.execution.identifier+' · '+phase.replace(/_/g,' '),'cron-meta'));
@@ -69,7 +70,7 @@
   }
   async function load(){
     const scope=context(),targetKey=key();if(!scope||loading===targetKey)return;loading=targetKey;
-    try{const data=await api('?scope='+scope.kind+(scope.missionId?'&mission_id='+encodeURIComponent(scope.missionId):''));
+    try{const data=await api('?scope='+scope.kind+(scope.missionId?'&mission_id='+encodeURIComponent(scope.missionId):'')+(scope.agentId?'&agent_id='+encodeURIComponent(scope.agentId):''));
       if(targetKey!==key())return;
       if(loadedKey!==targetKey){editing=null;el('cronForm').hidden=true;}loadedKey=targetKey;
       jobs=data.jobs;projects=data.projects;missions=data.missions||[];
@@ -89,7 +90,7 @@
   function edit(job=null){
     const scope=context();if(!scope)return;
     editing=job?.id||null;const schedule=job?.triggers[0];
-    editingProject=job?.projectId||null;
+    editingProject=job?.projectId||null;editingAgent=job?job.agent_id||null:scope.agentId||null;
     el('cronTitle').value=job?.title||'';el('cronGoal').value=job?.description||'';
     el('cronExpression').value=schedule?.cronExpression||'0 9 * * *';el('cronTimezone').value=schedule?.timezone||'Europe/Athens';
     if(job)el('cronProject').value=job.projectId;
@@ -99,7 +100,7 @@
   el('cronForm').onsubmit=event=>{event.preventDefault();if(!el('cronForm').reportValidity())return;
     const scope=context();if(!scope)return;
     change(async()=>{const body={title:el('cronTitle').value,description:el('cronGoal').value,cron_expression:el('cronExpression').value,timezone:el('cronTimezone').value,
-      work_scope:scope.kind,mission_id:scope.missionId,project_id:editingProject||undefined};
+      work_scope:scope.kind,mission_id:scope.missionId,project_id:editingProject||undefined,agent_id:editingAgent};
       await api(editing?'/'+editing:'',{method:editing?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});el('cronForm').hidden=true;editing=null;});};
   el('newCronBtn').onclick=()=>edit();el('cancelCronBtn').onclick=()=>{el('cronForm').hidden=true;editing=null;};
   function activate(){

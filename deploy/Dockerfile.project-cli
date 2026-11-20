@@ -1,0 +1,26 @@
+FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b AS python
+FROM kalilinux/kali-rolling@sha256:1ff4a2be3849333687b3ed2b31bb5af0cd1b7c0a11ec7713feb5abe5a6b2795c
+COPY --from=python /usr/local /usr/local
+COPY tools/ /usr/local/share/jarvis/development/
+COPY project-install /usr/local/bin/project-install
+ARG REFRESH
+RUN set -eu; test -n "$REFRESH"; export LC_ALL=C; \
+    report=/usr/local/share/jarvis/os-maintenance; mkdir -p "$report"; \
+    dpkg-query -W -f='${binary:Package}\t${Version}\n' > "$report/before.tsv"; \
+    apt-get -o APT::Update::Error-Mode=any -o Acquire::Retries=2 update > "$report/update.log"; \
+    apt-get -s --no-remove --with-new-pkgs upgrade > "$report/plan.log"; \
+    apt-get -y --download-only --no-remove --with-new-pkgs upgrade
+RUN --network=none set -eu; export DEBIAN_FRONTEND=noninteractive LC_ALL=C; \
+    report=/usr/local/share/jarvis/os-maintenance; \
+    apt-get -y --no-download --no-remove --with-new-pkgs upgrade > "$report/upgrade.log"; \
+    dpkg --audit > "$report/audit.log"; test ! -s "$report/audit.log"; apt-get check > "$report/check.log"; \
+    dpkg-query -W -f='${binary:Package}\t${Version}\n' > "$report/after.tsv"; \
+    apt-get -s --no-remove --with-new-pkgs upgrade > "$report/remaining.log"; \
+    date -u +%FT%TZ > "$report/verified-at"; \
+    mkdir -p /project /opt; chown 1000:1000 /project; ln -s /project /opt/lab; \
+    /usr/local/bin/python3 -Ic 'import hashlib, json'
+LABEL io.jarvis.project.template="writable-v2"
+ENV HOME=/project PATH=/usr/local/bin:/usr/bin:/bin:/project/.local/bin
+USER 1000:1000
+WORKDIR /project
+ENTRYPOINT ["/usr/bin/sleep", "infinity"]

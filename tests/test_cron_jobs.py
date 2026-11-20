@@ -128,3 +128,21 @@ def test_mission_job_requires_an_active_unheld_mission(native):
         native.holds=[{'id':'native-stop-hold'}]
         assert client.post('/api/cron-jobs',headers=HEADERS,json={**BODY,'work_scope':'project','mission_id':mission}).status_code==409
     assert not native.jobs
+
+
+def test_agent_schedules_keep_the_selected_agent_and_do_not_merge_with_other_agents(native,monkeypatch):
+    from unittest.mock import AsyncMock
+    import general_context
+    first,second=str(uuid4()),str(uuid4())
+    monkeypatch.setattr(general_context,'team',AsyncMock(return_value=[{'id':first},{'id':second}]))
+    with TestClient(server.app) as client:
+        one=client.post('/api/cron-jobs',headers=HEADERS,json={**BODY,'agent_id':first})
+        assert one.status_code==200 and one.json()['agent_id']==first
+        replay=client.post('/api/cron-jobs',headers=HEADERS,json={**BODY,'agent_id':first})
+        two=client.post('/api/cron-jobs',headers=HEADERS,json={**BODY,'agent_id':second})
+        assert replay.json()['id']==one.json()['id'] and two.json()['id']!=one.json()['id']
+        assert len(native.jobs)==2 and all(j['assigneeAgentId']==CEO for j in native.jobs)
+        values={v['name']:v['defaultValue'] for v in native.jobs[0]['variables']}
+        assert values['jarvis_agent_id']==first and values['jarvis_work_scope']=='general'
+        assert client.post('/api/cron-jobs',headers=HEADERS,json={**BODY,'agent_id':str(uuid4())}).status_code==404
+        assert len(native.jobs)==2

@@ -35,6 +35,7 @@ def test_actual_runtime_recovery_and_agent_reason_precedence():
     assert reason == 'Review the expired credentials.'
     jobs = [{'state': 'waiting', 'reason': 'Waiting for review.'}, {'state':'blocked', 'reason':reason}]
     assert agent_work.staff_condition({}, jobs) == ('blocked', reason)
+    assert agent_work.staff_condition({'status':'running'}, jobs) == ('blocked', reason)
     assert agent_work.staff_condition({}, []) == ('idle', 'No open assignments.')
     assert agent_work.staff_condition({}, [{'state':'active', 'reason':'Running.'}, *jobs])[0] == 'active'
 
@@ -170,6 +171,7 @@ def test_profiles_show_only_pending_owner_questions_on_the_author(monkeypatch):
         data = {'/api/companies/company/agents': people, '/api/companies/company/routines': [],
                 '/api/companies/company/issues': rows, f'/api/issues/{root}/interactions': interactions,
                 f'/api/issues/{root}': mission}
+        data.update({'/api/issues/'+row['id']:row for row in rows if row['companyId']=='company'})
         return httpx.Response(200, json=data[path])
 
     transport(monkeypatch, handler, workforce=True)

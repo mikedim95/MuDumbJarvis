@@ -98,7 +98,9 @@ def job_brief(task):
     result = ''
     active = bool(task.get('executionRunId') or any(run.get('status') == 'running' for run in task['runs']))
     action = (task.get('unblockDescriptor') or {}).get('action')
-    if status == 'blocked':
+    if task.get('recovery'):
+        progress = task['recovery']['reason']
+    elif status == 'blocked':
         progress = caption(action) or 'Waiting for the blocker to be resolved.'
         # An older validator wrapped the worker's explicitly incomplete result in a diagnostic.
         # Never promote an unaccepted success claim from that diagnostic.

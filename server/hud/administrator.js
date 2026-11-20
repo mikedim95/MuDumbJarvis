@@ -1,272 +1,178 @@
-/* Paperclip holds General configuration; Hermes owns each conversation's messages. */
+/* Independent global/project conversations. Capture scope before every async operation. */
 (() => {
   if (!document.body.classList.contains('ai-minimal')) return;
-  const el = id => document.getElementById(id);
-  const input = el('administratorInput'), feed = el('administratorFeed');
-  const selectionKey = 'jarvis-general-conversation', creationKey = 'jarvis-general-new-conversation';
-  const defaultId = 'default';
-  const draftKey = id => id === defaultId ? 'jarvis-administrator-draft' : 'jarvis-general-draft:' + id;
-  const state = new Map();
-  let current = localStorage.getItem(selectionKey) || defaultId, threads = [];
-  let listVersion = 0, creating = false, inGeneral = false, followEnd = true;
-
-  async function api(path, options = {}) {
-    const response = await fetch('/api/admin/' + path, {cache: 'no-store', ...options});
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(data.error || data.detail || 'General chat is unavailable.');
-      error.data = data;
-      throw error;
-    }
+  const el=id=>document.getElementById(id), input=el('administratorInput'), feed=el('administratorFeed');
+  const states=new Map();
+  let scope=null, current='default', threads=[], listVersion=0, creating=false, initialized=false, followEnd=true;
+  const selectionKey=m=>m?'jarvis-project-conversation:'+m:'jarvis-general-conversation';
+  const creationKey=m=>m?'jarvis-project-new-conversation:'+m:'jarvis-general-new-conversation';
+  const key=(id,m=scope)=>(m||'general')+':'+id;
+  const draftKey=(id,m)=>m?'jarvis-project-draft:'+m+':'+id:id==='default'?'jarvis-administrator-draft':'jarvis-general-draft:'+id;
+  const visible=()=>!el('administratorPanel').hidden;
+  const same=(id,m)=>id===current&&m===scope;
+  const viewScope=()=>{const v=window.JarvisModes.snapshot();return v.mode==='projects'?v.missionId:null;};
+  const params=(m,extra={})=>new URLSearchParams({...extra,...(m?{mission_id:m}:{})});
+  async function api(path,options={}) {
+    const response=await fetch('/api/admin/'+path,{cache:'no-store',...options});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){const error=new Error(data.error||data.detail||'Chat is unavailable.');error.data=data;throw error;}
     return data;
   }
-  const post = body => ({method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
-  function threadState(id) {
-    if (!state.has(id)) {
-      let draft = {};
-      try { draft = JSON.parse(localStorage.getItem(draftKey(id)) || '{}') || {}; } catch {}
-      const pending = draft.pending || (draft.request_id ? [draft] : []);
-      state.set(id, {draft: draft.text || '', pending, messages: [], loaded: false, loading: null, sending: false, status: ''});
+  const post=body=>({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  function state(id,m=scope) {
+    const k=key(id,m);
+    if(!states.has(k)){
+      let saved={};try{saved=JSON.parse(localStorage.getItem(draftKey(id,m))||'{}')||{};}catch{}
+      states.set(k,{draft:saved.text||'',pending:saved.pending||(saved.request_id?[saved]:[]),messages:[],loaded:false,loading:null,sending:false,status:'',work:[],workChecked:0,workLoading:false,workSignature:'',deliveryError:''});
     }
-    return state.get(id);
+    return states.get(k);
   }
-  function saveDraft(id) {
-    const {draft, pending} = threadState(id);
-    if (draft || pending.length) localStorage.setItem(draftKey(id), JSON.stringify({text: draft, pending}));
-    else localStorage.removeItem(draftKey(id));
-  }
-  function scrollToEnd() { followEnd = true; feed.scrollTop = feed.scrollHeight; }
-  feed.addEventListener('scroll', () => { followEnd = feed.scrollHeight - feed.clientHeight - feed.scrollTop < 50; });
-  new ResizeObserver(() => { if (followEnd) scrollToEnd(); }).observe(feed);
-
-  function messageElement(message) {
-    const row = document.createElement('div');
-    row.className = 'msg ' + (message.role === 'user' ? 'you' : message.role === 'assistant' ? 'jarvis' : 'sys');
-    row.textContent = message.text;
-    if (message.open) {
-      const link = document.createElement('button');
-      link.type = 'button';
-      link.textContent = message.label;
-      link.onclick = message.open;
-      row.append(' ', link);
-    }
+  function save(id,m){const s=state(id,m),k=draftKey(id,m);if(s.draft||s.pending.length)localStorage.setItem(k,JSON.stringify({text:s.draft,pending:s.pending}));else localStorage.removeItem(k);}
+  function scrollEnd(){followEnd=true;feed.scrollTop=feed.scrollHeight;}
+  feed.addEventListener('scroll',()=>{followEnd=feed.scrollHeight-feed.clientHeight-feed.scrollTop<50;});
+  new ResizeObserver(()=>{if(followEnd)scrollEnd();}).observe(feed);
+  function messageElement(message){
+    const row=document.createElement('div');
+    if(message.source?.kind==='project_result'){row.dataset.workReplyId=message.id;}
+    row.className='msg '+(message.role==='user'?'you':message.role==='assistant'?'jarvis':'sys');row.textContent=message.text;
+    if(message.source?.kind==='project_result'){const source=document.createElement('small');source.className='work-result-source';source.textContent=message.source.identifier+' · '+(message.source.label||'Jarvis result');row.prepend(source);}
+    if(message.open){const link=document.createElement('button');link.type='button';link.textContent=message.label;link.onclick=message.open;row.append(' ',link);}
     return row;
   }
-  function append(id, message) {
-    threadState(id).messages.push(message);
-    if (id === current) { feed.append(messageElement(message)); scrollToEnd(); }
-  }
-  function renderComposer() {
-    const s = threadState(current);
-    el('administratorSend').disabled = s.sending;
-    const status = el('administratorStatus');
-    status.textContent = s.status || (s.pending.length ? 'Delivery unconfirmed.' : '');
-    if (!s.sending) for (const request of s.pending) {
-      if (s.draft.trim() === request.text.trim()) continue; // Send retries the restored draft.
-      const retry = document.createElement('button');
-      retry.type = 'button';
-      retry.textContent = s.pending.length === 1 ? 'Retry' : 'Retry “' + request.text.slice(0, 40) + '”';
-      retry.title = request.text;
-      retry.onclick = () => send(null, request);
-      status.append(' ', retry);
+  function append(id,m,message){message.timestamp??=Date.now()/1000;state(id,m).messages.push(message);if(same(id,m)){feed.append(messageElement(message));scrollEnd();}}
+  function renderComposer(){
+    const s=state(current);el('administratorSend').disabled=s.sending||!threads.some(t=>t.id===current);
+    const status=el('administratorStatus');
+    const waiting=s.work.find(w=>w.state!=='closed'),missing=s.work.find(w=>w.state==='closed'&&!w.has_reply&&!w.superseded);
+    const progress=waiting?(waiting.state==='blocked'?(waiting.identifier+' · '+(waiting.reason||'Blocked; Jarvis needs to resolve this.')):'Jarvis is working with the team…'):missing?'Work ended without a published reply.':'';
+    status.textContent=s.status||s.deliveryError||(s.pending.length?'Delivery unconfirmed.':progress);
+    if(!s.sending)for(const request of s.pending){
+      if(s.draft.trim()===request.text.trim())continue;
+      const retry=document.createElement('button');retry.type='button';retry.textContent='Retry';retry.onclick=()=>send(null,request);status.append(' ',retry);
     }
   }
-  function renderThread() {
-    const s = threadState(current);
-    el('administratorHeading').textContent = threads.find(t => t.id === current)?.title || 'General chat';
-    feed.replaceChildren(...s.messages.map(messageElement));
-    input.value = s.draft;
-    renderComposer();
-    scrollToEnd();
+  function renderThread(){
+    const s=state(current);el('administratorHeading').textContent=threads.find(t=>t.id===current)?.title||(scope?'Project conversation':'General conversation');
+    feed.replaceChildren(...s.messages.map(messageElement));input.value=s.draft;renderComposer();scrollEnd();
   }
-  function renderList() {
-    const list = el('generalThreads'), focused = document.activeElement?.dataset.threadId;
-    list.replaceChildren(...threads.map(thread => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.threadId = thread.id;
-      button.textContent = thread.title;
-      button.onclick = () => selectThread(thread.id);
-      return button;
+  function renderList(){
+    const focused=document.activeElement?.dataset.threadId;
+    el('generalThreads').replaceChildren(...threads.map(thread=>{
+      const button=document.createElement('button');button.type='button';button.dataset.threadId=thread.id;button.textContent=thread.title;
+      button.setAttribute('aria-current',String(visible()&&thread.id===current));button.onclick=()=>selectThread(thread.id);return button;
     }));
-    markCurrent();
-    if (focused) [...list.children].find(button => button.dataset.threadId === focused)?.focus({preventScroll: true});
+    if(focused)[...el('generalThreads').children].find(b=>b.dataset.threadId===focused)?.focus({preventScroll:true});
   }
-  function markCurrent() {
-    const view = window.JarvisModes.snapshot();
-    for (const button of el('generalThreads').children) {
-      button.setAttribute('aria-current', String(view.mode === 'general' && view.generalView === 'chat' && button.dataset.threadId === current));
-    }
-  }
-  async function history(id) {
-    const s = threadState(id);
-    if (s.loaded) return;
-    if (!s.loading) {
-      s.loading = api('history?conversation_id=' + encodeURIComponent(id), {signal: AbortSignal.timeout(20000)})
-        .then(data => {
-          s.messages = data.messages;
-          s.loaded = true;
-          if (id === current) renderThread();
-        }).finally(() => { s.loading = null; });
-    }
+  async function history(id,m){
+    const s=state(id,m);if(s.loaded)return;
+    if(!s.loading)s.loading=api('history?'+params(m,{conversation_id:id}),{signal:AbortSignal.timeout(20000)}).then(data=>{
+      s.messages=data.messages;s.work=data.work||[];s.deliveryError=data.work_error||'';s.loaded=true;s.workChecked=Date.now();if(same(id,m))renderThread();
+    }).finally(()=>{s.loading=null;});
     await s.loading;
   }
-  function readHistory(id) {
-    history(id).catch(error => {
-      const s = threadState(id);
-      s.status = error.message;
-      if (id === current) renderComposer();
-    });
-  }
-  function selectThread(id) {
-    current = id;
-    localStorage.setItem(selectionKey, id);
-    renderList(); renderThread();
-    window.JarvisModes.setGeneralView('chat');
-    readHistory(id);
-  }
-  async function loadList() {
-    const version = ++listVersion;
-    try {
-      const data = await api('conversations', {signal: AbortSignal.timeout(20000)});
-      if (version !== listVersion) return;
-      threads = data.conversations;
-      if (!threads.some(t => t.id === current)) {
-        current = data.default_id;
-        localStorage.setItem(selectionKey, current);
-        renderThread();
-      }
-      el('generalThreadsStatus').textContent = '';
-      renderList();
-      el('administratorHeading').textContent = threads.find(t => t.id === current)?.title || 'General chat';
-      if (window.JarvisModes.snapshot().generalView === 'chat') readHistory(current);
-    } catch (error) {
-      if (version === listVersion) el('generalThreadsStatus').textContent = error.message;
-    }
-  }
-  async function newThread() {
-    if (creating) return;
-    creating = true;
-    el('newGeneralChat').disabled = true;
-    try {
-      const id = localStorage.getItem(creationKey) || crypto.randomUUID();
-      localStorage.setItem(creationKey, id);
-      const thread = await api('conversations', {...post({id}), signal: AbortSignal.timeout(20000)});
-      ++listVersion;
-      threads = [thread, ...threads.filter(t => t.id !== thread.id)];
-      localStorage.removeItem(creationKey);
-      el('generalThreadsStatus').textContent = '';
-      selectThread(thread.id);
-      await loadList();
-    } catch (error) {
-      el('generalThreadsStatus').textContent = error.message;
-    } finally {
-      creating = false;
-      el('newGeneralChat').disabled = false;
-    }
-  }
-  function showReceipts(id, data) {
-    const receipts = [...(data.administration_updates || []), ...(data.general_context_updates || [])];
-    for (const r of receipts) {
-      const row = {role: 'system'};
-      if (['start_project', 'start_general_work'].includes(r.action)) {
-        row.text = r.task.identifier + ' · ' + r.task.title;
-        row.label = r.action === 'start_project' ? 'Open project' : 'Open general work';
-        row.open = () => window.JarvisModes.openProject(r.task.id);
-        window.JarvisTasks.refresh();
-      } else if (r.job) {
-        row.text = 'Saved cron job: ' + r.job.title + ' · ' + r.job.status;
-        row.label = 'Cron jobs';
-        row.open = async () => {
-          if (r.job.work_scope === 'project') {
-            await window.JarvisModes.openProject(r.job.mission_id); window.JarvisModes.openProjectCron();
-          } else window.JarvisModes.setGeneralView('cron');
-        };
-      } else if (r.action === 'rename_agent') row.text = 'Saved agent name: ' + r.name;
-      else if (r.action === 'set_system_prompt') row.text = 'Saved system prompt for ' + r.name + '. Applies next turn.';
-      else row.text = 'Saved standing directions for ' + r.name + '.';
-      append(id, row);
-    }
-    if (receipts.some(r => !r.job && !r.task)) window.dispatchEvent(new Event('jarvis-general-context-updated'));
-  }
-  async function send(event, previous) {
-    event?.preventDefault();
-    const id = current, s = threadState(id), text = previous?.text || input.value.trim();
-    if (!text || s.sending) return;
-    let request = previous || s.pending.find(item => item.text.trim() === text);
-    if (!request) {
-      request = {text, request_id: crypto.randomUUID()};
-      s.pending.push(request);
-    }
-    if (!previous || input.value.trim() === text) {
-      input.value = '';
-      s.draft = '';
-    }
-    saveDraft(id);
-    s.sending = true; s.status = 'Jarvis is working…';
-    let originRevision, project;
-    renderComposer();
-    try {
-      // Capture the Context target before navigating or waiting for history/configuration.
-      const selected = request.scope ? null : window.JarvisGeneralContext.selectedTarget();
-      window.JarvisModes.setGeneralView('chat');
-      originRevision = window.JarvisModes.snapshot().navigationRevision;
-      if (selected) {
-        const target = await selected;
-        request.agent_id = target.agent_id;
-        request.scope = target.scope;
-        saveDraft(id);
-      }
-      await history(id);
-      if (!s.messages.some(m => m.requestId === request.request_id)) append(id, {role: 'user', text, requestId: request.request_id});
-      const data = await api('chat', post({conversation_id: id, input: text, request_id: request.request_id,
-        general_context_agent_id: request.agent_id, prompt_scope: request.scope}));
-      project = window.JarvisModes.createdProject(data);
-      append(id, {role: 'assistant', text: data.text});
-      showReceipts(id, data);
-      s.pending = s.pending.filter(item => item !== request);
-      s.status = ''; saveDraft(id);
-      await loadList();
-    } catch (error) {
-      project ||= window.JarvisModes.createdProject(error.data);
-      if (error.data) showReceipts(id, error.data);
-      s.status = error.message;
-      if (project) {
-        s.pending = s.pending.filter(item => item !== request);
-        saveDraft(id);
-      } else if (!s.draft) {
-        s.draft = text;
-        if (id === current) input.value = text;
-        saveDraft(id);
-      }
-    } finally {
-      s.sending = false;
-      if (id === current) {
-        renderComposer();
-        const view = window.JarvisModes.snapshot();
-        if (view.mode === 'general' && view.generalView === 'chat') {
-          if (project && view.navigationRevision === originRevision) await window.JarvisModes.openProject(project.id);
-          else input.focus();
+  async function refreshWork(id=current,m=scope,force=false){
+    const s=state(id,m);
+    if(!s.loaded||s.sending||s.workLoading)return;
+    const pending=s.work.some(w=>w.state!=='closed');
+    if(!force&&Date.now()-s.workChecked<(pending?4000:30000))return;
+    s.workLoading=true;s.workChecked=Date.now();
+    try{
+      const data=await api('updates?'+params(m,{conversation_id:id}),{signal:AbortSignal.timeout(20000)});
+      s.work=data.work||[];s.deliveryError='';
+      const signature=JSON.stringify(data.messages||[]);
+      if(signature!==s.workSignature){
+        s.workSignature=signature;
+        const ordinary=s.messages.filter(message=>message.source?.kind!=='project_result');
+        s.messages=[...ordinary,...(data.messages||[])].map((message,index)=>({message,index}))
+          .sort((a,b)=>(a.message.timestamp??(-1+a.index/10000))-(b.message.timestamp??(-1+b.index/10000))||a.index-b.index).map(item=>item.message);
+        if(same(id,m)){
+          const atEnd=followEnd,position=feed.scrollTop;feed.replaceChildren(...s.messages.map(messageElement));
+          if(atEnd)scrollEnd();else feed.scrollTop=position;
         }
       }
+    }catch(error){s.deliveryError='Could not load work replies. Retrying…';}
+    finally{s.workLoading=false;if(same(id,m))renderComposer();}
+  }
+  function readHistory(id,m){history(id,m).catch(error=>{state(id,m).status=error.message;if(same(id,m))renderComposer();});}
+  function openChat(){if(scope)window.JarvisModes.setProjectView('chat');else window.JarvisModes.setMode('direct');}
+  function selectThread(id){current=id;localStorage.setItem(selectionKey(scope),id);renderList();renderThread();openChat();readHistory(id,scope);}
+  async function loadList(m=scope){
+    const version=++listVersion;
+    try{
+      const data=await api('conversations?'+params(m),{signal:AbortSignal.timeout(20000)});
+      if(version!==listVersion||m!==scope)return;
+      threads=data.conversations.map(thread=>({...thread,title:thread.id===data.default_id?(m?'Project conversation':'General conversation'):thread.title}));
+      if(!threads.some(t=>t.id===current)){current=data.default_id;localStorage.setItem(selectionKey(m),current);}
+      el('generalThreadsStatus').textContent='';renderList();renderThread();if(visible())readHistory(current,m);
+    }catch(error){if(version===listVersion)el('generalThreadsStatus').textContent=error.message;}
+  }
+  async function newThread(){
+    if(creating)return;creating=true;el('newGeneralChat').disabled=true;
+    const m=scope;
+    try{
+      const id=localStorage.getItem(creationKey(m))||crypto.randomUUID();localStorage.setItem(creationKey(m),id);
+      const thread=await api('conversations',post({id,mission_id:m}));localStorage.removeItem(creationKey(m));
+      if(m!==scope)return;
+      ++listVersion;threads=[thread,...threads.filter(t=>t.id!==thread.id)];selectThread(thread.id);await loadList(m);
+    }catch(error){if(m===scope)el('generalThreadsStatus').textContent=error.message;}
+    finally{creating=false;el('newGeneralChat').disabled=false;}
+  }
+  function receipts(id,m,data){
+    const updates=[...(data.administration_updates||[]),...(data.general_context_updates||[])];
+    for(const r of updates){
+      const row={role:'system'};
+      if(['start_project','start_general_work','continue_project'].includes(r.action)){
+        row.text=(r.action==='continue_project'?'Sent to ':'')+r.task.identifier+' · '+r.task.title;
+        row.label=r.task.work_scope==='general'?'Open General work':'Open project';row.open=()=>window.JarvisModes.openProject(r.task.id);window.JarvisTasks.refresh();
+      }else if(r.action==='publish_knowledge'){
+        row.text='Available in General knowledge · '+r.identifier;
+      }else if(r.job){
+        row.text='Saved cron job: '+r.job.title;row.label='Cron jobs';row.open=async()=>{
+          if(r.job.work_scope==='project'){await window.JarvisModes.openProject(r.job.mission_id);window.JarvisModes.openProjectCron();}else window.JarvisModes.setGeneralView('cron');};
+      }else if(r.action==='rename_agent')row.text='Renamed '+r.name+'.';
+      else if(r.action==='set_system_prompt')row.text='Saved system prompt for '+r.name+'.';
+      else row.text='Saved '+(r.mission_id?'project':'general')+' directions for '+r.name+'.';
+      append(id,m,row);
+    }
+    if(updates.some(r=>!r.job&&!r.task))window.dispatchEvent(new Event('jarvis-general-context-updated'));
+  }
+  async function send(event,previous){
+    event?.preventDefault();const id=current,m=scope,s=state(id,m),text=previous?.text||input.value.trim();
+    if(!text||s.sending||!threads.some(t=>t.id===id))return;
+    let request=previous||s.pending.find(item=>item.text.trim()===text);
+    if(!request){request={text,request_id:crypto.randomUUID()};s.pending.push(request);}
+    if(!previous||input.value.trim()===text){input.value='';s.draft='';}save(id,m);
+    s.sending=true;s.status='Jarvis is working…';renderComposer();openChat();
+    const origin=window.JarvisModes.snapshot().navigationRevision;let project;
+    try{
+      await history(id,m);
+      if(!s.messages.some(msg=>msg.requestId===request.request_id))append(id,m,{role:'user',text,requestId:request.request_id});
+      const data=await api('chat',post({conversation_id:id,mission_id:m,input:text,request_id:request.request_id,prompt_scope:'administrator'}));
+      project=window.JarvisModes.createdProject(data);append(id,m,{role:'assistant',text:data.text});receipts(id,m,data);
+      s.pending=s.pending.filter(item=>item!==request);s.status='';save(id,m);if(m===scope)await loadList(m);
+    }catch(error){
+      project||=window.JarvisModes.createdProject(error.data);if(error.data)receipts(id,m,error.data);s.status=error.message;
+      if(project)s.pending=s.pending.filter(item=>item!==request);
+      else if(!s.draft){s.draft=text;if(same(id,m))input.value=text;}save(id,m);
+    }finally{
+      s.sending=false;refreshWork(id,m,true);
+      if(same(id,m)){renderComposer();if(visible()){
+        if(project&&window.JarvisModes.snapshot().navigationRevision===origin)await window.JarvisModes.openProject(project.id);else input.focus();
+      }}
     }
   }
-  function activate() {
-    const view = window.JarvisModes.snapshot(), general = view.mode === 'general';
-    markCurrent();
-    if (general && !inGeneral) loadList();
-    if (general && view.generalView === 'chat' && threads.some(t => t.id === current)) readHistory(current);
-    inGeneral = general;
+  function activate(){
+    const v=window.JarvisModes.snapshot(),m=viewScope(),workspace=v.mode!=='projects'||v.projectView!=='list'&&m;
+    if(!workspace)return;
+    if(!initialized||m!==scope){initialized=true;scope=m;current=localStorage.getItem(selectionKey(m))||'default';threads=[];renderThread();renderList();loadList(m);}
+    else{renderList();if(visible()&&threads.some(t=>t.id===current)){readHistory(current,m);refreshWork(current,m,true);}}
   }
-  input.addEventListener('input', () => {
-    const s = threadState(current);
-    s.draft = input.value;
-    saveDraft(current);
-    if (s.pending.length && !s.sending) renderComposer();
-  });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
-  el('administratorForm').addEventListener('submit', send);
-  el('newGeneralChat').onclick = newThread;
-  window.addEventListener('jarvis-mode-changed', activate);
-  renderThread(); activate();
+  input.addEventListener('input',()=>{const s=state(current);s.draft=input.value;save(current,scope);if(s.pending.length&&!s.sending)renderComposer();});
+  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();send();}});
+  el('administratorForm').addEventListener('submit',send);el('newGeneralChat').onclick=newThread;
+  window.addEventListener('jarvis-mode-changed',activate);
+  window.addEventListener('jarvis-tasks-updated',()=>{if(!initialized||viewScope()!==scope)activate();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&visible())refreshWork(current,scope,true);});
+  setInterval(()=>{if(!document.hidden&&visible())refreshWork();},5000);
+  renderThread();activate();
 })();

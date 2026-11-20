@@ -167,3 +167,23 @@ def test_unauthenticated_chat_never_reads_paperclip(native, monkeypatch):
         assert client.post('/api/chat', json={'input': 'List all tasks.'}).status_code == 401
     assert native.calls == []
     fake.chat_stream_events.assert_not_called()
+
+def test_current_bridge_address_in_general_chat(native, monkeypatch, tmp_path):
+    import project_runtime
+    path = tmp_path / 'runtime.json'
+    monkeypatch.setattr(project_runtime, 'SNAPSHOT', path)
+    native.issues[0]['assigneeAgentId'] = 'ceo'
+    sample = {'company':'company', 'at':project_runtime.time.time(), 'network':project_runtime.NETWORK,
+              'projects':{ISSUE:'running', FOREIGN:'running'}, 'bridge_ipv4':{ISSUE:'192.0.2.7', FOREIGN:'192.0.2.8'}}
+    path.write_text(json.dumps(sample))
+    facts = read('What is the IP for JAR-56?')
+    assert facts['selected_tasks'][0]['project_container']['ipv4'] == facts['goals'][0]['project_container']['ipv4'] == '192.0.2.7'
+    assert '192.0.2.8' not in json.dumps(facts)
+    for changes, status in [({'at':0}, 'unconfirmed'), ({'company':'other'}, 'unconfirmed'),
+                            ({'projects':{}}, 'inactive'), ({'bridge_ipv4':{ISSUE:'invalid'}}, 'running')]:
+        path.write_text(json.dumps({**sample, **changes}))
+        info = read('JAR-56')['selected_tasks'][0]['project_container']
+        assert info['status'] == status and 'ipv4' not in info
+    path.write_text(json.dumps(sample))
+    native.issues[0]['visibility'] = 'private'
+    assert '192.0.2.7' not in json.dumps(read('JAR-56'))

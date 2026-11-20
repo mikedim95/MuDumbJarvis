@@ -1,0 +1,27 @@
+{
+  "python3-pytest": {
+    "command": "pytest", "version": "8.3.5-2", "sha256": "76968eac524ed9af042946ddd080ba8612d3fc55b1817a62750c9d82979bd562",
+    "archives": [
+      ["p/pytest/python3-pytest_8.3.5-2_all.deb", "f933f7b38d1fd2c140684a44fecc7aa23cd6d08364604384c14c4cc21de8f8f9"],
+      ["p/python-iniconfig/python3-iniconfig_1.1.1-2_all.deb", "c9226a32a78fa93f9e993a4ed77fcb3ceb23c21b9d75d7ea4dc77cb016ed0d83"],
+      ["p/python-packaging/python3-packaging_25.0-1_all.deb", "d70c8469f6e9c6105e1ebcd3ebdc963f11dadbeddd89d2d1a2a3cb1c97d2ecbc"],
+      ["p/python-pluggy/python3-pluggy_1.5.0-1_all.deb", "d762a370c7c54046d991b3caa9095facbee5c54792e306b5f9e32455326f82bc"]
+    ]
+  },
+  "make": {
+    "command": "make", "version": "4.4.1-2", "sha256": "8a229baf64671988cfb5af43ba3070c6ce7214cf32bcf96155115559d1466fa7",
+    "archives": [["m/make-dfsg/make_4.4.1-2_amd64.deb", "70a9709e665383b06068ccd423d62ea191b65355f318a25565dbf324b254cec6"]]
+  },
+  "shfmt": {
+    "command": "shfmt", "version": "3.8.0-1+b8", "sha256": "d36a64424d379a28ef1d47be26f7ff081bfbc4a9e25a3262db5883e97d3055ad",
+    "archives": [["g/golang-mvdan-sh/shfmt_3.8.0-1+b8_amd64.deb", "7f5ba49c0bb38584cb8d2b6571306189ddbfd56e3371e5b877001f3e5b02501f"]]
+  },
+  "gojq": {
+    "command": "gojq", "version": "0.12.13-1", "sha256": "17ca7a7e09f1cca45c959ee3c26049558b8d5dbc23f9e8bde5465a958a10f59e",
+    "archives": [["g/gojq/gojq_0.12.13-1_amd64.deb", "f29902dde3872ac608c8b250100a823b434dccfaa7c60839755976cddc5cb6e0"]]
+  },
+  "tree": {
+    "command": "tree", "version": "2.2.1-1", "sha256": "80a66b71d56e9ffc300a07f61e3f3d8d61c184d38afc91c86c701cd10bd4ee9a",
+    "archives": [["t/tree/tree_2.2.1-1_amd64.deb", "123f5e15790fee551c52f56bb930e3eadd77f74af0819c8bec243e26521e98f5"]]
+  }
+}

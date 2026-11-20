@@ -64,6 +64,8 @@ def workspace_directory(turn):
 
 def read_workspace(turn, path, include_stat=False):
     root = '/workspace/issues/' + turn['issue'] + '/'
+    if isinstance(path,str) and path and not path.startswith('/'):
+        path=root+path
     if not isinstance(path, str) or not path.startswith(root):
         raise PermissionError('Artifact file must belong to the current private issue workspace')
     relative = PurePosixPath(path[len(root):])
@@ -132,11 +134,32 @@ def publish_artifact(args, **kwargs):
     if 'path' in args:
         if not os.environ.get('JARVIS_PROFILE') or not profile_registry.profile(os.environ['JARVIS_PROFILE'])['sandbox']:
             raise PermissionError('This role can publish text content, not filesystem paths')
-        data = read_workspace(turn, args['path'])
+        from . import project_cli
+        if project_cli.project_path(args['path']):
+            if 'terminal' not in profile_registry.profile(os.environ['JARVIS_PROFILE'])['tools']:
+                raise PermissionError('Project files require a project terminal assignment.')
+            data = project_cli.read_file(turn, args['path'])
+        else:
+            data = read_workspace(turn, args['path'])
     else:
         if not isinstance(args['content'], str):
             raise ValueError('Artifact content must be UTF-8 text')
         data = args['content'].encode()
+    from . import package_installs, team_workspace
+    if args['name'] == package_installs.MANIFEST:
+        manifest = json.loads(data)
+        if not isinstance(manifest, dict) or set(manifest) != {'package'}:
+            raise ValueError('Use package-request.json with a single package name')
+        result = package_installs.request(manifest['package'], turn, issue, reporting.api)
+        return json.dumps({'package_install': result, 'artifact': upload(turn, args['name'], data)})
+    if args['name'] == team_workspace.RESULT:
+        team_workspace.outcome(data)
+    if args['name'] == 'project-findings.md':
+        root = team_workspace.membership(issue, {r['id']:r for r in turn.get('_scope_issues', [])},
+            {r['id']:r for r in turn.get('_scope_routines', [])}, turn['company'], turn['project'],
+            turn['agent'] if turn.get('ceo') else turn.get('reports_to'))
+        if not root or root != (turn.get('work_scope') or {}).get('mission_id') or not 0 < len(data) <= 4000:
+            raise ValueError('A project findings note requires a visible project and up to 4000 UTF-8 bytes.')
     catalog_metrics=None
     if re.fullmatch(r'osint-catalog-v\d+\.json',args['name']):
         from . import public_sources
@@ -159,9 +182,17 @@ def publish_artifact(args, **kwargs):
     if sources and args['name'].endswith('.md'):
         validate_source_claims(turn, data.decode(), sources)
     artifact=upload(turn,args['name'],data)
+    if args['name'] == 'project-findings.md':
+        from . import project_cli
+        saved = project_cli.reference(turn, artifact['id'])
+        if saved.get('sha256') != artifact['sha256']:
+            raise ValueError('General did not confirm the published artifact digest.')
     if catalog_metrics is not None:turn['osint_catalog']={**catalog_metrics,'artifact_id':artifact['id']}
+    readback = ({'action':'records', 'issue_ids':[turn['issue']], 'artifact_id':artifact['id']}
+                if os.environ.get('JARVIS_PROFILE') == 'research' else None)
     return json.dumps({'source': 'Paperclip native attachment receipt', 'artifact':artifact,
         **({'catalog_validation':catalog_metrics} if catalog_metrics is not None else {}),
+        **({'readback_with_research_sources':readback} if readback else {}),
         'next': 'Deliverable is persisted in Paperclip. Finish other assigned work/tests, then report facts and blockers.'})
 
 
@@ -270,11 +301,40 @@ def validate_source_claims(turn, response, sources):
 
 def deliver_workspace(turn):
     """Collect real current-issue files after verified execution, without running code."""
+    from . import project_cli
+    if project_cli.assigned(turn) and 'terminal' in profile_registry.profile(os.environ['JARVIS_PROFILE'])['tools']:
+        # A shared volume may contain another worker's files. Collect only paths this run actually edited.
+        written = {}
+        for event in turn.get('employee_execution', []):
+            if (not event.get('success') or event['tool'] not in ('write_file', 'patch')
+                    or event['result'].get('mission_id') != turn['work_scope']['mission_id']):
+                continue
+            args = event['args']
+            path = args.get('path')
+            if not project_cli.project_path(path):
+                continue
+            # Shell output and patches can be published explicitly. Do not attribute a sibling's later edit.
+            if event['tool'] == 'patch':
+                written.pop(path, None)
+            elif (args.get('content') and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}\.(md|txt|json|py|yaml|yml|csv|log|js|ts)',
+                                                       PurePosixPath(path).name)):
+                written[path] = digest(args['content'].encode())
+        if len(written) > 12:
+            raise ValueError('Generated deliverables exceed the bounded file limit')
+        for path, expected in sorted(written.items()):
+            data = project_cli.read_file(turn, path)
+            if digest(data) != expected:
+                continue
+            receipt = upload(turn, PurePosixPath(path).name, data)
+            turn.setdefault('runtime_deliveries', []).append({'type':'existing_workspace_file',
+                'artifact_id':receipt['id'], 'source':'Collected from this run’s project file tool receipt'})
+        return
     from hermes_constants import get_hermes_home
     directory = get_hermes_home() / 'workspace/issues' / str(UUID(turn['issue']))
     if directory.is_symlink():
         raise PermissionError('Issue workspace cannot be a symlink')
-    files = sorted(p for p in directory.iterdir() if p.suffix in ('.py', '.md', '.txt', '.json', '.yaml', '.yml', '.log', '.js', '.ts') and not p.is_symlink())
+    files = sorted(p for p in directory.iterdir() if p.suffix in ('.py', '.md', '.txt', '.json', '.yaml', '.yml', '.log', '.js', '.ts')
+                   and not p.is_symlink() and p.is_file() and p.stat().st_mtime >= turn.get('started_at', 0))
     if len(files) > 12:
         raise ValueError('Generated deliverables exceed the bounded file limit')
     for file in files:
@@ -323,9 +383,15 @@ def verify_promptfoo_output(turn, terminal_events):
                 continue
             index = next(i for i, value in enumerate(argv) if value in ('--output', '-o'))
             path = argv[index + 1]
-            if not path.startswith('/'):
-                path = '/workspace/issues/' + turn['issue'] + '/' + path
-            raw, modified_at = read_workspace(turn, path, include_stat=True)
+            from . import project_cli
+            if ((event.get('result') or {}).get('mission_id') and event['result']['mission_id'] ==
+                    (turn.get('work_scope') or {}).get('mission_id')):
+                path = str(PurePosixPath(event['result']['workdir']) / path)
+                raw, modified_at = project_cli.read_file(turn, path, include_stat=True)
+            else:
+                if not path.startswith('/'):
+                    path = '/workspace/issues/' + turn['issue'] + '/' + path
+                raw, modified_at = read_workspace(turn, path, include_stat=True)
             if modified_at < turn.get('started_at', 0):
                 continue
             output = json.loads(raw)
@@ -367,45 +433,116 @@ def source_excerpt(text):
     return '\n'.join(excerpt)
 
 
+def cache_sibling_input(turn, artifact, raw):
+    """Copy verified input into this task's existing private workspace only."""
+    from hermes_constants import get_hermes_home
+    workspace_directory(turn)
+    fd=os.open(get_hermes_home(),os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    suffix=PurePosixPath(artifact['originalFilename']).suffix.lower()
+    suffix=suffix if suffix in ('.md','.txt','.json','.csv') else '.txt'
+    name=str(UUID(artifact['id']))+suffix
+    path='/workspace/issues/'+turn['issue']+'/inputs/'+name
+    try:
+        for part in ('workspace','issues',str(UUID(turn['issue'])),'inputs'):
+            try:os.mkdir(part,mode=0o700,dir_fd=fd)
+            except FileExistsError:pass
+            child=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=fd);os.close(fd);fd=child
+        try:leaf=os.open(name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=fd)
+        except FileExistsError:
+            if read_workspace(turn,path)!=raw:raise PermissionError('Existing private input differs from verified artifact bytes')
+        else:
+            with os.fdopen(leaf,'wb') as stream:stream.write(raw)
+    finally:os.close(fd)
+    return path
+
+
+def artifact_text_page(turn, artifact, raw, args, source):
+    """Bound a verified native text input without changing its trust or task state."""
+    if len(raw)!=artifact['byteSize'] or digest(raw)!=artifact['sha256']:
+        raise ValueError('Native artifact bytes do not match its hash/size receipt')
+    offset=args.get('offset',0);limit=args.get('limit',2000)
+    if isinstance(offset,bool) or not isinstance(offset,int) or offset<0:
+        raise ValueError('offset must be a nonnegative character offset')
+    if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=2400:
+        raise ValueError('limit must be between 1 and 2400 characters')
+    content=raw.decode('utf-8')
+    if offset>len(content):raise ValueError('offset exceeds artifact length')
+    excerpt=content[offset:offset+limit]
+    view={'issue_id':source['id'],'identifier':source.get('identifier'),'artifact_id':artifact['id'],
+        'name':artifact['originalFilename'][:160],'byte_size':len(raw),'sha256':artifact['sha256'],
+        'created_by_agent_id':artifact.get('createdByAgentId'),'originating_run_id':artifact_run_id(artifact),
+        'source_task_status':source.get('status'),'offset':offset,'total_characters':len(content),
+        'excerpt':excerpt,'next_offset':offset+len(excerpt) if offset+len(excerpt)<len(content) else None}
+    if offset==0 and args.get('materialize',True) and profile_registry.profile(os.environ['JARVIS_PROFILE'])['sandbox']:
+        view['workspace_path']=cache_sibling_input(turn,artifact,raw)
+    while len(json.dumps(view,ensure_ascii=False))>5000 and len(view['excerpt'])>1:
+        view['excerpt']=view['excerpt'][:len(view['excerpt'])//2]
+        view['next_offset']=offset+len(view['excerpt'])
+    return view
+
+
 def read_worker_artifacts(args, **kwargs):
+    from . import document_access
     turn, issue = scope()
     if not issue.get('parentId'):
-        raise PermissionError('Only assigned child work can read completed sibling deliverables')
+        raise PermissionError('Only assigned child work can read sibling artifacts')
     siblings = reporting.api('GET', '/companies/' + turn['company'] + '/issues')
-    allowed = [i for i in siblings if i.get('parentId') == issue['parentId'] and i.get('id') != turn['issue'] and
-        i.get('companyId') == turn['company'] and i.get('projectId') == turn['project'] and i.get('status') == 'done']
-    if args.get('issue_id'):
-        requested = str(UUID(args['issue_id']))
-        allowed = [i for i in allowed if i['id'] == requested]
-        if not allowed:
-            raise PermissionError('Requested issue is not a completed sibling in this objective. Do not pass your own issue ID; omit issue_id to discover all completed sibling artifacts.')
+    requested = str(UUID(args['issue_id'])) if args.get('issue_id') else None
+    aid = str(UUID(args['artifact_id'])) if args.get('artifact_id') else None
+    scoped = [i for i in siblings if i.get('parentId') == issue['parentId'] and i.get('id') != turn['issue']
+        and i.get('companyId') == turn['company'] and i.get('projectId') == turn['project']
+        and not i.get('hiddenAt') and i.get('status') in ('backlog','todo','in_progress','in_review','blocked','done')
+        and (not requested or i['id'] == requested)]
+    allowed = [i for i in scoped if i.get('status') == 'done']
+    inputs = document_access.granted_sibling_artifacts(reporting.api, turn, scoped, aid)
+    if requested and not allowed and not inputs:
+        raise PermissionError('Requested issue has no completed sibling deliverable or granted input for this assignment.')
+    if aid and inputs:
+        artifact, = inputs
+        source = next(i for i in scoped if i['id'] == artifact['issue_id'])
+        page = artifact_text_page(turn, artifact, attachment_bytes(aid),
+            {**args, 'materialize':artifact['private_input'] and args.get('materialize',True)}, source)
+        page.update(access='granted_input', source_run_status='succeeded')
+        return json.dumps({'source':'Owner-granted native verification input', 'artifact':page,
+            'next':'Verify the original bytes. The source assignment retains its recorded task status.'}, ensure_ascii=False)
     if len(allowed) > 5:
         raise ValueError('Sibling artifact read exceeds its bounded scope')
-    results = []
+    receipts = {artifact['id']:artifact for artifact in inputs}
     for item in allowed:
         runs = [r for r in reporting.api('GET', '/issues/' + item['id'] + '/runs') if r.get('agentId') == item['assigneeAgentId']]
         latest = max(runs, key=lambda r: r.get('startedAt') or '') if runs else None
         if not latest or latest['status'] != 'succeeded':
-            raise ValueError('Latest sibling execution has not succeeded')
-        artifacts = reporting.api('GET', '/issues/' + item['id'] + '/attachments')
-        for a in artifacts[:12]:
-            if a.get('createdByAgentId') != item['assigneeAgentId'] or artifact_run_id(a) != latest['runId']:
+            if any(a['issue_id']==item['id'] for a in inputs):
                 continue
-            raw = attachment_bytes(a['id'])
-            if len(raw) != a['byteSize'] or digest(raw) != a['sha256']:
-                raise ValueError('Native sibling artifact bytes do not match its receipt')
-            text = raw.decode('utf-8')
-            results.append({'issue_id': item['id'], 'identifier': item['identifier'],
-                'artifact_id': a['id'], 'name': a['originalFilename'], 'sha256': a['sha256'],
-                'originating_run_id': artifact_run_id(a), 'excerpt': text[:5000], 'truncated': len(text) > 5000})
-    return json.dumps({'source': 'Paperclip persisted sibling artifacts; native authorship/run/hash checked',
-        'artifacts': results, 'limit': 'Content can contain generated interpretation. CEO separately verifies signed execution evidence.'})
+            raise ValueError('Latest sibling execution has not succeeded')
+        for artifact in reporting.api('GET', '/issues/' + item['id'] + '/attachments'):
+            if artifact.get('createdByAgentId') != item['assigneeAgentId'] or artifact_run_id(artifact) != latest['runId']:
+                continue
+            receipts.setdefault(artifact['id'],{**artifact,'issue_id':item['id'],'identifier':item['identifier']})
+    if aid:
+        artifact=receipts.get(aid)
+        if artifact is None:raise PermissionError('Artifact is not from an eligible completed sibling execution')
+        source=next(i for i in allowed if i['id']==artifact['issue_id'])
+        view=artifact_text_page(turn,artifact,attachment_bytes(aid),args,source)
+        return json.dumps({'source':'Hash-checked native sibling artifact text','artifact':view,
+            'next':'Read next_offset until null, or inspect the complete hash-checked workspace_path using read_file/terminal within your private workspace. No runtime spill-file access is needed.'},ensure_ascii=False)
+    page=args.get('artifact_offset',0)
+    if isinstance(page,bool) or not isinstance(page,int) or page<0:raise ValueError('artifact_offset must be nonnegative')
+    results=sorted(receipts.values(),key=lambda row:(row['issue_id'],row['originalFilename'],row['id']))
+    rows=results[page:page+4]
+    return json.dumps({'source':'Authenticated native sibling artifact receipts','artifacts':[
+        {'issue_id':row['issue_id'],'identifier':row['identifier'],'artifact_id':row['id'],
+         'name':row['originalFilename'][:160],'byte_size':row['byteSize'],'sha256':row['sha256'],
+         'originating_run_id':artifact_run_id(row),
+         **({'access':'granted_input','source_task_status':row['source_task_status']} if row.get('access') else {})} for row in rows],
+        'next_artifact_offset':page+len(rows) if page+len(rows)<len(results) else None,
+        'next':'Call this tool with artifact_id, offset=0 and limit=2400 to read text. Continue using next_offset until null. Never read runtime spill files.'})
 
 
-def attachment_bytes(attachment_id):
+def attachment_bytes(attachment_id, timeout=15):
     request = urllib.request.Request('http://paperclip:3100/api/attachments/' + str(UUID(attachment_id)) + '/content',
         headers={'Authorization': 'Bearer ' + os.environ['HERMES_PAPERCLIP_AGENT_KEY']})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         raw = response.read(MAX_ARTIFACT + 1)
     if len(raw) > MAX_ARTIFACT:
         raise ValueError('Native artifact exceeds the reviewed read limit')
@@ -415,6 +552,9 @@ def attachment_bytes(attachment_id):
 def request_action_approval(args, **kwargs):
     turn, issue = scope()
     proposal = str(args.get('proposal', '')).strip()
+    if proposal.lower().startswith('install package '):
+        from . import package_installs
+        return json.dumps(package_installs.request(proposal[16:].strip(), turn, issue, reporting.api))
     if not 40 <= len(proposal) <= 3000:
         raise ValueError('Describe the sensitive action, target, reason and exact limits (40–3000 characters)')
     fingerprint = digest(proposal.encode())
@@ -440,12 +580,20 @@ def register(ctx, ceo=False):
              'action':{'type':'string','enum':['fetch','search','knowledge','records']},
              'urls':{'type':'array','items':{'type':'string'},'minItems':1,'maxItems':6},
              'query':{'type':'string','maxLength':200},
-             'issue_ids':{'type':'array','items':{'type':'string'},'maxItems':6}}, [], research_sources),
+             'issue_ids':{'type':'array','items':{'type':'string'},'maxItems':6},
+             'artifact_id':{'type':'string','description':'With action=records and one authorized issue_ids entry, read this exact native artifact, including unfinished source tasks. This does not certify completion.'},
+             'artifact_offset':{'type':'integer','minimum':0,'description':'Next native receipt page for action=records.'},
+             'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':2400},
+             'materialize':{'type':'boolean','description':'For sandbox profiles, copy the full verified artifact into this task’s private inputs on its first page; default true.'}}, [], research_sources),
         'publish_artifact': ('Persist a real issue deliverable in Paperclip. Provide name and exactly one of content (UTF-8 text) or path (existing file in your current private issue workspace). This never publishes externally.',
             {'name': {'type': 'string'}, 'content': {'type': 'string'}, 'path': {'type': 'string'}}, ['name'], publish_artifact),
-        'read_worker_artifacts': ('Read completed sibling deliverables for your assigned objective. Call with {} to discover them. Do not pass your own issue ID. Native worker identity, latest succeeded run, and actual artifact bytes/hashes are checked. No host paths or unrelated tasks.',
-            {'issue_id': {'type': 'string', 'description': 'Optional exact completed SIBLING issue UUID, never your current issue. Omit this field to discover all completed siblings.'}}, [], read_worker_artifacts),
-        'request_action_approval': ('Request native human approval for a sensitive action. Describe exact target, limits and reason. This tool never executes the action or expands runtime permissions.',
+        'read_worker_artifacts': ('Read completed sibling deliverables and individually granted text inputs for this assignment. List receipts with {}, then use artifact_id and offset/limit for bounded pages. The first page includes a private workspace_path when copying is permitted. Each receipt identifies the producing run. An input from an unfinished task retains its source status.',
+            {'issue_id': {'type': 'string', 'description': 'Optional exact completed SIBLING issue UUID, never your current issue.'},
+             'artifact_id':{'type':'string','description':'Exact artifact UUID from discovery; reads hash-checked text pages.'},
+             'materialize':{'type':'boolean','description':'Default true: on the first text page, copy the complete verified text into this task’s private inputs directory for read_file/terminal.'},
+             'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':2400},
+             'artifact_offset':{'type':'integer','minimum':0,'description':'Next discovery page, when next_artifact_offset is provided.'}}, [], read_worker_artifacts),
+        'request_action_approval': ('Request native human approval for a sensitive action. Describe exact target, limits and reason. Use proposal="install package NAME" for a missing sandbox package. Catalog packages use the verified installer. An unlisted package goes to the CEO for an owner decision and operator provisioning.',
             {'proposal': {'type': 'string'}}, ['proposal'], request_action_approval)}
     for name, (description, properties, required, handler) in tools.items():
         if name in allowed:

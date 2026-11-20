@@ -121,7 +121,7 @@ def test_sandbox_file_safety_uses_remote_workspace(employee, monkeypatch):
     monkeypatch.setenv('HERMES_WRITE_SAFE_ROOT', '/opt/data')
     hooks = []
     employee.register(SimpleNamespace(register_hook=lambda *args: hooks.append(args), register_tool=lambda **kwargs: None))
-    assert os.environ['HERMES_WRITE_SAFE_ROOT'] == '/workspace'
+    assert os.environ['HERMES_WRITE_SAFE_ROOT'] == '/workspace:/project'
     assert hooks[0] == ('pre_tool_call', employee.guard)
 
 

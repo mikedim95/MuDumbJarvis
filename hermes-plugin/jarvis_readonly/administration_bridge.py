@@ -32,6 +32,10 @@ def register(ctx):
             'for explicitly shared team knowledge, or schedule recurring work with schedule_project. '
             'Schedules default to work_scope=general. A mission schedule requires work_scope=project and mission_id. '
             'Use list_schedules to read job IDs and project scopes; set_schedule_status pauses, resumes or archives a native job. Ongoing work needs a real schedule; saving directions alone does not schedule execution. '
+            'Use search_projects to find published replies/results and project conversations; provide mission_id to narrow the search. '
+            'In a project-bound chat the server restricts searches and writes to that mission. '
+            'Use continue_project for explicitly assigned work on an existing mission; it sends the exact latest owner message to the native CEO task. '
+            'Use project_context with mission_id and agent_id to read local directions (no text), or save text with expected_revision from a fresh read. '
             'Use the active request_id supplied by the HUD. '
             'Read first; set_system_prompt requires the current prompt_sha256 as expected_sha256. '
             'Provide the exact agent_id and scope (agent, direct, administrator); the selected prompt in the '
@@ -40,10 +44,12 @@ def register(ctx):
             'Only an actual native receipt confirms a change. Direct authorizes only start_project.',
             'parameters':{'type':'object','properties':{
                 'request_id':{'type':'string'},
-                'action':{'type':'string','enum':['read','rename_agent','set_system_prompt','start_project','start_general_work','schedule_project','set_schedule_status','list_schedules']},
+                'action':{'type':'string','enum':['read','rename_agent','set_system_prompt','start_project','start_general_work','schedule_project','set_schedule_status','list_schedules','search_projects','project_context','continue_project']},
                 'agent_id':{'type':'string'},'scope':{'type':'string','enum':['agent','direct','administrator']},
                 'name':{'type':'string','maxLength':80},'text':{'type':'string','maxLength':20000,
                     'description':'Full replacement system prompt or recurring job goal. New projects preserve the latest owner message.'},
+                'query':{'type':'string','maxLength':500,'description':'Search terms for published project replies, task results and project conversations. Blank lists recent records.'},
+                'expected_revision':{'type':'string','description':'Latest project context revision UUID from a read; omit for a new document.'},
                 'assignment_context':{'type':'string','maxLength':3000,'description':'Only if the owner referred to earlier turns, include the prior facts needed to understand this assignment. Keep the original scope.'},
                 'expected_sha256':{'type':'string'},'title':{'type':'string','maxLength':120},
                 'cron_expression':{'type':'string','description':'Five cron fields; default 0 9 * * * (daily 09:00).'},

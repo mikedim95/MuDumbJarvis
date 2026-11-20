@@ -76,6 +76,35 @@ def test_inventory_reply_without_actual_tool_is_blocked(monkeypatch):
     assert payload['unblockDescriptor']['owner'] == {'agentId': agent}
 
 
+def test_research_handoff_does_not_require_every_available_tool(monkeypatch):
+    description=('OBJECTIVE:\nExpand reconnaissance knowledge to ten tools.\n\n'
+        'EXPECTED OUTCOME:\nA source-backed ten-tool catalog.\n\n'
+        'AVAILABLE TOOLS:\nlocal_ollama_models, research_sources, publish_artifact\n\n'
+        'ACCEPTANCE CRITERIA:\nVerify the original research artifacts.\n\n'
+        '[JARVIS CEO CORRECTION abc]\nDo not call local_ollama_models; this is not an inventory task.')
+    api,_=start(monkeypatch,description=description)
+    api.side_effect=None
+    assert not reporting.current_turn()['needs_inventory']
+    reporting.response(session_id=session,assistant_response='The research evidence is verified.')
+    reporting.finish(session_id=session,completed=True)
+    assert api.call_args.args[2]['status']=='done'
+
+
+def test_structured_inventory_still_requires_the_actual_inventory_call(monkeypatch):
+    api,_=start(monkeypatch,description='OBJECTIVE:\nList installed Ollama models.\n\nAVAILABLE TOOLS:\nlocal_ollama_models')
+    api.side_effect=None
+    reporting.response(session_id=session,assistant_response='An invented inventory')
+    reporting.finish(session_id=session,completed=True)
+    assert api.call_args.args[2]['status']=='blocked'
+
+
+def test_negated_inventory_mentions_are_not_an_inventory_request():
+    for description in ('Do not call local_ollama_models.',
+        'This is public-source research, not an Ollama model inventory.',
+        'No inventory of installed models is needed.'):
+        assert not reporting.inventory_required(description)
+
+
 def test_actual_inventory_tool_unlocks_completion_and_writes_correlated_audit(monkeypatch, tmp_path):
     import sys
     from types import SimpleNamespace

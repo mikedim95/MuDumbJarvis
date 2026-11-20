@@ -16,6 +16,7 @@ import subprocess
 
 import yaml
 import staffing
+prompt_policies = staffing.prompt_policies
 
 TEAM = {'research': 'JARVIS Research', 'software_development': 'JARVIS Software',
         'system_administration': 'JARVIS Systems', 'security_analysis': 'JARVIS Security'}
@@ -96,26 +97,27 @@ def shared_credentials(root):
 
 
 def stage_record(board, agent, item=None):
-    record = staffing.workforce_record(agent, board.env, item)
-    metadata = agent.get('metadata') or {}; meta = metadata.get('jarvis') or {}
-    history = list(meta.get('inference_configuration_history') or [])
-    if meta.get('inference_configuration') and meta['inference_configuration'] != record:
-        history.append(meta['inference_configuration'])
-    update = {**meta, 'inference_configuration': record, 'inference_configuration_history': history}
-    if item:
-        update.update(provisioned=False, operator_inference_upgrade_pending=True,
-            suppress_historical_readiness_notice=True)
-    patch = {'metadata': {**metadata, 'jarvis': update}}
-    if item:
-        patch.update(name=TEAM[item['id']], title=item['name'])
-    else:
-        instructions = (staffing.ROOT / 'deploy/JARVIS_CEO_POLICY.md').read_text()
-        patch.update(name='JARVIS', title='Chief Executive Officer',
-            capabilities='Plan objectives, select scoped specialists, delegate native Paperclip work, review evidence and report to the human. Future hires and sensitive actions require human approval.',
-            adapterConfig={**agent['adapterConfig'], 'instructions': instructions})
-    board.api('PATCH', '/agents/' + agent['id'], patch)
-    return record
-
+    with staffing._configuration_lock.lock(agent['id']):
+        agent = board.api('GET','/agents/'+agent['id'])
+        record = staffing.workforce_record(agent, board.env, item)
+        metadata = agent.get('metadata') or {}; meta = metadata.get('jarvis') or {}
+        history = list(meta.get('inference_configuration_history') or [])
+        if meta.get('inference_configuration') and meta['inference_configuration'] != record:
+            history.append(meta['inference_configuration'])
+        update = {**meta, 'inference_configuration': record, 'inference_configuration_history': history}
+        if item:
+            update.update(provisioned=False, operator_inference_upgrade_pending=True,
+                suppress_historical_readiness_notice=True)
+        patch = {'metadata': {**metadata, 'jarvis': update}}
+        if item:
+            patch.update(name=TEAM[item['id']], title=item['name'])
+        else:
+            instructions = staffing.configured_agent_prompt(agent, prompt_policies.assemble('ceo',agent['name']))
+            patch.update(name='JARVIS', title='Chief Executive Officer',
+                capabilities='Plan objectives, select scoped specialists, delegate native Paperclip work, review evidence and report to the human. Future hires and sensitive actions require human approval.',
+                adapterConfig={**agent['adapterConfig'], 'instructions': instructions})
+        board.api('PATCH', '/agents/' + agent['id'], patch)
+        return record
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -208,7 +210,11 @@ def main():
             config = staffing.codex_config(yaml.safe_load((home / 'config.yaml').read_text()))
             if home.name == 'hermes-ceo':
                 config['agent']['max_turns'] = 24
-                staffing.write_private(home / 'SOUL.md', (root / 'deploy/JARVIS_CEO_POLICY.md').read_text())
+                native = staffing.configured_agent_prompt(ceo,prompt_policies.assemble('ceo',ceo['name']))
+                prompt_policies.seed_file(home / 'SOUL.md', prompt_policies.identity_soul(ceo['name'])
+                    if native.startswith('[JARVIS PROMPT POLICY v2]\n') else prompt_policies.assemble('ceo',ceo['name']))
+                for name, text in prompt_policies.skills('ceo').items():
+                    prompt_policies.seed_file(home / 'skills' / name / 'SKILL.md', text)
             staffing.write_private(home / 'config.yaml', yaml.safe_dump(config, sort_keys=False))
     staffing.write_private(root / 'deploy/codex-workforce.env',
         'JARVIS_CODEX_CEO_MODEL=gpt-6.1-sol\nJARVIS_CODEX_CEO_CONFIGURATION=' +

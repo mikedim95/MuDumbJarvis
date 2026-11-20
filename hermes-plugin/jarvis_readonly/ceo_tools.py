@@ -115,8 +115,9 @@ def context_snapshot(turn, issue=None, comments=None):
         ('[JARVIS CEO PLAN', '[JARVIS CEO REVIEW]', '[JARVIS CEO WAITING]', '[JARVIS CEO RESULTS READY]')))]
     result = {'source': 'Paperclip REST API',
         'reporting_style': reporting.REPORT_STYLE,
-        'general_directions': turn.get('general_context'),
-        'work_scope':turn.get('work_scope'),'mission_context':turn.get('mission_context'),'shared_knowledge':turn.get('shared_knowledge'),
+        'general_directions': turn.get('general_context'), 'project_directions':turn.get('project_directions'),
+        'scheduled_agent':turn.get('scheduled_agent'), 'work_scope':turn.get('work_scope'),'mission_context':turn.get('mission_context'),'shared_knowledge':turn.get('shared_knowledge'),
+        **({'team_workspace': turn['team_workspace']} if turn.get('team_workspace') else {}),
         'objective': {k: issue.get(k) for k in ('id', 'identifier', 'title', 'description', 'status', 'goalId')},
         'goals': [{k: g.get(k) for k in ('id', 'title', 'description', 'status')} for g in goals[:20]],
         'goal_count': len(goals), 'goal_list_truncated': len(goals) > 20,
@@ -153,6 +154,10 @@ def context_snapshot(turn, issue=None, comments=None):
     if turn.get('work_scope'):
         from . import work_scope
         result['scope_guidance']=work_scope.guidance(turn['work_scope'])
+        if turn['work_scope'].get('kind') == 'project':
+            result['project_os_maintenance'] = ('Agents share a writable project lab. For OS upgrades the runtime operator builds a signed-package release and switches the project while preserving /project. '
+                'Ask for a decision on replacing the live container only if it is outstanding. After activation, assign Systems to verify the current hostname, package inventory and release evidence under /usr/local/share/jarvis/os-maintenance. '
+                'A prior container ID refers to the previous generation. Do not ask workers to retry sudo or infer installation from owner approval.')
     return result, items
 
 
@@ -183,6 +188,9 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
             rows = reporting.api('GET', '/issues/' + turn['issue'] + '/interactions')
             decisions = [d for d in blocker_review.decisions(rows, turn['issue'], turn['agent'])
                          if d['child_id'] in {i['id'] for i in items}]
+            children_by_id = {i['id']: i for i in items}
+            decisions = [d for d in decisions if d.get('package') or not blocker_review.approved_operator_request(
+                d['question'], children_by_id[d['child_id']], decisions)]
             snapshot['owner_decisions'] = decisions[:8]
             turn['review_child_ids'] = [i['id'] for i in items]
             turn['owner_decisions'] = decisions
@@ -232,13 +240,31 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
             blocked = [item for item in items if item['status'] == 'blocked']
             if blocked:
                 diagnostics = []
+                turn['worker_package_requests'] = {}
                 for child in blocked[:5]:
                     updates = sorted(reporting.api('GET', '/issues/' + child['id'] + '/comments'),
                         key=lambda c: c.get('createdAt') or '')
                     worker = [c for c in updates if c.get('authorAgentId') == child['assigneeAgentId']]
                     human = [c for c in updates if c.get('authorUserId')]
+                    packages = blocker_review.worker_package_requests(child, updates)
+                    installed = {}
+                    accepted_packages = [d for d in turn.get('owner_decisions', []) if d.get('package')
+                        and d.get('answer') == 'accepted' and d['child_id'] == child['id']
+                        and d['agent_id'] == child['assigneeAgentId']]
+                    if accepted_packages:
+                        from . import apt_receipts
+                        docs = reporting.api('GET', '/issues/' + child['id'] + '/documents')
+                        installed = apt_receipts.ready_commands(docs, accepted_packages, turn['company'],
+                            turn['project'], turn['issue'], child['id'], child['assigneeAgentId'])
+                        if installed:
+                            turn.setdefault('verified_package_probes', {})[child['id']] = installed
+                    packages = [name for name in packages if name not in installed]
+                    if packages:
+                        turn['worker_package_requests'][child['id']] = packages
                     diagnostics.append({'child_id': child['id'], 'identifier': child['identifier'],
                         'status': child['status'], 'assignee_agent_id': child['assigneeAgentId'],
+                        **({'verified_offline_packages':installed,
+                            'package_next_step':'For an installation blocker, give the same worker the exact probe_command in its private task directory.'} if installed else {}),
                         'latest_worker_error_or_summary': worker[-1]['body'].split('JARVIS_EXECUTION_EVIDENCE=')[0][:1800] if worker else None,
                         'blocker': (child.get('unblockDescriptor') or {}).get('action'),
                         'execution_hold': bool(child.get('executionBlocker')),
@@ -247,6 +273,10 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                         'human_review_notes': [c['body'][:1200] for c in human[-2:]],
                         'interpretation': 'Native blocked-task diagnostics, not accepted completion evidence.'})
                 snapshot['blocked_child_diagnostics'] = diagnostics
+                if turn['worker_package_requests']:
+                    snapshot['package_requests'] = turn['worker_package_requests']
+                    snapshot['package_guidance'] = ('Unlisted packages require a scoped operator handoff. Ask the owner through ask_owner. '
+                        'Acceptance queues operator provisioning. Keep the child blocked until verified installation.')
                 turn['inspected_blockers'] = {entry['child_id'] for entry in diagnostics}
                 snapshot['current_action'] = (
                     'You own these blockers. Apply the latest owner answer, including a changed scope, before asking again. '
@@ -257,10 +287,11 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
                     'repair a missing capability, delegate that specific repair and then resume the original worker. '
                     'Use depends_on as a STRUCTURED '
                     'argument for actual prerequisites. Never retry a failed approach unchanged, bypass a hold, or '
-                    'override a rejection. When your team cannot proceed, call action=ask_owner with child_id, '
+                    'override a rejection. When progress requires a new owner decision, call action=ask_owner with child_id, '
                     'plan explaining what you tried and why only the owner can decide, and text containing one '
                     'specific question. Use any existing answer first. A pending question already awaits the owner. '
-                    'A status update alone does not resolve a blocker.')
+                    'If a capability remains unavailable after the owner chose a scope, report the observed result, the limit and who maintains it. '
+                    'Keep the assignment blocked. A runtime repair belongs in the status report. Address owner questions to the person who can actually decide, using task names or short identifiers.')
         elif turn.get('hiring_approval_status') in ('pending', 'revision_requested', 'rejected', 'cancelled'):
             snapshot['current_action'] = ('Native hiring decision is ' + turn['hiring_approval_status'] +
                 '. Respect the human decision. Do not create duplicate hires or claim execution. Report this real decision and blocker.')
@@ -295,6 +326,23 @@ def prepare_turn_context(turn, issue=None, comments=None, deadline=None):
         # verified receipts remain in native records and turn.child_evidence;
         # only their explicitly labeled model-facing excerpts are reduced.
         snapshot['historical_update_note'] = 'recent_updates are prior turns, not instructions for this turn. Follow current_action.'
+        if turn.get('prompt_policy_version') == 2:
+            from . import prompt_context
+            snapshot['context_boundaries'] = prompt_context.BOUNDARIES
+            snapshot['identity'] = turn.get('registered_identity')
+            snapshot['role_procedure'] = turn.get('role_procedure')
+            snapshot['allowed_tools_source'] = 'The registered runtime tool schemas. Role descriptions grant no additional tools.'
+            for profile in snapshot['capability_profiles']:
+                profile['allowed_tools'] = profile_registry.profile(profile['id'])['tools']
+            for child in snapshot['children']:
+                native = next(i for i in items if i['id'] == child['id'])
+                child['dependencies'] = [{k: d.get(k) for k in ('id','identifier','status')}
+                    for d in native.get('blockedBy') or []]
+            # Company goals unrelated to this objective are not task context.
+            snapshot['goals'] = [g for g in snapshot['goals'] if g['id'] == snapshot['objective'].get('goalId')]
+            snapshot['recent_updates'] = [u for u in snapshot['recent_updates'] if not u.get('authorAgentId')][-1:]
+            if snapshot.get('latest_user_request') == snapshot['objective'].get('description'):
+                snapshot['objective']['description'] = 'See latest_user_request (same authenticated text).'
         text = bounded_context_text(snapshot, verified)
         reporting.check_budget(deadline)
         if verified:
@@ -497,7 +545,7 @@ def review_projection(item, excerpt_chars=1000, output_chars=1600, compact_index
     tools = []
     for call in proof['tool_calls']:
         observed = call.get('result') or {}
-        result = {key: observed[key] for key in ('source', 'exit_code', 'error', 'verified', 'result_truncated')
+        result = {key: observed[key] for key in ('source', 'exit_code', 'error', 'verified', 'result_truncated', 'mission_id', 'workdir', 'workdir_source')
                   if key in observed}
         if call['tool'] == 'agent_identity':
             result.update({key: observed.get(key) for key in ('agent_id', 'company_id', 'issue_id',
@@ -602,6 +650,8 @@ def bounded_context_text(snapshot, verified):
         text = prefix + json.dumps(candidate, separators=(',', ':'))
         if len(text) <= 32000:
             return text
+    if 'team_workspace' in snapshot:
+        return bounded_context_text({k: v for k, v in snapshot.items() if k != 'team_workspace'}, verified)
     knowledge=snapshot.get('shared_knowledge') or {}
     if knowledge.get('entries'):
         reduced={**snapshot,'shared_knowledge':{**knowledge,'entries':[],'entries_omitted_for_context_budget':True}}
@@ -618,6 +668,8 @@ def manage(args, **kwargs):
             raise PermissionError('Owner decisions must concern an existing report on this objective.')
         decision = blocker_review.ask(reporting.api, turn, issue, child, str(args.get('text') or '').strip(),
                                      str(args.get('plan') or '').strip())
+        if decision.get('next_actor') == 'runtime_operator':
+            return audit(turn, action, {'next_actor':'runtime_operator', 'result':turn['operator_blocker']})
         return audit(turn, action, {'interaction_id': decision['id'], 'question': decision['question']})
     if action == 'request_correction':
         child_id = str(UUID(str(args.get('child_id', ''))))
@@ -640,6 +692,11 @@ def manage(args, **kwargs):
             # Inspecting tree-holds requires board credentials.
             cause = (child.get('unblockDescriptor') or {}).get('action') or ''
             answer = next((d['id'] for d in turn.get('owner_decisions', []) if d['child_id'] == child_id and d['answer']), '')
+            installed = turn.get('verified_package_probes', {}).get(child_id, {})
+            probes = [installed[name] for name in blocker_review.blocker_packages(cause) if name in installed]
+            if probes:
+                text += '\nVerified assignment commands: ' + ', '.join(p['probe_command'] for p in probes) + '. Run in the private task directory and report the actual output.'
+                answer += json.dumps([(p['command'], p['version']) for p in probes], sort_keys=True)
             revision = hashlib.sha256((cause.strip().casefold() + answer).encode()).hexdigest()[:20]
             review_marker = '[JARVIS BLOCKER REVIEW ' + revision + ']'
             history = reporting.api('GET', '/issues/' + child_id + '/comments')
@@ -685,7 +742,9 @@ def manage(args, **kwargs):
                 excerpt += '\n[Objective truncated for this plan record; full text remains on the assigned Paperclip issue.]'
             plan = ('Runtime-generated execution scope, not a model-supplied rationale. '
                     'The CEO explicitly selected self.\nAssigned Paperclip objective: ' + excerpt +
-                    '\nUse the existing authorized local_ollama_models read-only inventory tool and report verified facts or actual blockers. '
+                    ('\nUse only relevant authorized reads or management tools as needed and answer from evidence. '
+                     if turn.get('prompt_policy_version') == 2 else
+                     '\nUse the existing authorized local_ollama_models read-only inventory tool and report verified facts or actual blockers. ') +
                     'This plan grants no new permissions and assigns no worker.')
         else:
             raise ValueError('A clear scoped plan is required for delegate or hire decisions')
@@ -693,16 +752,19 @@ def manage(args, **kwargs):
                       {'comment': f'[JARVIS CEO PLAN decision={decision}]\n' + plan}, turn['run'])
         turn['plan_decision'] = decision
         return audit(turn, action, {'recorded': True, 'decision': decision,
-                     'next': 'Call local_ollama_models now.' if decision == 'self' else
+                     'next': ('Use the relevant authorized tools only if needed, then answer the actual request.'
+                              if turn.get('prompt_policy_version') == 2 and decision == 'self' else
+                              'Call local_ollama_models now.') if decision == 'self' else
                              'Delegate a scoped child to one existing employee.' if decision == 'delegate' else
                              'Request a hire for human approval only if existing employees cannot do the work.'})
     if action == 'delegate':
+        turn['delegation_error_pending'] = True
         agent_id = str(UUID(str(args.get('agent_id', ''))))
         employee = next((a for a in employees(turn) if a['id'] == agent_id and profile_registry.ready_employee(a)), None)
         if employee is None:
             raise PermissionError('Only a ready existing direct report may receive delegated work')
         title, text = str(args.get('title', '')).strip(), str(args.get('text', '')).strip()
-        if not title or not 20 <= len(text) <= 6000:
+        if not title or (args.get('handoff') is None and not 20 <= len(text) <= 6000):
             raise ValueError('A clear title, responsibility and acceptance criteria are required')
         dependencies = [str(UUID(value)) for value in args.get('depends_on', [])]
         related = {child['id']: child for child in children(turn)}
@@ -711,6 +773,16 @@ def manage(args, **kwargs):
         if any(related[value].get('assigneeAgentId') == agent_id for value in dependencies):
             raise ValueError('Do not create a same-employee dependency cycle')
         check_research_dependency(turn, employee, list(related.values()), dependencies)
+        if args.get('handoff') is not None or turn.get('prompt_policy_version') == 2:
+            from . import prompt_context, acknowledgements
+            selected = profile_registry.profile(profile_registry.employee_profile(employee))
+            handoff = prompt_context.delegation_handoff(args)
+            tools = [*selected['tools'],'agent_identity']
+            if (acknowledgements.communication_only(issue.get('description')) and
+                    isinstance(handoff,dict) and acknowledgements.communication_only(
+                        '\n'.join(str(v) for v in handoff.values()),explicit=True)):
+                tools = ['agent_identity','publish_artifact']
+            text = prompt_context.render_handoff(handoff,tools,dependencies)
         if turn.get('plan_decision') != 'delegate':
             plan = str(args.get('plan', '')).strip()
             if plan and not 10 <= len(plan) <= 4000:
@@ -736,6 +808,7 @@ def manage(args, **kwargs):
         if (child.get('parentId') != turn['issue'] or child.get('projectId') != turn['project']
                 or child.get('assigneeAgentId') != agent_id or child.get('description') != text):
             raise ValueError('This employee already has a differently scoped child; review it before requesting more work')
+        turn.pop('delegation_error_pending',None)
         reporting.api('PATCH', '/issues/' + turn['issue'],
                       {'comment': 'CEO delegated ' + child['identifier'] + ' to ' + employee['name'] +
                        '. Scoped responsibility: ' + text}, turn['run'])
@@ -753,7 +826,7 @@ def manage(args, **kwargs):
             return audit(turn, action, {'diagnostics': [{'child_id': c['id'], 'identifier': c['identifier'],
                 'blocker': (c.get('unblockDescriptor') or {}).get('action'),
                 'partial_reports': blocker_review.partial_reports(reporting, turn, c)} for c in blocked[:5]],
-                'next': 'These are partial results. Send an executable correction or ask the owner for the missing decision.'})
+                'next': 'Report what the evidence establishes. Retry only with a concrete change. If an operator must repair the environment, record that blocker. Ask the owner only for a specific decision they can make.'})
         verified = verified_children(turn, items)
         turn['reviewed_children'] = [i['id'] for i in items]
         turn['child_evidence'] = verified
@@ -861,6 +934,7 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
         sum(name in turn['response'] for name in names) < min(2, len(names)))
     governed_decision = turn.get('action_approval') or (turn.get('plan_decision') == 'hire' and turn.get('hiring_approval'))
     turn['completion_blocker'] = blocker_review.objective_blocker(turn['response']) if success and not governed_decision else None
+    reviewed_blocker = None
     if success and not turn.get('owner_question') and (turn.get('inference_configuration') or {}).get('version') == 3:
         unresolved = next((c for c in items if c['status'] == 'blocked' and c['id'] in turn.get('inspected_blockers', ())), None)
         if unresolved is None and turn['completion_blocker']:
@@ -869,7 +943,16 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
             issue = reporting.api('GET', '/issues/' + turn['issue'])
             if issue.get('executionRunId') == turn['run'] and issue.get('assigneeAgentId') == turn['agent']:
                 question, reason = blocker_review.disposition(turn['response'], unresolved, turn['completion_blocker'])
-                blocker_review.ask(reporting.api, turn, issue, unresolved, question, reason)
+                if question or turn.get('worker_package_requests', {}).get(unresolved['id']):
+                    blocker_review.ask(reporting.api, turn, issue, unresolved, question, reason)
+                    if not turn.get('owner_question') and turn.get('worker_package_requests', {}).get(unresolved['id']):
+                        reviewed_blocker = blocker_review.blocked_status(unresolved)
+                else:
+                    if unresolved['status'] == 'blocked':
+                        source = (unresolved.get('unblockDescriptor') or {}).get('action') or turn['completion_blocker']
+                        reviewed_blocker = blocker_review.blocked_status(unresolved, source)
+                    else:
+                        reviewed_blocker = blocker_review.blocked_status(issue, turn['completion_blocker'])
     status, comment = 'blocked', turn['response']
     if not success:
         comment = 'CEO runtime failed or was interrupted. ' + str(turn_exit_reason)
@@ -880,8 +963,12 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
             '. No sensitive action was executed; runtime authority remains unchanged.\n\n' + comment)
     elif turn.get('owner_question') and (turn['completion_blocker'] or any(i['id'] == turn['owner_question']['child_id'] and i['status'] == 'blocked' for i in items)):
         comment = blocker_review.WAITING + turn['owner_question']['question']
+    elif turn.get('operator_blocker') or reviewed_blocker:
+        comment = turn.get('operator_blocker') or reviewed_blocker
     elif turn['completion_blocker']:
         comment = turn['completion_blocker']
+    elif turn.get('delegation_error_pending'):
+        comment = 'Delegation failed: no accepted worker assignment exists for the attempted handoff. Correct the tool arguments and delegate the existing request.\n\n' + comment
     elif not turn.get('plan_decision'):
         comment = 'CEO verification blocked: no plan/assignment decision was recorded in Paperclip.\n\n' + comment
     elif any(i['status'] in ('blocked', 'cancelled') for i in items):
@@ -970,7 +1057,7 @@ def finalize(turn, completed=False, failed=False, interrupted=False, turn_exit_r
     if status=='done':payload['unblockDescriptor']=None
     if status == 'blocked':
         action = 'Review the CEO/worker execution, request any required operator decision, then explicitly retry this task.'
-        if comment.startswith(blocker_review.WAITING):
+        if reviewed_blocker or comment.startswith(blocker_review.WAITING):
             action = comment
         elif comment.startswith('[JARVIS CEO WAITING]'):
             action = 'Await completion of ' + ', '.join(i['identifier'] for i in items) + '; Paperclip will wake this CEO to review their execution evidence and consolidate the result.'
@@ -989,6 +1076,7 @@ def register(ctx):
     # Hermes pre_verify only runs after code edits; the CEO has no code-edit
     # tools. Finalization below remains the fail-closed completion validator.
     from . import employee_work
+    from . import prompt_context
     employee_work.register(ctx, ceo=True)
     def request_employee(args, **kwargs):
         turn, me, _ = scope()
@@ -1011,11 +1099,13 @@ def register(ctx):
         schema={'name': 'paperclip_context', 'description': 'Read your actual assigned Paperclip objective, company goals, existing employees and child task states. Authenticated current context is automatically supplied; call for additional reads.',
                 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}}, handler=context)
     ctx.register_tool(name='paperclip_ceo', toolset='jarvis_ceo',
-        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. A blocked direct report needs request_correction(child_id, text) for an executable fix or ask_owner(child_id, plan=reason, text=question) for a human decision. Simple work uses your own local_ollama_models call, which records self scope before reading. Delegation: action=delegate, exact employee agent_id, title, text=scoped work and acceptance criteria; records a plan before the child. Optional plan adds rationale. Create ALL necessary minimum-team children before ending the turn; depends_on binds prerequisite child UUIDs. Review verified completed-child results and consolidate. Essential missing capability: action=request_hire, profile=one registered capability profile ID, title=employee name, text=concrete unmet capability justification (at least 40 characters). That call records your hiring rationale and requests HUMAN approval. It never provisions before approval and refuses a duplicate suitable employee. A separate plan is optional for profile-based hiring.',
+        schema={'name': 'paperclip_ceo', 'description': 'Persistent Paperclip CEO operations. Delegate with action=delegate, exact employee agent_id, title, and handoff as an OBJECT containing objective, expected_outcome, relevant_context, deliverables, acceptance_criteria (all strings). Put that object in handoff, not text. depends_on binds actual prerequisite sibling UUIDs. Create all necessary minimum-team children before ending the turn, then let Paperclip continue them. Review verified results and consolidate. Correct an existing child with request_correction(child_id, text); ask_owner(child_id, plan=reason, text=question) only for a necessary human decision. Simple work uses plan decision=self and relevant authorized tools; inventory reads record self scope automatically. Essential missing capability uses request_hire with registered profile, title and text=unmet capability reason (at least 40 characters); human approval is required and existing suitable employees are reused.',
                 'parameters': {'type': 'object', 'properties': {
                     'action': {'type': 'string', 'enum': ['plan', 'delegate', 'review', 'request_hire', 'request_correction', 'ask_owner']},
                     'decision': {'type': 'string', 'enum': ['self', 'delegate', 'hire']},
-                    'text': {'type': 'string'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
+                    'text': {'type': 'string','description':'Correction, question, plan or hiring justification. For v2 delegation use the separate handoff object; complete legacy five-field text contracts are also accepted.'}, 'plan': {'type': 'string'}, 'agent_id': {'type': 'string'}, 'title': {'type': 'string'},
+                    'handoff': {**prompt_context.HANDOFF_SCHEMA,
+                        'description': 'Required for v2 delegation. Short objective, expected outcome, relevant context references, deliverables and measurable acceptance criteria. Allowed tools and dependency UUIDs are supplied from authenticated runtime data.'},
                     'child_id': {'type': 'string', 'format': 'uuid'},
                     'profile': {'type': 'string', 'enum': list(profile_registry.catalog()['profiles'])}, 'portrait': portrait_field,
                     'depends_on': {'type': 'array', 'items': {'type': 'string', 'format': 'uuid'}, 'maxItems': 5,

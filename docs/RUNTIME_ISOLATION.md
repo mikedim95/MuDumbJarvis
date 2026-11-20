@@ -86,7 +86,7 @@ reference context; it does not count as execution.
 | Role | Model-accessible work |
 | --- | --- |
 | Research | Local model metadata, reviewed public sources, native report artifacts |
-| Software Development | Private SSH terminal/file tools, completed sibling artifacts, native deliverables |
+| Software Development | Private SSH terminal/file tools, completed sibling artifacts, individually granted verification inputs, native deliverables |
 | System Administration | Bounded inventory/sandbox diagnostics; sensitive-action proposals |
 | Documentation | Private file editing, reviewed sources, sibling artifacts, native reports |
 | Security Analysis | Private analysis/testing, reviewed sources, sibling artifacts, sensitive-action proposals |
@@ -159,6 +159,14 @@ the same native task and submission ID; they do not silently create retries.
 The sandbox test includes a separate operator-owned three-case offline echo
 evaluation. Its evidence is explicitly labeled as an operator control and does
 not substitute for an employee run.
+
+### Project lab maintenance
+
+Each new project gets a writable Kali container. Agents run as UID 1000. The project volume is available at `/project` and `/opt/lab`. Keep shared work, local tools and virtual environments there. The container’s writable layer survives stops and starts. Replacing a container switches that layer and retains the previous container for rollback.
+
+Run `python -m deploy.project_cli_service --build` to refresh the template from the configured signed Kali repository. The build simulates the upgrade, prohibits removals, applies the downloaded packages offline, audits the installed packages and records its evidence in `/usr/local/share/jarvis/os-maintenance`. Existing projects keep their selected image.
+
+After the owner agrees to replace a project’s container, run `python -m deploy.project_maintenance MISSION_UUID --expected-container FULL_CURRENT_CONTAINER_ID`. The operator checks for active work, verifies the candidate and switches the project to it. The former container is stopped and retained. To switch back, use the same command with the replacement’s full ID and `--rollback`. Both generations use the same project files. Systems can verify the installed inventory against `after.tsv` and report the remaining upgrade count from `remaining.log`.
 
 For an approved runtime upgrade, first inspect native live/queued runs, then
 run `python3 deploy/staffing.py --apply --refresh-idle-runtimes`. Add

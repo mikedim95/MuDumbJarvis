@@ -7,6 +7,8 @@
   let refreshQueued = false, reloadAgents = false, ceoId = null, agents = [];
   let projectVisibilityVersion = 0;
   const ownerQuestions = new Map();
+  const retryPending = new Map(), retryCalls = new Map();
+  try { for (const [key,value] of JSON.parse(localStorage.getItem('jarvis-retry-pending-v2') || '[]')) retryPending.set(key,value); } catch {}
   let objectiveId = localStorage.getItem('jarvis-ceo-objective') || null;
   if (!objectiveId) {
     try { objectiveId = JSON.parse(localStorage.getItem('jarvis-agent-popups-v1') || 'null')?.objective || null; } catch {}
@@ -38,16 +40,49 @@
     return data;
   }
 
-  function postMessage(taskId, input, requestId, interactionId) {
+  function postMessage(taskId, input, requestId, interactionId, replyMode) {
     return api('tasks/' + encodeURIComponent(taskId) + '/messages', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({input, request_id: requestId, interaction_id: interactionId})});
+      body: JSON.stringify({input, request_id: requestId, interaction_id: interactionId, reply_mode:replyMode})});
   }
 
-  async function replyToQuestion(taskId, questionId, input) {
-    const receipt = await postMessage(taskId, input, questionId, questionId);
+  async function replyToQuestion(taskId, questionId, input, feedbackRequestId) {
+    const receipt = await postMessage(taskId, input, feedbackRequestId || questionId, questionId, feedbackRequestId?'feedback':undefined);
     if (receipt.task?.id !== taskId || receipt.interaction_id !== questionId)
       throw new Error('The reply was not confirmed. Try again.');
-    ownerQuestions.delete(taskId);
+    if(feedbackRequestId && !receipt.feedback_id)throw new Error('Feedback was not confirmed. Try again.');
+    if(!feedbackRequestId)ownerQuestions.delete(taskId);
+    return receipt;
+  }
+
+  async function retry(taskId, observedRunId) {
+    const key = taskId + ':' + observedRunId;
+    if (retryCalls.has(key)) return retryCalls.get(key);
+    const save = () => localStorage.setItem('jarvis-retry-pending-v2',JSON.stringify([...retryPending].slice(-30)));
+    if (!retryPending.has(key)) { retryPending.set(key,crypto.randomUUID()); save(); }
+    const call = (async () => {
+      const receipt = await api('tasks/' + encodeURIComponent(taskId) + '/retry', {
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({request_id:retryPending.get(key),observed_run_id:observedRunId})});
+      // Keep a nonce only for an unacknowledged submission. A later deliberate
+      // retry of an exhausted generation needs a new native request, even when
+      // it still refers to the same original failed run.
+      retryPending.delete(key); save();
+      if (!receipt.accepted || !receipt.requestId) throw new Error('The execution changed. Refresh and retry the current task.');
+      window.dispatchEvent(new CustomEvent('jarvis-recovery-changed',{detail:{taskId}}));
+      refresh(true);
+      return receipt;
+    })();
+    retryCalls.set(key,call);
+    try { return await call; } finally { retryCalls.delete(key); }
+  }
+
+  async function resolveExecution(job, fields) {
+    const receipt=await api('tasks/'+encodeURIComponent(job.id)+'/resolve-execution',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        observed_run_id:job.recovery.run_id,action_id:job.recovery.action_id,...fields})});
+    if(!receipt.resolution_saved)throw new Error('The resolution was not confirmed. Refresh the project.');
+    window.dispatchEvent(new CustomEvent('jarvis-recovery-changed',{detail:{taskId:job.id}}));
+    refresh(true);return receipt;
   }
 
   function history() {
@@ -85,7 +120,7 @@
     const target = selected;
     const task = await api('tasks/' + encodeURIComponent(target));
     if (selected !== target) return;
-    ownerQuestions.set(task.id, task.owner_question?.id || null);
+    ownerQuestions.set(task.id, task.owner_question?.kind==='package_review'?null:task.owner_question?.id || null);
     window.dispatchEvent(new CustomEvent('jarvis-task-detail',{detail:{task}}));
     visualState(task);
     if (document.body.classList.contains('ai-minimal') && task.work_scope !== 'general') return;
@@ -211,7 +246,7 @@
       if (!pending) {
         if (!ownerQuestions.has(target)) {
           const task = await api('tasks/' + encodeURIComponent(target));
-          ownerQuestions.set(target, task.owner_question?.id || null);
+          ownerQuestions.set(target, task.owner_question?.kind==='package_review'?null:task.owner_question?.id || null);
         }
         pending = {input: text, request_id: crypto.randomUUID(), objective: true, task_id: target,
           interaction_id: ownerQuestions.get(target) || null};
@@ -287,7 +322,7 @@
     if(removed&&selected===id){selected=null;localStorage.removeItem('jarvis-task-selected');window.JarvisMonitor.clear();}
     history();announce();return receipt;
   }
-  window.JarvisTasks = {submit, snapshot, followup, replyToQuestion, newObjective, decide, refresh,
+  window.JarvisTasks = {submit, snapshot, followup, replyToQuestion, retry, resolveExecution, newObjective, decide, refresh,
     removeProject:id=>projectVisibility(id,true),restoreProject:id=>projectVisibility(id,false),
     selectObjective: async id => {
       if (pending) throw new Error('A submission is awaiting confirmation. Retry its text before changing projects.');

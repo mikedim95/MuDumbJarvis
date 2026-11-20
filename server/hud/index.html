@@ -11,6 +11,8 @@
 <script src="core/visual-core.js" defer></script>
 <link rel="stylesheet" href="csi/csi-workspace.css">
 <link rel="stylesheet" href="ai-minimal.css">
+<link rel="stylesheet" href="workspace-panels.css">
+<link rel="stylesheet" href="token-usage.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -286,11 +288,11 @@ footer{
   <header>
     <h1>J.A.R.V.I.S</h1>
     <nav id="appModes" aria-label="Jarvis mode">
-      <button id="directModeBtn" type="button" aria-pressed="true">CHAT</button>
+      <button id="directModeBtn" type="button" aria-pressed="true">GENERAL</button>
       <button id="projectsModeBtn" type="button" aria-pressed="false">PROJECTS</button>
-      <button id="generalModeBtn" type="button" aria-pressed="false">GENERAL</button>
     </nav>
-    <div id="aiProvider" role="status">Connecting…</div>
+    <div id="tokenUsage"><svg id="tokenUsageGraph" role="img" aria-label="Live token usage"><defs><linearGradient id="tokenUsageGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#96d9c8" stop-opacity=".2"/><stop offset="1" stop-color="#96d9c8" stop-opacity=".015"/></linearGradient></defs><path id="tokenUsageGrid"/><path id="tokenUsageArea"/><path id="tokenUsageLine"/></svg></div>
+    <div id="tokenUsageReadout" role="group" aria-label="Token usage"><div class="token-usage-rate"><output id="tokenUsageValue">—</output><span class="token-usage-unit">tok/s</span></div><span id="tokenUsageTotal">— total</span></div>
     <div class="sub">HERMES AGENT INTERFACE &nbsp;//&nbsp; <span id="connState">LINK DOWN</span></div>
     <div id="clock">--:--:--</div>
   </header>
@@ -333,16 +335,26 @@ footer{
   <!-- CENTER -->
   <div id="center">
     <div id="approvals"></div>
-    <button id="generalSidebarToggle" aria-controls="generalNav" aria-expanded="false" type="button">Conversations</button>
-    <aside id="generalNav" aria-label="General sidebar" hidden>
-      <nav aria-label="General tools">
-        <button id="generalContextBtn" type="button" aria-controls="generalContextPanel">Context</button>
-        <button id="generalCronBtn" type="button" aria-controls="cronPanel">Cron jobs</button>
-        <button id="generalAgentsBtn" type="button" aria-controls="agentsPanel">Agents</button>
+    <div id="workspaceControls" aria-label="Side panels">
+      <button id="generalSidebarToggle" class="rail-toggle" aria-controls="generalNav" aria-expanded="true" aria-label="Hide conversations sidebar" title="Hide conversations sidebar" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path class="rail-shade" d="M4 5h4v14H4z"/></svg></button>
+      <h2 id="workspaceScopeTitle" tabindex="-1" hidden></h2>
+      <button id="agentsSidebarToggle" class="rail-toggle" aria-controls="agentsRail" aria-expanded="true" aria-label="Hide agents sidebar" title="Hide agents sidebar" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/><path class="rail-shade" d="M16 5h4v14h-4z"/></svg></button>
+    </div>
+    <div id="workspaceBackdrop" hidden></div>
+    <aside id="generalNav" aria-label="Workspace sidebar" hidden>
+      <nav id="globalTools" aria-label="General tools">
+        <button id="generalCronBtn" type="button" hidden aria-controls="cronPanel">Cron jobs</button>
+        <button id="generalAgentsBtn" type="button" hidden aria-controls="agentsPanel">Agents</button>
       </nav>
-      <div class="conversation-list-heading">
+      <nav id="projectTools" aria-label="Workspace sections" hidden>
+        <button id="projectOverviewBtn" type="button">Overview</button>
+        <button id="projectChatBtn" type="button">Conversations</button>
+        <button id="projectAgentsBtn" type="button" hidden>Agents</button>
+        <button id="projectScheduleBtn" type="button" hidden>Cron jobs</button>
+      </nav>
+      <div class="conversation-list-heading" id="conversationListHeading">
         <h2>Conversations</h2>
-        <button id="newGeneralChat" type="button" aria-label="New chat" title="New chat"><span aria-hidden="true">＋</span> New chat</button>
+        <button id="newGeneralChat" type="button" aria-label="New conversation" title="New conversation"><span aria-hidden="true">＋</span> New</button>
       </div>
       <div id="generalThreads" aria-label="General conversations"></div>
       <p id="generalThreadsStatus" role="status"></p>
@@ -350,28 +362,62 @@ footer{
     <div id="workspaceMain">
     <p id="modeDescription">Brief conversations with your Paperclip context.</p>
     <p id="modeError" role="alert"></p>
+    <section id="projectContext" aria-label="Selected project" hidden>
+      <button id="projectBackBtn" type="button">← Projects</button>
+      <div class="project-heading"><h2 id="projectTitle" tabindex="-1">New project</h2><p id="projectStatus" role="status"></p><p id="projectGoal" hidden></p></div>
+    </section>
+    <details id="projectPackages" hidden>
+      <summary>Development tools</summary>
+      <p id="projectCliStatus" role="status"></p>
+      <form id="projectPackageForm">
+        <fieldset id="projectPackageControls" disabled>
+          <legend>Preapprove tools for private assignment directories</legend>
+          <label><input type="checkbox" id="projectPackageAll"> All listed tools</label>
+          <div id="projectPackageChoices"></div>
+          <button type="submit">Save approvals</button>
+        </fieldset>
+        <button type="button" id="projectPackageReload" hidden>Reload</button>
+      </form>
+      <p id="projectPackageStatus" role="status"></p>
+    </details>
+    <details id="projectSharing" hidden>
+      <summary>Shared workspace</summary>
+      <form id="sharingForm">
+        <fieldset id="sharingControls" disabled>
+          <label><input type="checkbox" id="sharingEnabled"> Share with agents assigned to this project</label>
+          <label for="sharingNotes">Project inputs and report notes</label>
+          <textarea id="sharingNotes" rows="4" maxlength="2400"></textarea>
+          <button type="submit" id="sharingSave">Save</button>
+        </fieldset>
+        <button type="button" id="sharingReload">Reload</button>
+      </form>
+      <ul id="sharingResults" aria-label="Recent published outcomes"></ul>
+      <p id="sharingStatus" role="status"></p>
+    </details>
     <section id="generalContextPanel" aria-labelledby="generalContextHeading" hidden>
-      <h2 id="generalContextHeading">Context</h2>
-      <label class="context-target">View context
-        <select id="generalAgentList" aria-label="Agent or chat"></select>
-      </label>
+      <button id="contextBackBtn" type="button">← Agent</button>
+      <h2 id="generalContextHeading">Agent context</h2>
+      <div class="context-scopes" role="group" aria-label="Context scope">
+        <button id="agentGeneralScope" type="button">General</button>
+        <button id="agentProjectScope" type="button" hidden>This project</button>
+      </div>
+      <p id="contextScopeHint"></p>
+      <form id="agentContextForm">
+        <label for="generalContextText">Saved directions</label>
+        <textarea id="generalContextText" rows="10" maxlength="8000" placeholder="Directions for this agent…"></textarea>
+        <div class="context-actions"><button id="saveAgentContext" type="submit">Save context</button><button id="reloadAgentContext" type="button">Reload</button></div>
+      </form>
       <p id="generalContextStatus" role="status"></p>
-      <pre id="generalContextText"></pre>
       <details id="administratorInspector">
         <summary>System prompt</summary>
-        <p id="administratorPromptLabel" role="status"></p>
+        <p id="administratorPromptLabel"></p>
         <pre id="administratorPrompt"></pre>
       </details>
-      <h3>Shared research and general work</h3><ul id="generalKnowledgeList"></ul>
     </section>
-    <section id="agentsPanel" aria-labelledby="agentsHeading" hidden>
-      <div class="agents-heading">
-        <h2 id="agentsHeading" tabindex="-1">Agents</h2>
-        <p id="agentsActivitySummary" aria-live="polite"></p>
-      </div>
-      <p id="agentsNotice" role="status"></p>
-      <div id="agentsMap" role="group" aria-label="Agent roster"></div>
-      <section id="agentDetails" aria-labelledby="agentDetailsHeading" hidden></section>
+    <section id="generalOverviewPanel" aria-labelledby="generalOverviewHeading" hidden>
+      <h2 id="generalOverviewHeading">Overview</h2>
+      <p>Standing directions and shared work across projects.</p>
+      <section id="sharedWork"><h3>Shared research and general work</h3><ul id="generalKnowledgeList"></ul></section>
     </section>
     <section id="projectBrowser" aria-labelledby="projectsHeading" hidden>
       <div class="project-browser-heading"><h2 id="projectsHeading" tabindex="-1">Projects</h2></div>
@@ -380,13 +426,8 @@ footer{
       <ul id="projectList" aria-label="Projects"></ul>
       <button id="newProjectBtn" type="button"><span aria-hidden="true">＋</span> NEW PROJECT</button>
     </section>
-    <section id="projectContext" aria-label="Selected project" hidden>
-      <button id="projectBackBtn" type="button">← Projects</button>
-      <div class="project-heading"><h2 id="projectTitle" tabindex="-1">New project</h2><p id="projectStatus" role="status"></p></div>
-      <button id="projectScheduleBtn" type="button">Cron jobs</button>
-    </section>
     <section id="administratorPanel" aria-labelledby="administratorHeading" hidden>
-      <h2 id="administratorHeading" tabindex="-1">General chat</h2>
+      <h2 id="administratorHeading" tabindex="-1">General conversation</h2>
       <div id="administratorFeed" role="log" aria-label="Conversation" aria-live="polite"></div>
     </section>
     <div id="generalComposer" hidden>
@@ -443,6 +484,17 @@ footer{
       <button class="btn" id="clearBtn" title="Clear the visible chat (history stays in Hermes)">CLR</button>
     </div>
     </div>
+    <aside id="agentsRail" aria-label="Agents sidebar">
+    <section id="agentsPanel" aria-labelledby="agentsHeading" hidden>
+      <div class="agents-heading">
+        <h2 id="agentsHeading" tabindex="-1">Agents</h2>
+        <p id="agentsActivitySummary" aria-live="polite"></p>
+      </div>
+      <p id="agentsNotice" role="status"></p>
+      <div id="agentsMap" role="group" aria-label="Agent roster"></div>
+      <section id="agentDetails" aria-labelledby="agentDetailsHeading" hidden></section>
+    </section>
+    </aside>
   </div>
 
   <!-- RIGHT COLUMN -->
@@ -912,7 +964,6 @@ async function refreshMachines(){
 const fmtK=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":String(n||0);
 function showBrain(runtime){
   $("loadoutBrain").textContent=[runtime.provider||"unknown",runtime.model].filter(Boolean).join(" · ");
-  $("aiProvider").textContent=[runtime.provider==="openai-codex"?"Codex":runtime.provider,runtime.model].filter(Boolean).join(" · ");
 }
 async function refreshUsage(){
   try{
@@ -1109,11 +1160,18 @@ addMsg("sys",document.body.classList.contains("ai-minimal")?"Ask a question, che
 </script>
 <script src="monitor.js"></script>
 <script src="tasks.js"></script>
+<script src="package-response.js"></script>
+<script src="recovery.js"></script>
 <script src="modes.js"></script>
+<script src="team-workspace.js"></script>
+<script src="project-packages.js"></script>
+<script src="workspace-panels.js"></script>
+<script src="token-usage.js"></script>
 <script src="project-results.js"></script>
 <script src="general-context.js"></script>
 <script src="administrator.js"></script>
 <script src="cron-jobs.js"></script>
+<script src="document-permissions.js"></script>
 <script src="agents.js"></script>
 <div id="csiRoot"></div>
 <script src="csi/csi-workspace.js" defer></script>

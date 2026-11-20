@@ -15,6 +15,7 @@ import time
 from uuid import UUID
 
 import httpx
+import agent_work
 from fastapi import Depends, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -25,9 +26,23 @@ _inference_policy = importlib.util.module_from_spec(_policy_spec)
 _policy_spec.loader.exec_module(_inference_policy)
 
 
+_package_spec = importlib.util.spec_from_file_location('jarvis_monitor_packages', Path(__file__).resolve().parents[1] /
+    'hermes-plugin/jarvis_readonly/package_installs.py')
+packages = importlib.util.module_from_spec(_package_spec)
+_package_spec.loader.exec_module(packages)
+
+
 class RetryRequest(BaseModel):
     request_id: UUID
     observed_run_id: UUID | None
+
+
+class ResolveExecution(BaseModel):
+    observed_run_id: UUID
+    action_id: UUID
+    provider_stopped: bool
+    action_outcome: str = Field(pattern='^(completed|not_performed|mixed)$')
+    evidence: str = Field(min_length=20,max_length=2000)
 
 
 class Decision(BaseModel):
@@ -203,7 +218,17 @@ def add_routes(router, Paperclip):
         for a in sorted(approvals, key=lambda a: a.get('createdAt') or '', reverse=True)[:25]:
             try:
                 valid, linked = await scoped_approval(p, a['id'])
-                views.append({**approval_view(valid), 'issue_ids': [i['id'] for i in linked]})
+                view = {**approval_view(valid), 'issue_ids': [i['id'] for i in linked]}
+                if (valid.get('payload') or {}).get('kind') == packages.KIND and len(linked) == 1 and valid['status'] == 'approved':
+                    key = packages.receipt_key(valid['id'])
+                    try:
+                        doc = await p.request('GET', f"issues/{linked[0]['id']}/documents/{key}")
+                    except HTTPException as exc:
+                        if exc.status_code != 404:
+                            raise
+                        doc = None
+                    view['installation'] = packages.receipt(doc, valid) or {'status': 'awaiting_install'}
+                views.append(view)
             except HTTPException as exc:
                 if exc.status_code != 404:
                     raise
@@ -234,6 +259,7 @@ def add_routes(router, Paperclip):
         for name in ('blockedBy', 'blocks'):
             deps[name] = [{k: i.get(k) for k in ('id', 'identifier', 'title', 'status')} for i in issue.get(name) or []]
         return redact({'task_id': str(task_id), **deps, 'plans': plans, 'plan_document': issue.get('planDocument'),
+            'owner_recovery': agent_work.recovery_view(issue),
             'execution_blocker': issue.get('executionBlocker'), 'recovery': issue.get('activeRecoveryAction'),
             'interruption': issue.get('interruption'), 'evidence': receipts,
             'artifacts': [{k: a.get(k) for k in ('id', 'originalFilename', 'contentType', 'byteSize', 'sha256', 'createdByAgentId', 'originatingRunId', 'createdAt')} for a in artifacts]})
@@ -280,6 +306,34 @@ def add_routes(router, Paperclip):
             'observedRunId': str(body.observed_run_id) if body.observed_run_id else None})
         return redact(receipt)
 
+    @router.post('/tasks/{task_id}/resolve-execution')
+    async def resolve_execution(task_id: UUID, body: ResolveExecution, p=Depends(client)):
+        issue=await p.issue(task_id)
+        blocker=issue.get('executionBlocker') or {}
+        if not body.provider_stopped:
+            raise HTTPException(422,'Confirm that the previous execution has stopped before resolving its block')
+        if len(body.evidence.strip())<20:
+            raise HTTPException(422,'Describe the verified outcome and continuation in at least 20 characters')
+        if (blocker.get('cause')!='legacy_execution_requires_reconciliation' or
+                blocker.get('runId')!=str(body.observed_run_id) or blocker.get('recoveryActionId')!=str(body.action_id)):
+            raise HTTPException(409,'The execution changed; refresh the project before resolving its block')
+        if issue.get('executionRunId') or (issue.get('activeRun') or {}).get('status') in ('running','queued'):
+            raise HTTPException(409,'The execution is still active')
+        holds=await p.request('GET',f'issues/{task_id}/tree-holds?status=active')
+        if (holds.get('holds') if isinstance(holds,dict) else holds):
+            raise HTTPException(409,'An owner stop hold is active; resolving an execution cannot release it')
+        runs=await p.request('GET',f'issues/{task_id}/runs')
+        latest=max(runs,key=lambda r:r.get('createdAt') or r.get('startedAt') or '',default={})
+        if latest.get('runId')!=str(body.observed_run_id) or latest.get('status') not in ('failed','cancelled','timed_out'):
+            raise HTTPException(409,'Only the latest stopped execution can be resolved')
+        await p.request('POST',f'issues/{task_id}/recovery-actions/resolve',{
+            'actionId':str(body.action_id),'outcome':'restored','sourceIssueStatus':'todo',
+            'resolutionNote':'Owner reviewed the stopped execution in JARVIS. '+body.evidence.strip(),
+            'executionReconciliation':{'runId':str(body.observed_run_id),'providerStopped':True,
+                'actionOutcome':body.action_outcome,'outcomeEvidence':body.evidence.strip()}})
+        from task_api import project_issue
+        return {'resolution_saved':True,'task':project_issue(await p.issue(task_id))}
+
     async def cancellation_preview(p, task_id):
         await p.issue(task_id)
         preview = await p.request('POST', f'issues/{task_id}/tree-control/preview', {'mode': 'cancel'})
@@ -324,6 +378,24 @@ def add_routes(router, Paperclip):
             return await apply_staff_change(a)  # Reconcile uncertain staff-change acknowledgments safely.
         if a.get('status') not in ('pending', 'revision_requested'):
             raise HTTPException(409, 'Approval already has a different decision')
+        if body.decision == 'approve' and (a.get('payload') or {}).get('kind') == packages.KIND:
+            if len(linked) != 1:
+                raise HTTPException(409, 'Package approval requires one assignment')
+            task = await p.issue(linked[0]['id'])
+            agent = next((r for r in await p.agents() if r['id'] == task.get('assigneeAgentId')), {})
+            profile = ((agent.get('metadata') or {}).get('jarvis') or {}).get('profile')
+            template = catalog()['profiles'].get(profile, {})
+            if (agent.get('companyId') != p.company or agent.get('reportsTo') != p.ceo
+                    or agent.get('status') in ('terminated', 'pending_approval') or not template.get('sandbox')
+                    or 'terminal' not in template.get('tools', ()) or task.get('hiddenAt')
+                    or task.get('status') in ('done', 'cancelled')):
+                raise HTTPException(409, 'The sandbox assignment is unavailable')
+            try:
+                expected = packages.payload(a['payload'].get('package'), p.company, task['projectId'], task['id'], agent['id'])
+            except (ValueError, TypeError, AttributeError):
+                raise HTTPException(409, 'Unrecognized package request') from None
+            if not packages.matches(a, expected):
+                raise HTTPException(409, 'Package or assignment changed. Request the exact installation again.')
         if body.decision == 'approve' and a.get('type') == 'hire_agent':
             proposed = a.get('payload') or {}
             meta = ((proposed.get('metadata') or {}).get('jarvis') or {})

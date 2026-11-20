@@ -1,28 +1,21 @@
 # AI-first view and safe Codex binding over the verified command-center image.
 ARG HUD_BASE=jarvis-command-center:hud-before-minimal-ai
 FROM ${HUD_BASE}
-COPY --chown=1000:1000 server/server.py /app/server/server.py
-COPY --chown=1000:1000 server/chat_context.py /app/server/chat_context.py
-COPY --chown=1000:1000 server/general_context.py /app/server/general_context.py
-COPY --chown=1000:1000 server/administration.py /app/server/administration.py
-COPY --chown=1000:1000 server/agent_config_lock.py /app/server/agent_config_lock.py
-COPY --chown=1000:1000 server/blocker_delivery.py /app/server/blocker_delivery.py
-COPY --chown=1000:1000 server/task_api.py /app/server/task_api.py
-COPY --chown=1000:1000 server/task_brief.py /app/server/task_brief.py
-COPY --chown=1000:1000 server/agent_work.py /app/server/agent_work.py
-COPY --chown=1000:1000 server/cron_api.py /app/server/cron_api.py
-COPY --chown=1000:1000 server/work_scope.py /app/server/work_scope.py
-COPY --chown=1000:1000 server/task_monitor.py /app/server/task_monitor.py
+ENV JARVIS_PROJECT_LIFECYCLE_SOCKET=/app/server/logs/.project-lifecycle.sock
+COPY --chown=1000:1000 server/server.py server/chat_context.py server/document_permissions.py \
+    server/general_knowledge.py server/general_context.py server/administration.py \
+    server/project_workspace.py server/project_runtime.py server/work_delivery.py server/token_usage.py \
+    server/agent_config_lock.py server/blocker_delivery.py server/csi_events.py \
+    server/task_api.py server/task_brief.py server/agent_work.py \
+    server/agent_activity.py server/cron_api.py server/work_scope.py \
+    server/task_monitor.py /app/server/
+COPY --chown=1000:1000 server/hud/index.html server/hud/tasks.js server/hud/package-response.js \
+    server/hud/monitor.js server/hud/recovery.js server/hud/ceo-input.js \
+    server/hud/modes.js server/hud/team-workspace.js server/hud/project-packages.js \
+    server/hud/workspace-panels.js server/hud/workspace-panels.css server/hud/token-usage.js \
+    server/hud/token-usage.css server/hud/project-results.js server/hud/general-context.js \
+    server/hud/administrator.js server/hud/document-permissions.js server/hud/agents.js \
+    server/hud/cron-jobs.js server/hud/ai-minimal.css /app/server/hud/
 COPY --chown=1000:1000 hermes-plugin/jarvis_readonly /app/hermes-plugin/jarvis_readonly
-COPY --chown=1000:1000 server/hud/index.html /app/server/hud/index.html
-COPY --chown=1000:1000 server/hud/tasks.js /app/server/hud/tasks.js
-COPY --chown=1000:1000 server/hud/ceo-input.js /app/server/hud/ceo-input.js
-COPY --chown=1000:1000 server/hud/modes.js /app/server/hud/modes.js
-COPY --chown=1000:1000 server/hud/project-results.js /app/server/hud/project-results.js
-COPY --chown=1000:1000 server/hud/general-context.js /app/server/hud/general-context.js
-COPY --chown=1000:1000 server/hud/administrator.js /app/server/hud/administrator.js
-COPY --chown=1000:1000 server/hud/agents.js /app/server/hud/agents.js
 COPY --chown=1000:1000 server/hud/portraits /app/server/hud/portraits
-COPY --chown=1000:1000 server/hud/cron-jobs.js /app/server/hud/cron-jobs.js
-COPY --chown=1000:1000 server/hud/ai-minimal.css /app/server/hud/ai-minimal.css
 COPY --chown=1000:1000 server/hud/csi /app/server/hud/csi

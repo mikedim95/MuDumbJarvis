@@ -26,6 +26,9 @@ from uuid import UUID
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+_prompt_spec=importlib.util.spec_from_file_location('jarvis_prompt_policies',ROOT/'deploy/prompt_policies.py')
+prompt_policies=importlib.util.module_from_spec(_prompt_spec)
+_prompt_spec.loader.exec_module(prompt_policies)
 _lock_spec=importlib.util.spec_from_file_location('jarvis_agent_config_lock',ROOT/'server/agent_config_lock.py')
 _configuration_lock=importlib.util.module_from_spec(_lock_spec)
 _lock_spec.loader.exec_module(_configuration_lock)
@@ -294,12 +297,15 @@ def stop_terminated_employee(board, agent):
 
 def configured_agent_prompt(agent, default):
     saved=(((agent.get('metadata') or {}).get('jarvis') or {}).get('system_prompts') or {}).get('agent')
+    native=(agent.get('adapterConfig') or {}).get('instructions')
     if saved is None:
-        return default
+        # Native UI/API edits may predate the HUD's saved-override metadata.
+        # A new generated default is never permission to replace them.
+        return native if isinstance(native,str) and native.strip() else default
     text=saved.get('text')
     if not isinstance(text,str) or not 1<=len(text)<=20000 or hashlib.sha256(text.encode()).hexdigest()!=saved.get('sha256'):
         raise ValueError('Saved owner system prompt is invalid; review before reconciling')
-    return text
+    return native if isinstance(native,str) and native.strip() else text
 
 
 def runtime_patch(board, agent_id, *, fields=None, jarvis_updates=None):
@@ -308,7 +314,8 @@ def runtime_patch(board, agent_id, *, fields=None, jarvis_updates=None):
         current=board.api('GET','/agents/'+agent_id)
         patch=copy.deepcopy(fields or {})
         if 'adapterConfig' in patch:
-            patch['adapterConfig']['instructions']=configured_agent_prompt(current,patch['adapterConfig']['instructions'])
+            if 'instructions' in patch['adapterConfig']:
+                patch['adapterConfig']['instructions']=configured_agent_prompt(current,patch['adapterConfig']['instructions'])
             patch['adapterConfig']={**(current.get('adapterConfig') or {}),**patch['adapterConfig']}
         if jarvis_updates:
             metadata=current.get('metadata') or {}
@@ -372,27 +379,21 @@ def provision(board, agent, item, refresh=False, allow_resume=True):
         if not refresh or observed != config:
             raise ValueError('Existing employee runtime configuration differs; review before changing authority')
         write_private(config_path, yaml.safe_dump(config, sort_keys=False))
-    soul = ('You are ' + agent['name'] + ', the ' + item['name'] + ' employee reporting to JARVIS, the CEO.\n'
-        'Paperclip owns your assigned issue, dependencies and execution evidence.\n' + item['authority'] + '\n'
-        'Use only your assigned issue context. Never use internal subagents. Do not perform host or external changes.\n'
-        'Use actual tools, publish deliverables with publish_artifact, and report real tests/errors. Do not invent evidence.\n')
-    if codex:
-        soul += ('Your inference is OpenAI Codex through the configured Hermes provider and shared slot. '
-            'Do not call an LLM provider directly from fixture code or shell commands. '
-            'Restrictions on cloud providers in test fixtures do not prohibit your authorized Codex runtime.\n')
-    (home / 'SOUL.md').write_text(soul)
+    soul = (prompt_policies.assemble(item['id'], agent['name'], item['authority'])
+        if item['id'] in prompt_policies.ROLES else prompt_policies.legacy_employee(agent['name'],item,codex))
+    # Managed defaults live in native per-turn instructions. SOUL needs only
+    # stable identity, avoiding a second full copy of the operating policy.
+    # A preserved custom native prompt instead keeps the default methodology
+    # in SOUL, with the owner's instructions still supplied by Paperclip.
+    native_prompt = configured_agent_prompt(agent,soul)
+    local_soul = (prompt_policies.identity_soul(agent['name'])
+        if native_prompt.startswith('[JARVIS PROMPT POLICY v2]\n') else soul)
+    prompt_policies.seed_file(home / 'SOUL.md', local_soul)
     for skill in item['skills']:
         directory = home / 'skills' / skill
-        directory.mkdir(parents=True, exist_ok=True)
-        (directory / 'SKILL.md').write_text('---\nname: ' + skill + '\ndescription: Scoped ' + item['name'] + ' workflow\n---\n'
-            + item['authority'] + '\nRead the assigned Paperclip objective, retrieve actual evidence, and publish artifacts. '
-            'Distinguish retrieved facts from interpretation. Test generated code in the isolated workspace. '
-            'Use only the authenticated current issue workspace, not another task directory. '
-            + ('The sandbox includes Python unittest and promptfoo 0.125.1 for offline echo/deterministic-assertion demos. '
-            'Never call cloud providers or remote generation from fixture code, or use model-graded assertions. '
-            'Use promptfoo eval --no-cache --max-concurrency 1 with a JSON output file when a real framework demonstration is needed; '
-            'also run actual Python unittest checks. ' if 'terminal' in item['tools'] else '') +
-            'Publish the actual source/config/results as Paperclip attachments.\n')
+        text = (prompt_policies.skills(item['id'])[skill] if item['id'] in prompt_policies.ROLES
+            else prompt_policies.legacy_skill(item,skill))
+        prompt_policies.seed_file(directory / 'SKILL.md', text)
     network = 'jarvis-exec-' + rid
     if item['sandbox']:
         if not inspect('image', SANDBOX_IMAGE):
@@ -490,6 +491,14 @@ def provision(board, agent, item, refresh=False, allow_resume=True):
             {'role': 'assistant', 'content': 'Paperclip. I use only the current authenticated issue and approved tools.'}]}}
     runtime_updates = {'provisioned': True, 'runtime_name': runtime_name, 'dormancy': 'No timer heartbeats or inference while idle',
         'operator_inference_upgrade_pending': False}
+    if (item['id'] in prompt_policies.ROLES and
+            not str((agent.get('adapterConfig') or {}).get('instructions') or '').strip() and
+            not ((meta.get('system_prompts') or {}).get('agent'))):
+        generated = {'SOUL.md':local_soul, **{'skills/'+name+'/SKILL.md':text
+            for name,text in prompt_policies.skills(item['id']).items()}}
+        # Record only exact files we actually seeded, not unrelated local edits.
+        owned = {path:text for path,text in generated.items() if (home/path).read_text()==text}
+        runtime_updates['prompt_policy']=prompt_policies.provenance(item['id'],soul,owned,True)
     capabilities = ', '.join(item['capabilities']) + '. ' + item['authority']
     if (not meta.get('provisioned') or any(agent.get('adapterConfig', {}).get(key) != value for key, value in adapter.items())
             or agent.get('capabilities') != capabilities or agent.get('role') != item['role']):
@@ -560,6 +569,11 @@ def main():
                 continue
             item = validate_agent(agent, approvals, board.env)
             if item:
+                if __package__:
+                    from . import provision_packages
+                else:
+                    import provision_packages
+                provision_packages.reconcile(board, agent, item, approvals, inspect)
                 agent = stage_workforce_employee(board, agent, item)
                 live = board.api('GET', '/companies/' + company + '/live-runs')
                 owned = [r for r in live if r['agentId'] == agent['id'] and r['status'] in ('queued', 'running')]

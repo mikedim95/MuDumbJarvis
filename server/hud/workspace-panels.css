@@ -1,0 +1,95 @@
+/* Shared three-column workspace, with independent side-panel controls. */
+body:not(.ai-minimal) :is(#workspaceControls,#workspaceBackdrop,#agentsRail) { display:none; }
+body.ai-minimal[data-workspace="true"] { --left-rail:clamp(192px,18vw,256px); --right-rail:clamp(244px,23vw,300px); }
+body.ai-minimal[data-workspace="true"] #center,
+body.ai-minimal[data-workspace="true"] #center:has(#generalNav[hidden]) {
+  grid-template-columns:var(--left-rail) minmax(0,1fr) var(--right-rail);
+  grid-template-rows:40px minmax(0,1fr); position:relative;
+}
+body.ai-minimal[data-left-panel="closed"],
+body.ai-minimal[data-workspace="true"]:has(#generalNav[hidden]) { --left-rail:0px; }
+body.ai-minimal[data-right-panel="closed"] { --right-rail:0px; }
+body.ai-minimal[data-workspace="true"] #workspaceControls {
+  grid-area:1 / 1 / 2 / 4; display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px; border-bottom:1px solid var(--line); background:var(--surface); z-index:24;
+}
+body.ai-minimal[data-workspace="true"] #workspaceControls .rail-toggle {
+  display:inline-flex; align-items:center; justify-content:center; width:34px; min-height:32px;
+  padding:6px; margin:0; border:0; border-radius:6px; color:var(--muted); background:transparent; cursor:pointer;
+}
+body.ai-minimal[data-workspace="true"] #workspaceControls .rail-toggle::before { content:none; }
+#workspaceControls .rail-toggle svg { display:block; width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.5; }
+#workspaceControls .rail-shade { fill:currentColor; opacity:.25; stroke:none; }
+body.ai-minimal[data-workspace="true"] #workspaceControls .rail-toggle:hover { color:var(--text); background:var(--raised); }
+#workspaceControls .rail-toggle:focus-visible { outline:2px solid #a6ded1; outline-offset:1px; }
+#workspaceControls .rail-toggle:disabled { opacity:.3; cursor:default; }
+body.ai-minimal[data-workspace="true"] #generalNav:not([hidden]) {
+  grid-area:2 / 1; display:flex; position:relative; inset:auto; width:auto; padding:16px 12px;
+  min-width:0; overflow:hidden; border-right:1px solid var(--line); box-shadow:none;
+}
+body.ai-minimal[data-workspace="true"] #workspaceMain,
+body.ai-minimal[data-workspace="true"] #center:has(#generalNav[hidden]) #workspaceMain {
+  grid-area:2 / 2; min-width:0; padding-inline:clamp(16px,3vw,48px);
+}
+body.ai-minimal[data-workspace="true"] #agentsRail {
+  grid-area:2 / 3; display:flex; flex-direction:column; min-width:0; min-height:0;
+  border-left:1px solid var(--line); background:var(--rail); overflow:hidden;
+}
+body.ai-minimal[data-workspace="true"] :is(#generalNav,#agentsRail)[aria-hidden="true"] { visibility:hidden; pointer-events:none; border:0; }
+body.ai-minimal[data-workspace="true"] #agentsRail #agentsPanel:not([hidden]) {
+  display:flex; flex-direction:column; flex:1 1 0; min-height:0; min-width:0;
+  width:100%; max-width:none; padding:16px 14px 24px; margin:0; overflow:auto;
+}
+#agentsRail .agents-heading { display:block; margin-bottom:14px; }
+#agentsRail #agentsHeading { font:600 16px/1.4 Inter,system-ui,sans-serif; }
+#agentsRail #agentsActivitySummary { margin-top:5px; font-size:11px; }
+#agentsRail #agentsMap { flex:0 0 auto; --portrait-width:100px; --portrait-gap:12px; padding:0; }
+#agentsRail #agentLeader .agent-station { width:118px; }
+#agentsRail #agentLeader:has(+ #agentTeam) { padding-bottom:14px; }
+#agentsRail #agentLeader:has(+ #agentTeam)::after { height:14px; }
+#agentsRail #agentTeam {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
+  padding:12px 0 0; overflow:visible; scroll-snap-type:none; border-top:1px solid var(--agent-wire);
+}
+#agentsRail #agentTeam > li { display:flex; min-width:0; padding:0; }
+#agentsRail #agentTeam > li::before,#agentsRail #agentTeam > li::after { display:none; }
+#agentsRail .agent-station { padding-bottom:8px; border-radius:8px; }
+#agentsRail .agent-name { font-size:12px; margin-inline:7px; }
+#agentsRail .agent-specialization { font-size:10px; margin-inline:7px; }
+#agentsRail .agent-likeness .agent-activity { inset:auto auto 5px 5px; font-size:9px; padding:2px 5px; }
+#agentsRail .agent-question-badge { width:22px; height:22px; font-size:16px; inset:5px 5px auto auto; }
+#agentsRail #agentDetails { flex:0 0 auto; margin:16px 0 0; padding:12px; font-size:12px; }
+#agentsRail .agent-detail-heading { flex-wrap:wrap; align-items:center; gap:5px 10px; }
+#agentsRail .agent-detail-heading h3 { font-size:14px; }
+#agentsRail .agent-controls { gap:6px; flex-wrap:wrap; }
+#agentsRail :is(#agentContextBtn,#agentCronBtn) { font-size:12px; padding:7px 9px; }
+#agentsRail .agent-relation { flex-wrap:wrap; }
+#agentsRail #agentPublished { font-size:12px; }
+#agentsRail .agent-question { grid-template-columns:minmax(0,1fr); padding:9px; }
+#agentsRail .agent-question button { justify-self:end; }
+#workspaceBackdrop { display:none; }
+@media (max-width:1023px) {
+  body.ai-minimal[data-workspace="true"] { --left-rail:0px; --right-rail:0px; }
+  body.ai-minimal[data-workspace="true"] #generalNav:not([hidden]),
+  body.ai-minimal[data-workspace="true"] #agentsRail {
+    grid-area:auto; position:absolute; z-index:22; top:40px; bottom:0;
+    width:min(300px,85vw); box-shadow:0 8px 32px #0008;
+  }
+  body.ai-minimal[data-workspace="true"] #generalNav:not([hidden]) { left:0; right:auto; background:var(--rail); }
+  body.ai-minimal[data-workspace="true"] #agentsRail { right:0; left:auto; }
+  body.ai-minimal[data-workspace="true"] #workspaceMain { padding-inline:14px; }
+  #workspaceBackdrop:not([hidden]) { display:block; position:absolute; z-index:20; inset:40px 0 0; background:#0007; }
+}
+
+body.ai-minimal[data-workspace="true"] #workspaceControls #agentsSidebarToggle { margin-left:auto; }
+
+#workspaceScopeTitle { flex:1; min-width:0; padding:0 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); font:600 14px/1.4 Inter,system-ui,sans-serif; }
+body.ai-minimal[data-compact-scope="true"] #administratorHeading { display:none; }
+body.ai-minimal[data-compact-scope="true"] #administratorPanel:not([hidden]) { padding-top:12px; }
+@media(max-width:600px) { #workspaceScopeTitle { padding-inline:10px; font-size:12px; } }
+
+#projectSharing, #projectPackages { margin: .5rem 1rem; }
+#projectSharing summary, #projectPackages summary { cursor: pointer; }
+#sharingControls, #projectPackageControls { border: 0; margin: .5rem 0; padding: 0; }
+#sharingControls label, #projectPackageControls label { display: block; margin: .5rem 0; }
+#sharingNotes { display: block; width: 100%; box-sizing: border-box; margin-bottom: .5rem; }

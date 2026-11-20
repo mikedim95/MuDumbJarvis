@@ -1237,10 +1237,12 @@ def test_codex_responses_request_observation_reads_the_actual_flat_tool_schema(p
     context = plugin.tools.prepare_turn_context(plugin.turn)
     plugin.reporting.observe_model_context(session_id=SESSION, model='gpt-6.1-sol', provider='openai-codex',
         base_url='https://chatgpt.com/backend-api/codex', request_messages=[{'role':'user','content':context}],
-        request={'method':'POST','body':{'tools':[{'type':'function','name':'paperclip_context','parameters':{}}]}})
+        request={'method':'POST','body':{'tools':[{'type':'function','name':'paperclip_context',
+            'parameters':{'properties':{'query':{'type':'string'}}}}]}})
     row=json.loads((tmp_path/'logs/model-context.jsonl').read_text())
     assert row['complete_context_present'] and row['provider']=='openai-codex'
     assert row['endpoint_host']=='chatgpt.com' and row['available_function_names']==['paperclip_context']
+    assert row['available_function_parameters']=={'paperclip_context':['query']}
 
 
 def test_codex_demo_guard_denies_hiring_and_requires_authenticated_scope(plugin, monkeypatch):

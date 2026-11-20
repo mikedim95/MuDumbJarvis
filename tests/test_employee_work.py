@@ -226,6 +226,11 @@ def test_runtime_report_rejects_a_bare_status(work, response):
 def test_runtime_workspace_delivery_collects_only_real_current_issue_files(work):
     root = work.module.workspace_directory(work.turn)
     current = work.home / 'workspace/issues' / ISSUE
+    import os
+    old = current/'prior-unrelated-output.json'
+    old.write_text('older run')
+    os.utime(old,(100,100))
+    work.turn['started_at'] = 200
     (current / 'test_demo.py').write_text('actual generated code')
     (current / 'private.env').write_text('excluded extension')
     (current / 'escape.txt').symlink_to(work.home / 'elsewhere.txt')
@@ -311,3 +316,61 @@ def test_old_result_file_cannot_mask_failed_evaluation_followed_by_display_comma
     with pytest.raises(ValueError): work.module.verify_promptfoo_output(work.turn, [event])
     os.utime(p, (300, 300))
     assert work.module.verify_promptfoo_output(work.turn, [event])['successes'] == 3
+
+
+def test_sibling_artifact_pages_remain_inline_and_full_bytes_are_in_own_workspace(work):
+    sibling='77777777-7777-4777-8777-777777777777';blob='88888888-8888-4888-8888-888888888888'
+    author='99999999-9999-4999-8999-999999999999';raw=('line "quoted" \\\n'*2500).encode()
+    artifact={'id':blob,'originalFilename':'catalog.json','byteSize':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),
+              'createdByAgentId':author,'originatingRunId':'reviewed-run'}
+    def api(method,path,*args):
+        assert method=='GET'
+        if path=='/issues/'+ISSUE:return work.issue
+        if path.endswith('/issues'):return [{'id':sibling,'identifier':'JAR-42','parentId':work.issue['parentId'],
+            'companyId':COMPANY,'projectId':PROJECT,'assigneeAgentId':author,'status':'done'}]
+        if path.endswith('/documents/jarvis-document-permissions'):
+            from urllib.error import HTTPError
+            raise HTTPError('',404,'No assignment grant',{},None)
+        if path.endswith('/runs'):return [{'runId':'reviewed-run','agentId':author,'status':'succeeded','startedAt':'2026-11-19'}]
+        if path.endswith('/attachments'):return [artifact]
+        pytest.fail(path)
+    work.monkeypatch.setattr(work.module.reporting,'api',api)
+    reads=[];work.monkeypatch.setattr(work.module,'attachment_bytes',lambda key:reads.append(key) or raw)
+    listing=json.loads(work.module.read_worker_artifacts({}))
+    assert len(json.dumps(listing))<6000 and reads==[]
+    assert listing['artifacts'][0]['artifact_id']==blob
+    cursor=0;chunks=[]
+    while cursor is not None:
+        response=work.module.read_worker_artifacts({'artifact_id':blob,'offset':cursor,'limit':2400})
+        assert len(response)<6000
+        page=json.loads(response)['artifact'];chunks.append(page['excerpt'])
+        if cursor==0:
+            assert page['workspace_path'].startswith('/workspace/issues/'+ISSUE+'/inputs/')
+            assert work.module.read_workspace(work.turn,page['workspace_path'])==raw
+        cursor=page['next_offset']
+    assert ''.join(chunks)==raw.decode()
+    assert not any(p.is_file() for p in (work.home/'workspace/issues'/ISSUE).iterdir()),'Input copies must not be collected as generated deliverables'
+    with pytest.raises(PermissionError):work.module.read_worker_artifacts({'artifact_id':ARTIFACT})
+    work.monkeypatch.setattr(work.module,'attachment_bytes',lambda key:b'wrong bytes')
+    with pytest.raises(ValueError,match='receipt'):work.module.read_worker_artifacts({'artifact_id':blob})
+
+
+def test_private_artifact_input_cache_rejects_symlink_components(work):
+    work.module.workspace_directory(work.turn)
+    outside=work.home/'outside';outside.mkdir()
+    (work.home/'workspace/issues'/ISSUE/'inputs').symlink_to(outside,target_is_directory=True)
+    with pytest.raises(OSError):
+        work.module.cache_sibling_input(work.turn,{'id':ARTIFACT,'originalFilename':'data.json'},b'{}')
+    assert list(outside.iterdir())==[]
+
+
+def test_publish_accepts_task_relative_paths_without_allowing_escape(work):
+    work.module.workspace_directory(work.turn)
+    (work.home/'workspace/issues'/ISSUE/'review.txt').write_text('Actual completed review.')
+    observed=[]
+    work.monkeypatch.setattr(work.module,'upload',lambda turn,name,data:observed.append((name,data)) or {'id':ARTIFACT})
+    receipt=json.loads(work.module.publish_artifact({'name':'review.txt','path':'review.txt'}))
+    assert receipt['artifact']['id']==ARTIFACT and observed==[('review.txt',b'Actual completed review.')]
+    for path in ('../review.txt','../../config.yaml','/opt/hermes/config.yaml'):
+        with pytest.raises(PermissionError):work.module.publish_artifact({'name':'review.txt','path':path})
+    assert len(observed)==1

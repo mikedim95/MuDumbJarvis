@@ -163,6 +163,21 @@ def test_confirming_earlier_work_uses_prior_context_and_creates_one_project(nati
     asyncio.run(scenario())
 
 
+def test_general_ceo_opens_explicit_project_and_signals_provisioner_once(native, monkeypatch):
+    from deploy import project_containers
+    signal = Mock()
+    monkeypatch.setattr(admin, 'notify_project_change', signal)
+    async def scenario():
+        await grant(message='Create a project to test the formatter and share the findings with the team.')
+        first = await call('start_general_work')
+        assert first['action'] == 'start_project'
+        assert await call('start_project') == first
+        root = next(iter(native.projects.values()))
+        assert project_containers.eligible(root, {'PAPERCLIP_COMPANY_ID':'company','PAPERCLIP_CEO_AGENT_ID':CEO})
+        signal.assert_called_once()
+    asyncio.run(scenario())
+
+
 def test_rename_preserves_capability_and_historical_identity(native):
     async def scenario():
         await grant()

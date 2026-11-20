@@ -123,6 +123,89 @@ def test_interrupted_reporting_recovers_from_native_worker_record():
     assert len(posted) == 1 and 'run-7' in posted[0]['body']
 
 
+@pytest.mark.parametrize('vote,endpoint,status',[
+    ('Yes','accept','accepted'),('No','reject','rejected'),('Approve','accept','accepted'),('Decline','reject','rejected')])
+def test_legacy_worker_report_reaches_ceo_and_owner_decision_is_idempotent(monkeypatch,vote,endpoint,status):
+    reason = 'Operator must provision compatible jq and dependencies inside this sandbox.'
+    child = {'id': CHILD,'parentId': ROOT,'assigneeAgentId': WORKER,'companyId':COMPANY,'projectId':PROJECT,
+             'identifier':'JAR-101','status':'blocked','updatedAt':'2026-11-19T00:00:00Z',
+             'unblockDescriptor':{'action':'CEO review requested. Worker reports incomplete work: blocked. ' + reason}}
+    root = {'id':ROOT,'assigneeAgentId':CEO,'companyId':COMPANY,'projectId':PROJECT,'status':'blocked'}
+    rows, votes, notes = [], [], {}
+    async def request(self, method, path, body=None):
+        if '/tree-holds?' in path: return []
+        if path == 'issues/'+CHILD+'/comments': return [
+            {'authorAgentId':WORKER,'createdByRunId':'worker-run','body':reason+'\nJARVIS_EXECUTION_EVIDENCE={}'}]
+        if path == 'issues/'+ROOT+'/interactions':
+            if method == 'GET': return rows
+            assert body['resolverPolicy']=='human_only' and body['continuationPolicy']=='none'
+            row = {**body, 'id':str(uuid4()),'issueId':ROOT,'createdByUserId':'board','status':'pending'}
+            rows.append(row)
+            return row
+        if path == 'issues/'+ROOT: return root
+        if path == 'issues/'+CHILD: return child
+        if path == 'issues/'+ROOT+'/comments':
+            if method=='GET': return list(notes.values())
+            assert body['resume'] is False and body['reopen'] is False
+            return notes.setdefault(body['clientRequestId'], {**body,'issueId':ROOT,'id':str(uuid4()),'authorUserId':'owner'})
+        assert path == 'issues/'+ROOT+'/interactions/'+rows[0]['id']+'/'+endpoint
+        votes.append(body)
+        rows[0].update(status=status,resolvedByUserId='owner')
+        return rows[0]
+    def setup(self):
+        self.company,self.project,self.ceo,self.workforce,self.http=COMPANY,PROJECT,CEO,True,AsyncMock()
+    monkeypatch.setattr(task_api.Paperclip,'__init__',setup)
+    monkeypatch.setattr(task_api.Paperclip,'request',request)
+    p=task_api.Paperclip()
+    assert asyncio.run(blocker_delivery.forward(p,child,reason))
+    assert asyncio.run(blocker_delivery.forward(p,child,reason)) and len(rows)==1
+    projected = asyncio.run(blocker_delivery.owner_decisions(p,ROOT))[0]
+    assert projected['package']=='jq' and projected['child_id']==CHILD
+    data={'input':vote,'interaction_id':rows[0]['id'],'request_id':str(uuid4())}
+    path='/api/tasks/'+ROOT+'/messages'
+    with TestClient(server.app) as client:
+        child['assigneeAgentId']=CEO
+        assert client.post(path,json=data,headers=HEADERS).status_code==409
+        assert client.post(path,json={**data,'reply_mode':'feedback'},headers=HEADERS).status_code==409
+        assert not notes
+        child['assigneeAgentId']=WORKER
+        feedback = {**data, 'input':'Yes', 'reply_mode':'feedback','request_id':str(uuid4())}
+        for _ in range(2):
+            sent=client.post(path,json=feedback,headers=HEADERS)
+            assert sent.status_code==200 and sent.json().get('feedback_id') and 'decision' not in sent.json()
+        assert len(notes)==1 and rows[0]['status']=='pending' and not votes
+        assert client.post(path,json={**feedback,'input':'Different text'},headers=HEADERS).status_code==409
+        for note in ('Why this package?', 'What about disk space?'):
+            legacy={**data,'input':note,'request_id':data['interaction_id']}
+            assert client.post(path,json=legacy,headers=HEADERS).json().get('feedback_id')
+        assert len(notes)==3 and rows[0]['status']=='pending' and not votes
+        for _ in range(2):
+            r=client.post(path,json=data,headers=HEADERS)
+            assert r.status_code==200 and r.json()['decision']==status
+        assert client.post(path,json={**data,'input':'Yes' if endpoint=='reject' else 'No'},headers=HEADERS).status_code==409
+        assert client.post(path,json=feedback,headers=HEADERS).json().get('feedback_id')
+        assert client.post(path,json={**feedback,'request_id':str(uuid4())},headers=HEADERS).status_code==409
+    assert asyncio.run(blocker_delivery.forward(p,child,reason)) and len(rows)==1 and len(votes)==1
+    assert child['status']=='blocked'
+
+
+def test_ceo_uses_package_confirmation_before_generic_question(plugin):
+    review = plugin.tools.blocker_review
+    child={'id':CHILD,'identifier':'JAR-101','assigneeAgentId':WORKER}
+    plugin.turn['worker_package_requests']={CHILD:['jq']}
+    rows=[]
+    def api(method,path,body=None,run=None):
+        assert path=='/issues/'+ROOT+'/interactions'
+        if method=='GET': return rows
+        assert run==plugin.turn['run']
+        row={**body,'id':str(uuid4()),'issueId':ROOT,'createdByAgentId':CEO,'status':'pending'}
+        rows.append(row)
+        return row
+    decision=review.ask(api,plugin.turn,plugin.issue,child,review.GENERIC_QUESTION,'')
+    assert decision['package']=='jq' and plugin.turn['owner_question']['id']==rows[0]['id']
+    assert review.ask(api,plugin.turn,plugin.issue,child,'','')==decision and len(rows)==1
+
+
 def test_ceo_repairs_same_assignment_then_escalates_repeated_cause(plugin, monkeypatch):
     child_with_evidence(plugin, status='blocked')
     original = plugin.children[0]
@@ -174,5 +257,75 @@ def test_an_explicitly_incomplete_objective_cannot_be_completed_with_partial_rep
     monkeypatch.setattr(plugin.reporting,'api',api)
     plugin.tools.finalize(plugin.turn,completed=True)
     assert plugin.calls[-1][2]['status']=='blocked'
-    assert created[0]['kind']=='ask_user_questions'
-    assert 'metadata reader' in created[0]['summary']
+    assert not created
+    assert 'metadata reader' in plugin.calls[-1][2]['unblockDescriptor']['action']
+
+
+def test_review_retains_package_block_without_inventing_owner_decision(plugin, monkeypatch):
+    child_with_evidence(plugin, status='blocked')
+    child = plugin.children[0]
+    child.update(description='[JARVIS REQUEST initial]\nUse the named utility.',
+                 unblockDescriptor={'action': 'CEO review requested. Worker reports incomplete work: blocked. The utility is missing.'})
+    review = plugin.tools.blocker_review
+    previous = form(CEO, ROOT, CHILD, 'Keep the named utility?')
+    previous.update(status='answered', resolvedByUserId='owner', result={'answers': [
+        {'questionId':'child-' + CHILD, 'otherText':'Yes. Keep the original scope.'}]})
+    original = plugin.reporting.api
+    def api(method, path, *args):
+        if path.endswith('/interactions'):
+            assert method == 'GET'
+            return [previous]
+        return original(method, path, *args)
+    monkeypatch.setattr(plugin.reporting, 'api', api)
+    plugin.turn.update(inference_configuration={'version': 3}, plan_decision='delegate',
+                       response='The utility is missing. ' + review.GENERIC_QUESTION)
+    plugin.tools.prepare_turn_context(plugin.turn, issue=plugin.issue, comments=[])
+    plugin.tools.finalize(plugin.turn, completed=True)
+    update = plugin.calls[-1][2]
+    assert update['status'] == 'blocked'
+    assert update['unblockDescriptor']['action'] == update['comment'] == f"Blocked on {child['identifier']} — The utility is missing."
+    assert not any(method == 'POST' and path.endswith('/interactions') for method, path, *_ in plugin.calls)
+    with pytest.raises(ValueError, match='specific decision'):
+        review.ask(None, plugin.turn, plugin.issue, child, review.GENERIC_QUESTION, 'The utility is missing.')
+
+
+def test_approved_operator_provisioning_is_not_a_new_owner_decision(plugin):
+    from unittest.mock import patch
+    review = plugin.tools.blocker_review
+    child = {'id':'child','identifier':'JAR-test','assigneeAgentId':'worker','status':'blocked'}
+    decision = {'id':'approval','child_id':'child','agent_id':'worker','package':'nmap','answer':'accepted'}
+    text = 'Can the runtime operator provide a scan-capable Nmap executable under the existing approval?'
+    assert review.approved_operator_request(text, child, [decision]) == decision
+    assert not review.approved_operator_request('Would you change the project scope for Nmap?', child, [decision])
+    assert not review.approved_operator_request(text, {**child, 'assigneeAgentId':'another'}, [decision])
+    turn = {'agent':'ceo'}
+    with patch.object(review, 'decisions', return_value=[decision]):
+        def api(method, path):
+            assert method == 'GET'
+            return []
+        assert review.ask(api, turn, {'id':'parent'}, child, text, 'Operator provisioning is required.')['next_actor'] == 'runtime_operator'
+    assert 'owner_question' not in turn
+
+
+def test_terminal_repair_is_operator_work_and_owner_choices_keep_the_reply_field(plugin):
+    review = plugin.tools.blocker_review
+    child = {'id':CHILD, 'identifier':'JAR-103', 'status':'blocked'}
+    issue = {'id':ROOT,'identifier':'JAR-100'}
+    text = 'Can the runtime operator restore authenticated project-terminal scope for the authorized task?'
+    turn = {'agent':CEO,'run':'run'}
+    assert review.ask(None, turn, issue, child, text, 'The worker reported a terminal error.') == {'next_actor':'runtime_operator'}
+    assert 'owner_question' not in turn
+    maintenance = 'Can the runtime operator provide a supported writable, administratively authorized package-maintenance execution path for the same project container?'
+    assert review.ask(None, turn, issue, child, maintenance, 'The package database is read-only.') == {'next_actor':'runtime_operator'}
+    assert 'preserving project files' in turn['operator_blocker']
+    assert review.project_operator_request(maintenance[:-1] + ', or should we prepare a replacement?') is None
+    def api(method, path, body=None, run=None):
+        if method == 'GET':
+            return []
+        prompt = body['payload']['questionSet']['questions'][0]['prompt']
+        assert prompt == 'Would you approve replacing the container for JAR-103 in project JAR-100?'
+        return {**body,'id':'question','status':'pending','issueId':ROOT,'createdByAgentId':CEO}
+    decision = review.ask(api, {'agent':CEO,'run':'run'}, issue, child,
+        f'Would you approve replacing the container for JAR-103 ({CHILD}) in project {ROOT}?',
+        'Replacing the live container requires a decision.')
+    assert decision['id'] == 'question'

@@ -105,6 +105,27 @@ def reference(issue):
     return {key: issue.get(key) for key in ('id', 'identifier', 'title')} if issue else None
 
 
+def recovery_view(issue):
+    """Small native owner action, not a new retry policy or raw error dump."""
+    blocker = issue.get('executionBlocker') or {}
+    interruption = issue.get('interruption') or {}
+    if not blocker and not interruption.get('canRetry'):
+        return None
+    run = issue.get('activeRun') or {}
+    active = bool(issue.get('executionRunId') or run.get('status') in ('running','queued'))
+    observed = blocker.get('runId') or interruption.get('observedRunId')
+    allowed = bool(observed and (blocker.get('canRetry') or interruption.get('canRetry')) and
+        not active and issue.get('status') not in ('done','cancelled'))
+    error = str(blocker.get('runError') or '')
+    http = re.search(r'\bHTTP\s+[45][0-9]{2}\b', error)
+    reason = ('The agent connection failed (' + http[0] + ').' if http else
+        'The previous execution stopped before completion.')
+    return {'run_id': observed, 'can_retry': allowed, 'state': safe_text(interruption.get('state'),50),
+        'action_id': blocker.get('recoveryActionId'),
+        'needs_reconciliation': blocker.get('cause')=='legacy_execution_requires_reconciliation',
+        'reason': reason, 'next_action': safe_text(blocker.get('nextAction'),285)}
+
+
 async def issue_index(client, project_id=None):
     """Include routine issues and their ordinary descendants on every native page."""
     size = 500
@@ -167,7 +188,7 @@ def staff_condition(person, jobs):
         return 'blocked', safe_text(person.get('errorReason') or person.get('lifecycleError'), 285) or 'The agent runtime reported an error.'
     if person.get('status') == 'paused':
         return 'paused', 'The agent is paused in Paperclip.'
-    if person.get('status') == 'running' and not any(j['state'] == 'active' for j in jobs):
+    if person.get('status') == 'running' and not any(j['state'] in ('active', 'blocked') for j in jobs):
         return 'active', 'Paperclip reports a running agent. No linked assignment was supplied.'
     for state in ('active','blocked','waiting','queued'):
         primary = next((j for j in jobs if j['state'] == state), None)
@@ -288,7 +309,23 @@ class WorkLinks:
         return {'work_scope': kind, 'mission': mission, 'cron_job': cron, 'run_issue': execution}
 
 
-async def overview(client):
+def document_reader(agent):
+    from task_monitor import catalog
+    profile = ((agent.get('metadata') or {}).get('jarvis') or {}).get('profile')
+    spec = catalog()['profiles'].get(profile) or {}
+    tools = spec.get('tools', [])
+    if 'research_sources' in tools:
+        return 'records'
+    if 'read_worker_artifacts' in tools:
+        return 'siblings'
+    return None
+
+
+def can_request_documents(agent):
+    return bool(document_reader(agent))
+
+
+async def overview(client, mission_id=None, activity_agent_id=None):
     from general_context import team
     project = None if getattr(client, 'workforce', False) else client.project
     people, issues, routines = await asyncio.gather(
@@ -318,10 +355,11 @@ async def overview(client):
     links = WorkLinks(client.company, client.ceo, issues, scoped)
     agents = {person['id']: {**{key: person.get(key) for key in ('id', 'name', 'title', 'role', 'status', 'reportsTo')},
                              'portrait_url': portrait_url(person, client.ceo), 'specialization': specialization(person),
-                             'work': [], 'past_work': [], 'schedules': [], 'questions': []} for person in people}
-    # Paperclip's list omits the execution recovery detail on older failed runs.
-    # Read it only when the list supplies neither the necessary action nor a dependency.
+                             'document_permissions':can_request_documents(person), 'work': [], 'past_work': [], 'schedules': [], 'questions': [], 'package_decisions': []} for person in people}
+    # Older failures are absent from the native list projection, including todo
+    # retries with a completed dependency. Hydrate idle open jobs before classifying.
     limit = asyncio.Semaphore(4)
+    package_progress = {}
     async def recovery_detail(row):
         async with limit:
             try:
@@ -333,6 +371,8 @@ async def overview(client):
         if (detail.get('companyId'), detail.get('projectId'), detail.get('status'), detail.get('assigneeAgentId')) == (
                 client.company, row.get('projectId'), row.get('status'), row.get('assigneeAgentId')):
             row['executionBlocker'] = detail.get('executionBlocker')
+            row['interruption'] = detail.get('interruption')
+            row['executionRunId'] = detail.get('executionRunId')
 
     async def pending_questions(row):
         async with limit:
@@ -346,19 +386,54 @@ async def overview(client):
                 if exc.status_code == 404:
                     return
                 raise
-        agents[row['assigneeAgentId']]['questions'].extend(
-            {'id': decision['id'], 'question': decision['question'], 'created': decision['created'],
-             'task': reference(row), 'mission': links.for_issue(row)['mission']}
-            for decision in decisions if decision['status'] == 'pending')
+        agent = agents[row['assigneeAgentId']]
+        await blocker_delivery.load_package_receipts(client, row, issues, decisions)
+        package_progress.update(blocker_delivery.package_blockers(row, issues, decisions))
+        operator_questions = set()
+        for decision in decisions:
+            child = issues.get(decision['child_id']) or {}
+            if (decision['status'] == 'pending' and not decision.get('package') and child.get('status') == 'blocked'
+                    and child.get('parentId') == row['id'] and child.get('projectId') == row.get('projectId')):
+                approved = blocker_delivery.approved_operator_request(decision['question'], child, decisions)
+                if approved:
+                    progress = {'next_actor':'runtime_operator', 'progress':f"{child['identifier']} needs operator review. "
+                        f"Package approval for {approved['package']} is recorded."}
+                    if approved['package'] == 'nmap' and (approved.get('installation') or {}).get('status') == 'ready':
+                        progress['progress'] = f"{child['identifier']} needs operator review. The installed Nmap launcher supports version checks only."
+                    package_progress[child['id']] = progress
+                    operator_questions.add(decision['id'])
+                    if (row.get('unblockDescriptor') or {}).get('action') == blocker_delivery.WAITING + decision['question']:
+                        package_progress[row['id']] = progress
+        for decision in decisions:
+            if decision['id'] in operator_questions:
+                continue
+            view = {'id': decision['id'], 'question': decision['question'], 'created': decision['created'],
+                    'task': reference(row), 'mission': links.for_issue(row)['mission']}
+            if decision.get('package'):
+                child = issues.get(decision['child_id']) or {}
+                if (child.get('parentId') != row['id'] or child.get('projectId') != row.get('projectId')
+                        or child.get('assigneeAgentId') != decision['agent_id'] or child.get('hiddenAt')
+                        or child.get('status') != 'blocked'):
+                    continue
+                view.update(kind='package_review', package=decision['package'], child=child.get('identifier'),
+                            decision=decision['status'], resolved_at=decision.get('resolved_at'))
+                if decision['status'] == 'pending':
+                    view['question'] += ' Available command: ' + decision['usage'] + '.'
+                if decision.get('installation'):
+                    view['installation'] = {k: v for k, v in decision['installation'].items()
+                                            if k in ('status', 'version', 'verified_at')}
+                if decision['answer']:
+                    agent['package_decisions'].append(view)
+            if decision['status'] == 'pending':
+                agent['questions'].append(view)
 
     lookups = [recovery_detail(row) for row in issues.values()
         if row.get('assigneeAgentId') in agents and not row.get('executionBlocker')
         and not row.get('executionRunId') and not row.get('activeRun')
         and not row.get('hiddenAt') and row.get('status') not in ('backlog', 'done', 'cancelled')
-        and (row.get('assigneeAgentId') == client.ceo or
-             ((row.get('blockerAttention') or {}).get('state') == 'needs_attention'
-              and not (row.get('unblockDescriptor') or {}).get('action')
-              and not (row.get('blockerAttention') or {}).get('sampleBlockerIdentifier')))]
+        and not (links.for_issue(row).get('mission') or {}).get('hiddenAt')
+        and (row.get('assigneeAgentId') == client.ceo or row.get('status') in ('todo','blocked') or
+             ((row.get('blockerAttention') or {}).get('state') == 'needs_attention'))]
     if getattr(client, 'workforce', False) and client.ceo in agents:
         blocked_parents = {row.get('parentId') for row in issues.values() if row.get('status') == 'blocked'}
         lookups.extend(pending_questions(row) for row in issues.values()
@@ -375,8 +450,17 @@ async def overview(client):
         assignee = row.get('assigneeAgentId')
         for agent_id in {assignee, executor} & agents.keys():
             job_state = 'waiting' if state == 'active' and executor != agent_id else state
-            entry = {**reference(row), 'status': row.get('status'), 'state': job_state,
-                     'reason': row.get('_owner_wait') if job_state == 'blocked' and row.get('_owner_wait') else work_reason(row, job_state, executor),
+            reason = work_reason(row, job_state, executor)
+            next_actor = None
+            if job_state == 'blocked' and not row.get('executionBlocker'):
+                if row.get('_owner_wait'):
+                    reason = row['_owner_wait']
+                elif row['id'] in package_progress:
+                    reason = package_progress[row['id']]['progress']
+                    next_actor = package_progress[row['id']]['next_actor']
+            entry = {**reference(row), 'parentId':row.get('parentId'), 'status': row.get('status'), 'state': job_state,
+                     'reason': reason, 'next_actor': next_actor,
+                     'recovery': recovery_view(row),
                      'assigneeAgentId': assignee,
                      'active_agent_id': executor, **links.for_issue(row)}
             archived = (entry.get('mission') or {}).get('hiddenAt')
@@ -385,10 +469,34 @@ async def overview(client):
             agents[agent_id]['past_work' if state == 'closed' or archived else 'work'].append(entry)
     for job in links.jobs.values():
         owner = job.get('assigneeAgentId')
+        from cron_api import agent_focus
+        focus=agent_focus(job)
+        if focus in agents and focus!=owner and job.get('status')!='archived':
+            agents[focus]['schedules'].append(links.schedule(job))
         if owner in agents and job.get('status') != 'archived':
             agents[owner]['schedules'].append(links.schedule(job))
     for person in people:
         agent = agents[person['id']]
         agent['activity'], agent['status_reason'] = staff_condition(person, agent['work'])
         agent['questions'].sort(key=lambda question: (question['created'], question['id']), reverse=True)
-    return {'ceo_id': client.ceo, 'agents': list(agents.values())}
+    if mission_id:
+        selected = {}
+        for person in people:
+            agent = agents[person['id']]
+            for field in ('work','past_work','questions','schedules','package_decisions'):
+                agent[field] = [item for item in agent[field] if (item.get('mission') or {}).get('id') == mission_id]
+            if agent['id'] != client.ceo and not any(agent[f] for f in ('work','past_work','questions','schedules')):
+                continue
+            status = person if any(j['state']=='active' for j in agent['work']) else {**person,'status':'idle'}
+            agent['activity'], agent['status_reason'] = staff_condition(status, agent['work'])
+            selected[agent['id']] = agent
+        agents = selected
+    from agent_activity import current_work, latest_activity
+    for agent in agents.values():
+        agent['current_work'] = current_work(agent)
+    if activity_agent_id:
+        if activity_agent_id not in agents:
+            raise HTTPException(404, 'Agent is unavailable in this workspace')
+        agent = agents[activity_agent_id]
+        agent['recent_activity'] = await latest_activity(client, agent, issues)
+    return {'ceo_id': client.ceo, **({'mission_id':mission_id} if mission_id else {}), 'agents': list(agents.values())}

@@ -245,3 +245,23 @@ def test_historical_preflight_uses_original_objective_and_plan_rules(workforce, 
     turn = workforce.reporting._turns[(SESSION, 'legacy')]
     assert turn['needs_inventory'] is True and turn['needs_report'] is True and turn['plan_decision'] == 'self'
     assert 'conversation_request_id' not in turn and 'latest_user_request' not in turn
+
+
+def test_ceo_preflight_loads_own_project_directions_and_agent_focused_schedule(workforce,monkeypatch):
+    mock_selection(workforce,monkeypatch,3)
+    schedule='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    workforce.issue.update(originKind='routine_execution',originId=schedule,
+        description='[JARVIS MISSION '+ROOT+']\nReview the source notes.')
+    original=workforce.reporting.api
+    def api(method,path,body=None,run_id=None):
+        if path=='/companies/'+COMPANY+'/routines':
+            return [{'id':schedule,'companyId':COMPANY,'variables':[{'name':'jarvis_work_scope','defaultValue':'project'},
+                {'name':'jarvis_mission_id','defaultValue':ROOT},{'name':'jarvis_agent_id','defaultValue':WORKER}]}]
+        if path=='/issues/'+ROOT+'/documents/jarvis-context-'+CEO:
+            return {'body':'Use this mission glossary.','latestRevisionId':NONCE}
+        return original(method,path,body,run_id)
+    monkeypatch.setattr(workforce.reporting,'api',api)
+    result=workforce.reporting.begin(session_id=SESSION,turn_id='local-directions')
+    delivered=decode_preflight(result['context'])
+    assert delivered['project_directions']=={'text':'Use this mission glossary.','revision':NONCE,'mission_id':ROOT}
+    assert delivered['scheduled_agent']['agent_id']==WORKER

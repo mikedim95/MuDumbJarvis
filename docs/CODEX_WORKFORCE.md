@@ -110,8 +110,19 @@ not expand that capability's tools. Historical version-1 local and version-2
 read-only demo receipts remain valid under their original authority.
 
 All profiles borrow the single native Hermes OAuth store under
-`.runtime/codex-shared`. Native refresh locking and write-through prevent
-multiple copied rotating grants from racing. Only each container's own profile
+`.runtime/codex-shared`. For the local CLI handover, Codex owns the rotating
+refresh token. Hermes receives the access token through its native credential
+pool. The host's `jarvis-codex-login.timer` checks every two minutes and asks
+the Codex client to renew a login within 30 minutes of expiry.
+
+To enroll the existing same-account handover, run `python3 deploy/codex_login.py --enroll`
+and `python3 deploy/install-runtime-service.py` as the operator. Enrollment
+requires matching account and user identities in the private CLI and shared
+Hermes stores. Inspect `systemctl --user status jarvis-codex-login.service`
+if renewal fails. A revoked login requires signing into the original Codex
+account again.
+
+Only each container's own profile
 is mounted below that root; other employees' memory and sessions are not shared.
 Existing `/opt/data` aliases retain legacy SSH/plugin paths. No credentials are
 included in Git, the frontend, or public evidence.

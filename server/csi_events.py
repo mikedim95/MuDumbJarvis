@@ -263,4 +263,16 @@ async def build_snapshot(p, task_id, evidence_validator, capability_projection):
               'limits': {'tasks': MAX_TASKS, 'events': MAX_EVENTS, 'truncated': truncated},
               'finding_policy': 'No synthetic progress, identity matches, decryption or network geolocation. Published model summaries are labelled separately from authenticated tool output.'}
     result['snapshot_id'] = digest(result)
+    if (getattr(p, 'workforce', False) and root.get('assigneeAgentId') == p.ceo and not root.get('parentId')
+            and not root.get('hiddenAt') and root.get('status') not in ('done', 'cancelled')
+            and any(i.get('parentId') == root['id'] and i.get('status') == 'blocked' for i in selected)):
+        import blocker_delivery
+        decisions = await blocker_delivery.owner_decisions(p, root['id'])
+        result['package_requests'] = [
+            {'id': d['id'], 'status': 'pending', 'type':'package_review', 'issue_ids':[root['id']],
+             'proposal':{'name':'CEO software request', 'proposal':d['question'] + ' Available command: ' + d['usage'] + '.'}}
+            for d in decisions if d.get('package') and d['status'] == 'pending'
+            and (child := scoped.get(d['child_id'])) and child.get('parentId') == root['id']
+            and not child.get('hiddenAt') and child.get('status') == 'blocked'
+            and child.get('assigneeAgentId') == d['agent_id']]
     return result

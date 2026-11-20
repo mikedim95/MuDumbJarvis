@@ -1,9 +1,11 @@
 """Authenticated Paperclip REST integration. No local task database or scheduler."""
 import asyncio
 import os
+import socket
 from collections import defaultdict
 from datetime import datetime, timezone
-from uuid import UUID
+from typing import Literal
+from uuid import UUID, uuid5
 
 import httpx
 import work_scope
@@ -13,6 +15,19 @@ from task_brief import job_brief
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+
+
+def notify_project_change():
+    # The operator reads native Paperclip state. This datagram only shortens the periodic reconcile delay.
+    endpoint = os.environ.get('JARVIS_PROJECT_LIFECYCLE_SOCKET')
+    if not endpoint:
+        return
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+            sock.setblocking(False)
+            sock.sendto(b'projects', endpoint)
+    except OSError:
+        pass
 
 
 class TaskSubmission(BaseModel):
@@ -26,6 +41,7 @@ class TaskMessage(BaseModel):
     input: str = Field(min_length=1, max_length=8000)
     request_id: UUID
     interaction_id: UUID | None = None
+    reply_mode: Literal['feedback'] | None = None
 
 
 class Paperclip:
@@ -81,6 +97,7 @@ def project_issue(issue,scope=None):
     resolved=scope or work_scope.classify(issue)
     result.update(work_scope=resolved['kind'],mission_id=resolved.get('mission_id'))
     result['description']=work_scope.clean_description(result.get('description'))
+    result['recovery'] = agent_work.recovery_view(issue)
     if issue.get('status') == 'blocked' or issue.get('executionBlocker'):
         result['state'] = agent_work.engagement(issue)[0]
     return result
@@ -96,6 +113,9 @@ def build_router(require_auth):
         finally:
             await upstream.http.aclose()
 
+    from document_permissions import routes as permission_routes
+    permission_routes(router, client)
+
     @router.get('/agents')
     async def agents(p: Paperclip = Depends(client)):
         return {'ceo_id': p.ceo or None,
@@ -103,8 +123,13 @@ def build_router(require_auth):
                 'lifecycleState', 'lifecycleError', 'capabilities')} for a in await p.agents()]}
 
     @router.get('/agents/work')
-    async def staff_assignments(p: Paperclip = Depends(client)):
-        return await agent_work.overview(p)
+    async def staff_assignments(mission_id: UUID | None = None, agent_id: UUID | None = None,
+                                p: Paperclip = Depends(client)):
+        if mission_id:
+            from project_workspace import mission
+            await mission(p, mission_id)
+        return await agent_work.overview(p, str(mission_id) if mission_id else None,
+                                         str(agent_id) if agent_id else None)
 
     @router.get('/agents/{agent_id}/portrait/{asset_id}')
     async def staff_portrait(agent_id: UUID, asset_id: UUID, p: Paperclip = Depends(client)):
@@ -143,6 +168,7 @@ def build_router(require_auth):
         if hidden:
             import cron_api
             await cron_api.pause_mission(p,str(task_id))
+        notify_project_change()
         return {'id': str(task_id), 'hidden_at': issue.get('hiddenAt'), 'removed': hidden,
             'history_preserved': True, 'task': project_issue(issue)}
 
@@ -177,6 +203,8 @@ def build_router(require_auth):
             'idempotencyKey': 'jarvis:' + str(body.request_id), 'allowDuplicate': True})
         if issue.get('description') != text or issue.get('assigneeAgentId') != agent_id:
             raise HTTPException(409, 'Submission ID already belongs to another task')
+        if agent_id == p.ceo:
+            notify_project_change()
         return project_issue(issue)
 
     @router.get('/tasks')
@@ -190,46 +218,7 @@ def build_router(require_auth):
 
     @router.post('/tasks/{task_id}/messages')
     async def message(task_id: UUID, body: TaskMessage, p: Paperclip = Depends(client)):
-        issue = await p.issue(task_id)
-        if not getattr(p, 'workforce', False):
-            raise HTTPException(409, 'CEO conversation mode is not enabled')
-        if issue.get('parentId') or issue.get('assigneeAgentId') != p.ceo:
-            raise HTTPException(409, 'Messages must address a CEO-owned top-level objective')
-        if issue.get('status') == 'cancelled':
-            raise HTTPException(409, 'Cancelled objectives cannot be resumed through chat')
-        holds = await p.request('GET', f'issues/{task_id}/tree-holds?status=active')
-        if isinstance(holds, dict):
-            holds = holds.get('holds', [])
-        if holds:
-            raise HTTPException(409, 'This objective has a native stop hold; chat cannot release it')
-        text = body.input.strip()
-        if not text:
-            raise HTTPException(422, 'Message cannot be blank')
-        if body.interaction_id:
-            decisions = await blocker_delivery.owner_decisions(p, issue['id'])
-            decision = next((d for d in decisions if d['id'] == str(body.interaction_id)), None)
-            if not decision:
-                raise HTTPException(409, 'This question does not belong to the selected CEO objective.')
-            if decision['status'] == 'pending':
-                try:
-                    await p.request('POST', f'issues/{task_id}/interactions/{body.interaction_id}/respond',
-                        {'answers': [{'questionId': 'child-' + decision['child_id'], 'optionIds': [], 'otherText': text}]})
-                except HTTPException as exc:
-                    if exc.status_code != 409:
-                        raise
-                    decisions = await blocker_delivery.owner_decisions(p, issue['id'])
-                    if not any(d['id'] == decision['id'] and d['status'] == 'answered' and d['answer'] == text for d in decisions):
-                        raise
-            elif decision['status'] != 'answered' or decision['answer'] != text:
-                raise HTTPException(409, 'This question has already been closed or answered differently.')
-            return {'task': project_issue(await p.issue(task_id)), 'interaction_id': decision['id']}
-        marker = '[JARVIS USER MESSAGE request_id=' + str(body.request_id) + ']\n'
-        comment = await p.request('POST', f'issues/{task_id}/comments', {
-            'body': marker + text, 'clientRequestId': str(body.request_id),
-            'reopen': True, 'resume': True})
-        if comment.get('body') != marker + text:
-            raise HTTPException(409, 'Message request ID already belongs to different text')
-        return {'task': project_issue(await p.issue(task_id)), 'comment_id': comment['id']}
+        return await post_followup(p, task_id, body)
 
     @router.get('/tasks/{task_id}')
     async def task(task_id: UUID, p: Paperclip = Depends(client)):
@@ -264,6 +253,12 @@ def build_router(require_auth):
 
         async def details(item, scope):
             async with limit:
+                if item['id'] != issue['id'] and item.get('status') in ('todo','blocked') and not item.get('executionRunId') and not item.get('activeRun'):
+                    native = await p.issue(item['id'])
+                    if (native.get('companyId'),native.get('projectId'),native.get('parentId')) != (
+                            item.get('companyId'),item.get('projectId'),item.get('parentId')):
+                        raise HTTPException(409,'The assignment changed scope; refresh the project')
+                    item = {**item,**native}
                 comments, runs = await asyncio.gather(
                     p.request('GET', f"issues/{item['id']}/comments"),
                     p.request('GET', f"issues/{item['id']}/runs"))
@@ -297,16 +292,22 @@ def build_router(require_auth):
         results = await asyncio.gather(*(details(item, scope) for item, scope, _, _ in visits))
         by_id = {row['id']: row for row in results}
         root = results[0]
+        package_progress = {}
         if getattr(p, 'workforce', False) and not issue.get('parentId') and issue.get('assigneeAgentId') == p.ceo and any(
                 item.get('status') == 'blocked' for item in rows if item.get('parentId') == issue['id']):
             decisions = await blocker_delivery.owner_decisions(p, issue['id'])
-            root['owner_question'] = next(({'id': d['id'], 'question': d['question']} for d in decisions if d['status'] == 'pending'), None)
+            await blocker_delivery.load_package_receipts(p, root, by_id, decisions)
+            package_progress = blocker_delivery.package_blockers(root, by_id, decisions)
+            root['owner_question'] = next(({'id': d['id'], 'question': d['question'],
+                    **({'kind':'package_review'} if d.get('package') else {})} for d in decisions if d['status'] == 'pending'), None)
         root['scheduled_runs'] = []
         root['schedules'] = links.by_mission.get(root['id'], [])
         for row, (_, _, parent, relation) in zip(results[1:], visits[1:]):
             by_id[parent][relation].append(row)
         for row in results:
             row['brief'] = job_brief(row)
+            if row['id'] in package_progress and row['state'] == 'blocked' and not row.get('recovery'):
+                row['brief'].update(package_progress[row['id']])
         if root.get('owner_question'):
             root['brief']['progress'] = 'Jarvis needs your decision. ' + root['owner_question']['question']
         return root
@@ -314,3 +315,89 @@ def build_router(require_auth):
     from task_monitor import add_routes
     add_routes(router, Paperclip)
     return router
+
+
+async def post_followup(p, task_id, body):
+    issue = await p.issue(task_id)
+    if not getattr(p, 'workforce', False):
+        raise HTTPException(409, 'CEO conversation mode is not enabled')
+    if issue.get('parentId') or issue.get('assigneeAgentId') != p.ceo:
+        raise HTTPException(409, 'Messages must address a CEO-owned top-level objective')
+    if issue.get('status') == 'cancelled':
+        raise HTTPException(409, 'Cancelled objectives cannot be resumed through chat')
+    holds = await p.request('GET', f'issues/{task_id}/tree-holds?status=active')
+    if isinstance(holds, dict):
+        holds = holds.get('holds', [])
+    if holds:
+        raise HTTPException(409, 'This objective has a native stop hold; chat cannot release it')
+    text = body.input.strip()
+    if not text:
+        raise HTTPException(422, 'Message cannot be blank')
+    if body.reply_mode and not body.interaction_id:
+        raise HTTPException(422, 'Select the approval request to send feedback.')
+    if body.interaction_id:
+        decisions = await blocker_delivery.owner_decisions(p, issue['id'])
+        decision = next((d for d in decisions if d['id'] == str(body.interaction_id)), None)
+        if not decision:
+            raise HTTPException(409, 'This question does not belong to the selected CEO objective.')
+        if body.reply_mode and not decision.get('package'):
+            raise HTTPException(409, 'This question takes a direct reply.')
+        if decision.get('package'):
+            choices = {'yes': ('accept', 'accepted'), 'approve': ('accept', 'accepted'),
+                       'no': ('reject', 'rejected'), 'decline': ('reject', 'rejected')}
+            choice = None if body.reply_mode else choices.get(text.casefold())
+            if decision['status'] == 'pending':
+                child = await p.issue(decision['child_id'])
+                if (issue.get('hiddenAt') or issue.get('status') == 'done' or child.get('hiddenAt')
+                        or child.get('status') != 'blocked' or child.get('parentId') != issue['id']
+                        or child.get('companyId') != issue['companyId'] or child.get('projectId') != issue.get('projectId')
+                        or child.get('assigneeAgentId') != decision['agent_id']):
+                    raise HTTPException(409, 'The package request no longer matches this assignment.')
+            if not choice:
+                # Older HUDs used the question ID for every reply. Give each
+                # distinct legacy note a stable comment ID for safe retries.
+                nonce = str(uuid5(body.interaction_id, text) if body.request_id == body.interaction_id else body.request_id)
+                note = f"Owner feedback on {decision['package']} request {decision['id']} (decision pending)\n{text}"
+                path = f'issues/{task_id}/comments'
+                if decision['status'] == 'pending':
+                    comment = await p.request('POST', path, {'clientRequestId':nonce, 'body':note, 'resume':False, 'reopen':False})
+                else:
+                    comment = next((c for c in await p.request('GET', path) if c.get('clientRequestId') == nonce), {})
+                if not (comment.get('id') and comment.get('body') == note and comment.get('issueId') == issue['id']
+                        and comment.get('authorUserId') and not comment.get('authorAgentId')):
+                    raise HTTPException(409, 'Feedback was not confirmed for this request.')
+                return {'task':project_issue(issue), 'interaction_id':decision['id'], 'feedback_id':comment['id']}
+            action, expected = choice
+            if decision['status'] != 'pending':
+                if decision['answer'] != expected:
+                    raise HTTPException(409, 'This package request already has a different disposition.')
+            else:
+                try:
+                    await p.request('POST', f'issues/{task_id}/interactions/{body.interaction_id}/{action}', {})
+                except HTTPException as exc:
+                    if exc.status_code != 409:
+                        raise
+                saved = await blocker_delivery.owner_decisions(p, issue['id'])
+                if not any(d['id'] == decision['id'] and d['answer'] == expected for d in saved):
+                    raise HTTPException(409, 'Paperclip did not confirm your package decision.')
+            return {'task': project_issue(issue), 'interaction_id': decision['id'], 'decision':expected}
+        if decision['status'] == 'pending':
+            try:
+                await p.request('POST', f'issues/{task_id}/interactions/{body.interaction_id}/respond',
+                    {'answers': [{'questionId': 'child-' + decision['child_id'], 'optionIds': [], 'otherText': text}]})
+            except HTTPException as exc:
+                if exc.status_code != 409:
+                    raise
+                decisions = await blocker_delivery.owner_decisions(p, issue['id'])
+                if not any(d['id'] == decision['id'] and d['status'] == 'answered' and d['answer'] == text for d in decisions):
+                    raise
+        elif decision['status'] != 'answered' or decision['answer'] != text:
+            raise HTTPException(409, 'This question has already been closed or answered differently.')
+        return {'task': project_issue(await p.issue(task_id)), 'interaction_id': decision['id']}
+    marker = '[JARVIS USER MESSAGE request_id=' + str(body.request_id) + ']\n'
+    comment = await p.request('POST', f'issues/{task_id}/comments', {
+        'body': marker + text, 'clientRequestId': str(body.request_id),
+        'reopen': True, 'resume': True})
+    if comment.get('body') != marker + text:
+        raise HTTPException(409, 'Message request ID already belongs to different text')
+    return {'task': project_issue(await p.issue(task_id)), 'comment_id': comment['id']}

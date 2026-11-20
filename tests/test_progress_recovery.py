@@ -20,10 +20,12 @@ def native():
     root = {'id': ROOT, 'companyId': 'co', 'projectId': 'project', 'assigneeAgentId': 'ceo',
             'status': 'blocked', 'updatedAt': '2026-01-01T00:00:00Z'}
     child = {**root, 'id': CHILD, 'parentId': ROOT, 'assigneeAgentId': 'worker'}
-    state = SimpleNamespace(records={ROOT: root, CHILD: child}, questions=[], approvals=[], holds=[], runs=[], calls=[])
+    state = SimpleNamespace(records={ROOT: root, CHILD: child}, questions=[], approvals=[], holds=[], runs=[], comments=[], calls=[])
 
     async def request(method, path, body=None):
         state.calls.append((method, path, body))
+        if method=='GET' and path=='issues/'+ROOT:
+            return deepcopy(state.records[ROOT])
         if path.endswith('/interactions'):
             return state.questions
         if path.endswith('/approvals'):
@@ -33,7 +35,8 @@ def native():
         if path.endswith('/runs'):
             return state.runs
         if path.endswith('/comments'):
-            return []
+            if method=='POST':state.comments.append({'body':body['body'],'authorUserId':'owner','createdAt':'2026-03-01T00:00:00Z'})
+            return state.comments
         assert method == 'POST' and path == 'agents/ceo/wakeup'
         return {'status': 'queued'}
 
@@ -46,13 +49,30 @@ def test_answered_question_resumes_ceo_with_durable_idempotency(monkeypatch):
     monkeypatch.setattr(agent_work, 'issue_index', AsyncMock(side_effect=lambda _: deepcopy(state.records)))
     for _ in range(2):
         asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
-    posts = [body for method, _, body in state.calls if method == 'POST']
-    assert len(posts) == 2 and posts[0] == posts[1]
+    posts = [body for method, path, body in state.calls if method == 'POST' and path=='agents/ceo/wakeup']
+    assert len(posts) == 1
     assert posts[0]['payload']['issueId'] == ROOT
     assert posts[0]['idempotencyKey'].startswith('jarvis-progress:')
     state.records[ROOT]['updatedAt'] = '2026-02-01T00:00:00Z'
     asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
-    assert state.calls[-1][2]['idempotencyKey'] == posts[0]['idempotencyKey']
+    assert len([1 for method,path,_ in state.calls if method=='POST' and path=='agents/ceo/wakeup'])==1
+    assert len(state.comments)==1 and state.comments[0]['body'].startswith(blocker_delivery.PROGRESS)
+
+
+def test_real_owner_input_allows_another_progress_review_without_self_wakeup_loop(monkeypatch):
+    state=native();monkeypatch.setattr(agent_work,'issue_index',AsyncMock(side_effect=lambda _:deepcopy(state.records)))
+    asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
+    state.comments.append({'authorUserId':'owner','createdAt':'2026-03-02T00:00:00Z','body':'Please apply my updated scope.'})
+    asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
+    posts=[body for method,path,body in state.calls if method=='POST' and path=='agents/ceo/wakeup']
+    assert len(posts)==2 and posts[0]['idempotencyKey']!=posts[1]['idempotencyKey']
+
+
+def test_failed_native_execution_is_never_repeated_by_progress_polling(monkeypatch):
+    state=native();state.records[ROOT]['executionBlocker']={'canRetry':True,'runId':'failed-run'}
+    monkeypatch.setattr(agent_work,'issue_index',AsyncMock(return_value=state.records))
+    asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
+    assert not any(method=='POST' for method,_,_ in state.calls)
 
 
 @pytest.mark.parametrize('condition', ['running', 'queued', 'question', 'approval', 'hold', 'retry', 'archived', 'done'])
@@ -107,3 +127,25 @@ def test_explicit_worker_blocker_cannot_be_reported_as_done(employee, monkeypatc
     payload = calls[-1][2]
     proof = json.loads(payload['comment'].split('JARVIS_EXECUTION_EVIDENCE=')[1])
     assert payload['status'] == proof['task_status'] == 'blocked'
+
+
+@pytest.mark.parametrize('review_record', ['ceo_report', 'skipped_question'])
+def test_confirmed_blocker_stays_quiet_until_new_input(monkeypatch, review_record):
+    state = native()
+    monkeypatch.setattr(agent_work, 'issue_index', AsyncMock(side_effect=lambda _: deepcopy(state.records)))
+    action = 'Blocked on JAR-101 — The named software is unavailable.'
+    state.records[ROOT]['unblockDescriptor'] = {'action': action}
+    reviewed = '2026-03-01T12:00:00.000Z'
+    if review_record == 'ceo_report':
+        state.comments.append({'authorAgentId':'ceo','body':action,'createdAt':reviewed})
+    else:
+        state.questions.append({'id':'prior','status':'cancelled','resolvedByUserId':'owner',
+            'createdByAgentId':'ceo','result':{'outcome':'skipped','reason':action},'resolvedAt':reviewed})
+    asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
+    assert not any(method == 'POST' for method, _, _ in state.calls)
+    if review_record == 'ceo_report':
+        state.records[CHILD]['updatedAt'] = '2026-03-02T00:00:00Z'
+    else:
+        state.comments.append({'authorUserId':'owner','body':'Use the new project scope.','createdAt':'2026-03-02T00:00:00Z'})
+    asyncio.run(blocker_delivery.continue_stalled_projects(state.client))
+    assert sum(path == 'agents/ceo/wakeup' and method == 'POST' for method,path,_ in state.calls) == 1

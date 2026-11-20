@@ -35,14 +35,18 @@ heartbeats or inference run while employees are idle. State/history is retained.
 The existing JARVIS-01 employee keeps its ID and task history and is reused for
 Research in a separate runtime; the original user-facing chat is separate.
 
-Code/file tools use Hermes' existing SSH execution backend to reach a private
-container, never Kali. Execution containers are non-root, read-only outside
+General and private assignments use Hermes' SSH execution backend to reach a
+private employee container. Those containers are non-root, read-only outside
 their workspace/tmpfs, drop all capabilities, have no credentials or Docker
 socket, and use Docker's internal **isolated** gateway mode so the host bridge
 has no reachable gateway address. They have no external route or DNS forwarding.
 Only the owning Hermes runtime shares that private execution network. The
 runtime parent holds API credentials; its model-facing tools cannot execute
 in that parent. Each role has explicit toolsets and CPU/memory/PID limits.
+
+Project terminal assignments use the mission’s writable Kali lab. Approved
+agents share its persistent `/project` volume. The operator maintains the
+system image as described in [Project lab maintenance](RUNTIME_ISOLATION.md#project-lab-maintenance).
 
 All employees select the existing `jarvis-hermes-aigoat24:3b` alias and share
 Ollama's one inference slot. No model/server concurrency setting is changed.

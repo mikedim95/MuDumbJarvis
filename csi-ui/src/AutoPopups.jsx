@@ -70,18 +70,21 @@ function ChatActivity({entry}){
 function ApprovalRequests({entry}){
  const [feedback,setFeedback]=useState(''),[deciding,setDeciding]=useState(false);
  const approvals=(entry.data.approvals||[]).filter(a=>['pending','revision_requested'].includes(a.status));
- const decide=async(id,decision)=>{setDeciding(true);setFeedback('Recording your decision…');
-  const result=await window.JarvisTasks?.decide(id,decision,'Human decision from the approval popup.');
-  setFeedback(result?'Decision recorded.':window.JarvisTasks?.snapshot().error||'Could not record the decision.');setDeciding(false);};
+ const decide=async(a,decision)=>{setDeciding(true);setFeedback('Recording your decision…');
+  try{
+   const result=await window.JarvisTasks.decide(a.id,decision,'Human decision from the approval popup.');
+   setFeedback(result?'Decision recorded.':window.JarvisTasks.snapshot().error||'Could not record the decision.');
+  }catch(error){setFeedback(error.message);}finally{setDeciding(false);}};
  return <div className="csi-objective"><p className="csi-label">YOUR APPROVAL IS REQUIRED</p>
   {approvals.map(a=><section className="csi-objective-approval" key={a.id} data-approval-id={a.id}>
    <strong>{a.proposal?.name||a.proposal?.title||a.type}</strong>
    <pre>{a.hiring_reason||a.proposal?.reason||a.proposal?.summary||a.proposal?.proposal||'Review this request before deciding.'}</pre>
    {a.proposal?.scope&&<pre>{typeof a.proposal.scope==='string'?a.proposal.scope:JSON.stringify(a.proposal.scope,null,2)}</pre>}
    <small>Approval {a.id} · {a.status}</small>
-   <div className="cron-actions"><button type="button" disabled={deciding} onClick={()=>decide(a.id,'approve')}>Approve</button>
-    <button type="button" disabled={deciding} onClick={()=>decide(a.id,'reject')}>Reject</button></div>
-   <p>In the project conversation, reply with <code>/approve {a.id}</code> or <code>/reject {a.id}</code>, optionally followed by a note.</p>
+   {a.type==='package_review'?<jarvis-package-response task-id={entry.taskId} question-id={a.id}/>:<div className="cron-actions">
+    <button type="button" disabled={deciding} onClick={()=>decide(a,'approve')}>Approve</button>
+    <button type="button" disabled={deciding} onClick={()=>decide(a,'reject')}>Reject</button></div>}
+   {a.type!=='package_review'&&<p>In the project conversation, reply with <code>/approve {a.id}</code> or <code>/reject {a.id}</code>, optionally followed by a note.</p>}
   </section>)}
   {feedback&&<p role="status">{feedback}</p>}</div>;
 }
@@ -217,7 +220,7 @@ export default function AutoPopups(){
    }
    const scope=new Set([task.id,...(snapshot.graph?.nodes||[]).filter(n=>n.kind==='task').map(n=>n.native_id)]);
    snapshot.approvals=(monitor?.approvals||(nativeData.current?.task_id===task.id?nativeData.current.approvals:[])||[])
-    .filter(a=>(a.issue_ids||[]).some(id=>scope.has(id)));
+    .filter(a=>a.type!=='package_review'&&(a.issue_ids||[]).some(id=>scope.has(id))).concat(snapshot.package_requests||[]);
    nativeData.current=snapshot;
    window.dispatchEvent(new CustomEvent('jarvis-project-snapshot',{detail:snapshot}));
    const fresh=snapshot.events.filter(e=>!seen.current.has(e.id)&&(!cutoff||Date.parse(e.occurred_at||'')>=cutoff));

@@ -25,9 +25,10 @@ def manage(args, **kwargs):
                 for a in roster if a.get('reportsTo') == me['id'] and a.get('companyId') == company],
             'approvals': [{k: a.get(k) for k in ('id', 'type', 'status', 'decisionNote')} for a in approvals]},
             tool_name='paperclip_company')
-    if not turn.get('plan_decision'):
-        ceo_tools.manage({'action': 'plan', 'decision': 'self',
-            'plan': 'Perform the requested scoped Paperclip company operation using native records and report its actual result.'})
+    def plan_operation():
+        if not turn.get('plan_decision'):
+            ceo_tools.manage({'action': 'plan', 'decision': 'self',
+                'plan': 'Perform the requested scoped Paperclip company operation using native records and report its actual result.'})
     if action == 'rename_agent':
         agent_id = str(UUID(args['agent_id']))
         agent = next((a for a in roster if a['id'] == agent_id and a.get('companyId') == company
@@ -38,6 +39,7 @@ def manage(args, **kwargs):
         if not 2 <= len(name) <= 100 or re.search(r'[\x00-\x1f\x7f]', name):
             raise ValueError('Provide a name between 2 and 100 characters on one line')
         changed = agent['name'] != name
+        plan_operation()
         if changed:
             reporting.api('PATCH', '/agents/' + agent_id, {'name': name}, turn['run'])
         updated = reporting.api('GET', '/agents/' + agent_id)
@@ -52,6 +54,7 @@ def manage(args, **kwargs):
             raise ValueError('Provide a project name between 2 and 100 characters')
         existing = next((p for p in projects if p['name'].casefold() == name.casefold()), None)
         if existing:
+            plan_operation()
             return ceo_tools.audit(turn, action, {'project_id': existing['id'], 'name': existing['name'],
                 'created': False, 'source': 'Existing native project reused'}, tool_name='paperclip_company')
         body = {'name': name, 'description': str(args.get('description', ''))[:4000], 'status': 'planned',
@@ -62,6 +65,7 @@ def manage(args, **kwargs):
                     r'https://github\.com/[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*/?', repository):
                 raise ValueError('Repository must be an HTTPS github.com owner/repository URL without credentials')
             body['repositoryUrls'] = [repository]
+        plan_operation()
         project = reporting.api('POST', '/companies/' + company + '/projects', body, turn['run'])
         return ceo_tools.audit(turn, action, {'created': True, 'project_id': project['id'], 'name': project['name'],
             'status': project['status'], 'host_workspace_mounted': False}, tool_name='paperclip_company')
@@ -70,9 +74,13 @@ def manage(args, **kwargs):
         project = next((p for p in projects if p['id'] == project_id), None)
         if not project:
             raise PermissionError('Project must belong to the current JARVIS company')
+        if issue.get('projectId') == project_id:
+            return ceo_tools.audit(turn,action,{'project_id':project_id,'name':project['name'],
+                'issue_id':turn['issue'],'associated':True,'already_associated':True},tool_name='paperclip_company')
         all_issues = reporting.api('GET', '/companies/' + company + '/issues')
         if any(i.get('parentId') == turn['issue'] for i in all_issues):
             raise ValueError('Choose the project before delegation; an existing task tree cannot be silently moved')
+        plan_operation()
         updated = reporting.api('PATCH', '/issues/' + turn['issue'], {'projectId': project_id}, turn['run'])
         if updated.get('projectId') != project_id:
             raise ValueError('Native project association was not confirmed')
@@ -95,6 +103,7 @@ def manage(args, **kwargs):
         approval = next((a for a in approvals if (a.get('payload') or {}).get('kind') == 'jarvis_staff_termination'
             and (a.get('payload') or {}).get('agentId') == agent_id), None)
         if not approval:
+            plan_operation()
             approval = reporting.api('POST', '/companies/' + company + '/approvals', {
                 'type': 'request_board_approval', 'requestedByAgentId': me['id'], 'issueIds': [turn['issue']],
                 'payload': {'kind': 'jarvis_staff_termination', 'agentId': agent_id, 'name': agent['name'],

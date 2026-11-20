@@ -4,23 +4,176 @@ import json
 import re
 import time
 import urllib.error
-from uuid import NAMESPACE_URL, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 PREFIX = 'jarvis-blocker:'
 REPORT = 'CEO review requested. '
 WAITING = 'Waiting for your decision. '
+BLOCKED_ON = 'Blocked on '
+GENERIC_QUESTION = 'What input or change of scope can you provide so the team can continue?'
+PACKAGE_REQUEST = 'Requested operator provisioning for sandbox package '
+PACKAGE_KEY = 'jarvis-package-review:'
+
+
+def package_name(value):
+    if (not isinstance(value, str) or not re.fullmatch(r'[a-z0-9][a-z0-9.+-]{0,62}', value)
+            or '..' in value or value.endswith(('.deb', '.rpm'))):
+        raise ValueError('Use one package name, such as jq.')
+    return value
+
+
+def blocker_packages(action):
+    if not action.startswith(REPORT):
+        return []
+    action = action[len(REPORT):]
+    if action.startswith(PACKAGE_REQUEST):
+        try:
+            return [package_name(name) for name in action[len(PACKAGE_REQUEST):].split(', ')]
+        except ValueError:
+            return []
+    # Older workers recorded this explicit operator handoff before a structured
+    # package request existed. Ignore incidental mentions of software names.
+    reason = action.removeprefix('Worker reports incomplete work: blocked. ')
+    match = re.match(r'Operator must provision compatible ([a-z0-9+.-]+) and dependencies inside this sandbox\b', reason, re.I)
+    if not match:
+        match = re.fullmatch(r'Operator must complete the already-approved provisioning and expose '
+                             r'([a-z0-9+.-]+) in the sandbox before verification can succeed\.?', reason, re.I)
+    if match:
+        try:
+            return [package_name(match[1].lower())]
+        except ValueError:
+            pass
+    return []
+
+
+def reported_packages(child, report):
+    """Require agreement between the native assignment blocker and its worker's report."""
+    if (child.get('status') != 'blocked' or report.get('authorAgentId') != child.get('assigneeAgentId')
+            or not report.get('createdByRunId')):
+        return []
+    contents, marker, _ = (report.get('body') or '').partition('\nJARVIS_EXECUTION_EVIDENCE=')
+    action = (child.get('unblockDescriptor') or {}).get('action') or ''
+    reason = action.removeprefix(REPORT)
+    if not marker:
+        return []
+    if reason.startswith(PACKAGE_REQUEST):
+        if reason not in contents.splitlines():
+            return []
+    elif reason.removeprefix('Worker reports incomplete work: blocked. ') not in contents:
+        return []
+    return blocker_packages(action)
+
+
+def worker_package_requests(child, comments):
+    names = set()
+    for row in comments:
+        if row.get('authorAgentId') != child['assigneeAgentId'] or not row.get('createdByRunId'):
+            continue
+        body = row.get('body') or ''
+        if body.startswith(PACKAGE_REQUEST):
+            try:
+                name = package_name(body[len(PACKAGE_REQUEST):])
+            except ValueError:
+                continue
+            nonce = str(uuid5(NAMESPACE_URL, f'jarvis-package:{child["id"]}:{child["assigneeAgentId"]}:{name}'))
+            if row.get('clientRequestId') == nonce:
+                names.add(name)
+    reports = [r for r in comments if r.get('authorAgentId') == child['assigneeAgentId']
+               and r.get('createdByRunId') and '\nJARVIS_EXECUTION_EVIDENCE=' in (r.get('body') or '')]
+    if reports:
+        names.update(reported_packages(child, max(reports, key=lambda r: r.get('createdAt') or '')))
+    return sorted(names)
+
+
+def package_confirmation(child, name, owner=None):
+    child_id, agent = str(UUID(child['id'])), str(UUID(child['assigneeAgentId']))
+    name = package_name(name)
+    return {'kind': 'request_confirmation', 'idempotencyKey': f'{PACKAGE_KEY}{child_id}:{agent}:{name}',
+        'title': f'Software request for {child["identifier"]}',
+        'summary': 'Yes queues this Debian package and its dependencies for this assignment’s offline package environment.',
+        'continuationPolicy': 'none', 'resolverPolicy': 'human_only',
+        **({'addresseeUserId': owner} if owner else {}),
+        'payload': {'version': 1, 'prompt': f'{child["identifier"]} needs {name}. Authorize the runtime operator to provide it for this assignment?',
+            'acceptLabel': 'Approve', 'rejectLabel': 'Decline', 'rejectRequiresReason': False,
+            'supersedeOnUserComment': False}}
+
+
+def package_decision(row, issue_id, ceo_id):
+    key = row.get('idempotencyKey') or ''
+    if (not key.startswith(PACKAGE_KEY) or row.get('issueId') != issue_id
+            or row.get('kind') != 'request_confirmation' or row.get('continuationPolicy') != 'none'
+            or row.get('resolverPolicy') != 'human_only' or row.get('addresseeAgentId')
+            or not (row.get('createdByAgentId') == ceo_id or
+                    (row.get('createdByUserId') and not row.get('createdByAgentId')))):
+        return None
+    try:
+        child, agent, name = key[len(PACKAGE_KEY):].split(':')
+        if str(UUID(child)) != child or str(UUID(agent)) != agent:
+            return None
+        package_name(name)
+    except (ValueError, TypeError):
+        return None
+    payload = row.get('payload') or {}
+    if any(payload.get(k) is not None for k in ('target', 'toolAction', 'secretProposal')) or not payload.get('prompt'):
+        return None
+    return {'id': row['id'], 'child_id':child, 'agent_id':agent, 'package':name, 'question':payload['prompt'],
+            'key':key, 'status':row['status'], 'created':row.get('createdAt') or '', 'resolved_at':row.get('resolvedAt'),
+            'answer':row['status'] if row.get('resolvedByUserId') and row['status'] in ('accepted','rejected') else None}
+
+
+def generic_question(text):
+    return text.rstrip().casefold().endswith(GENERIC_QUESTION.casefold())
+
+
+def blocked_status(child, reason=None):
+    detail = (reason or (child.get('unblockDescriptor') or {}).get('action') or 'The assignment remains incomplete.').strip()
+    detail = detail.removeprefix(REPORT).removeprefix('Worker reports incomplete work: blocked. ')
+    if generic_question(detail):
+        detail = detail[:-len(GENERIC_QUESTION)].strip() or 'The assignment remains incomplete.'
+    return f"{BLOCKED_ON}{child['identifier']} — {detail.strip()[:900]}"
+
 
 
 def objective_blocker(response):
     for paragraph in response.split('\n\n'):
-        if re.search(r'\b(?:overall\s+)?(?:task|objective|goal)\s+(?:remains?|is)\s+(?:blocked|incomplete|unfinished|unmet)\b', paragraph, re.I):
+        if re.search(r'\b(?:overall\s+)?(?:task|objective|goal|request|assignment|expansion|research|work|delegation)\s+(?:remains?|is)\s+(?:(?:currently|still)\s+)?(?:blocked|incomplete|unfinished|unmet)\b', paragraph, re.I):
             return paragraph.strip()[:900]
+    return None
+
+
+def approved_operator_request(text, child, reviews):
+    """An operator handoff about a decided package does not ask its owner for a decision."""
+    if not isinstance(text, str) or not re.match(
+            r'(?i)^(?:can|could|will|would) (?:the |a )?(?:runtime )?operator '
+            r'(?:provide|provision|install|repair|configure|expose)\b', text):
+        return None
+    if re.search(r'(?i)\b(?:would you|do you|should we|which option|choose|change (?:the )?scope)\b', text):
+        return None
+    return next((r for r in reviews if r.get('package') and r.get('answer') == 'accepted'
+        and r['child_id'] == child.get('id') and r.get('agent_id') == child.get('assigneeAgentId')
+        and re.search(r'(?<![\w.+-])' + re.escape(r['package']) + r'(?![\w+-]|\.[\w])', text, re.I)), None)
+
+
+def project_operator_request(text):
+    match = re.match(r'^(?:can|could|would|will) the runtime operator (.+)', text, re.I)
+    if not match or re.search(r'\b(?:you|your|choose|authorize|approve)\b|\bor (?:should|would|do|can)\b', text, re.I):
+        return None
+    request = match[1].casefold()
+    if re.match(r'(?:restore|repair|fix) (?:the )?(?:authenticated )?project[- ]terminal (?:scope|access|connection)\b', request):
+        return 'The runtime operator needs to check the connection to the project terminal.'
+    if (request.startswith(('provide ', 'provision ', 'enable ')) and 'project container' in request
+            and re.search(r'\b(?:package[- ]maintenance|noninteractive sudo|root execution)\b', request)):
+        return 'The runtime operator can refresh the project OS image and switch the lab while preserving project files. Systems can verify the release afterwards.'
     return None
 
 
 def decisions(rows, issue_id, ceo_id):
     result = []
     for row in rows:
+        package = package_decision(row, issue_id, ceo_id)
+        if package:
+            result.append(package)
+            continue
         if (row.get('issueId') != issue_id or row.get('createdByAgentId') != ceo_id
                 or row.get('kind') != 'ask_user_questions'
                 or not (row.get('idempotencyKey') or '').startswith(PREFIX)):
@@ -77,10 +230,43 @@ def wake_request(api, turn, comments, human, children):
 
 
 def ask(api, turn, issue, child, text, reason):
+    packages = turn.get('worker_package_requests', {}).get(child['id'], [])
+    if packages:
+        path = '/issues/' + issue['id'] + '/interactions'
+        existing = {d['key']: d for d in decisions(api('GET', path), issue['id'], turn['agent'])}
+        reviewed = []
+        for name in packages:
+            form = package_confirmation(child, name, issue.get('responsibleUserId') or issue.get('createdByUserId'))
+            decision = existing.get(form['idempotencyKey'])
+            if not decision:
+                row = api('POST', path, form, turn['run'])
+                decision = package_decision(row, issue['id'], turn['agent'])
+                if not decision:
+                    raise ValueError('Paperclip did not confirm the CEO package request.')
+            reviewed.append(decision)
+        pending = next((d for d in reviewed if d['status'] == 'pending'), None)
+        if pending:
+            turn['owner_question'] = pending
+        return pending or reviewed[0]
     if not 10 <= len(text) <= 500 or not 10 <= len(reason) <= 900:
         raise ValueError('Supply one short decision question in text and explain in plan what you tried and why you need the owner.')
+    if generic_question(text):
+        raise ValueError('Report the blocker, or ask for a specific decision the owner has not already made.')
+    operator_request = project_operator_request(text)
+    if operator_request:
+        turn['operator_blocker'] = blocked_status(child, operator_request)
+        return {'next_actor':'runtime_operator'}
+    for item in (child, issue):
+        identifier = item.get('identifier')
+        if identifier and item.get('id'):
+            text = text.replace(identifier + ' (' + item['id'] + ')', identifier)
+            text = text.replace(item['id'], identifier)
     path = '/issues/' + issue['id'] + '/interactions'
     previous = decisions(api('GET', path), issue['id'], turn['agent'])
+    approved = approved_operator_request(text, child, previous)
+    if approved:
+        turn['operator_blocker'] = blocked_status(child, 'Package approval is recorded. The remaining capability requires runtime operator review.')
+        return {**approved, 'next_actor':'runtime_operator'}
     pending = next((item for item in previous if item['status'] == 'pending'
                     and item['child_id'] in turn.get('review_child_ids', [child['id']])), None)
     if pending:
@@ -107,11 +293,9 @@ def disposition(response, child, reason=None):
     """Persist the CEO's final question when it was written as prose instead of a tool call."""
     lines = [line.strip(' *#>-') for line in response.splitlines() if line.strip()]
     question = next((sentence for line in reversed(lines) for sentence in reversed(
-        re.split(r'(?<=[.!?])\s+', line)) if sentence.endswith('?') and 10 <= len(sentence) <= 500), None)
+        re.split(r'(?<=[.!?])\s+', line)) if sentence.endswith('?') and 10 <= len(sentence) <= 500
+        and not generic_question(sentence)), None)
     reason = reason or (child.get('unblockDescriptor') or {}).get('action') or 'No executable correction was recorded.'
-    if not question:
-        question = ('For ' + child['identifier'] + ', ' + reason[:280].rstrip('.!?') +
-                    '. What input or change of scope can you provide so the team can continue?')
     return question, ('CEO review of ' + child['identifier'] + '. ' + reason)[:900]
 
 
